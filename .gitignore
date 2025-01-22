@@ -1,0 +1,31 @@
+# NetBeans specific files
+/nbproject/private/
+/nbproject/Makefile-*.mk
+/nbproject/configurations.xml
+
+# Build outputs
+/build/
+/dist/
+/out/
+/nbbuild/
+/nbdist/
+/nboutput/
+
+# Java specific
+*.class
+*.jar
+*.war
+*.ear
+
+# Miscellaneous
+*.log
+*.bak
+*.swp
+*.orig
+*~ 
+.DS_Store
+
+# Other OS/IDE-specific files
+Thumbs.db
+.idea/
+*.iml
