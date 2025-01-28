@@ -27,6 +27,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private void initComponents() {
 
         jButton1 = new javax.swing.JButton();
+        SelectImageFolderButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Slideshow Creator");
@@ -38,11 +39,21 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
         });
 
+        SelectImageFolderButton.setText("Select Folder");
+        SelectImageFolderButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SelectImageFolder(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(150, 150, 150)
+                .addComponent(SelectImageFolderButton)
+                .addContainerGap(153, Short.MAX_VALUE))
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addGap(0, 0, Short.MAX_VALUE)
@@ -51,7 +62,10 @@ public class SlideshowCreator extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(251, Short.MAX_VALUE)
+                .addComponent(SelectImageFolderButton)
+                .addGap(26, 26, 26))
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addGap(0, 0, Short.MAX_VALUE)
@@ -66,6 +80,73 @@ public class SlideshowCreator extends javax.swing.JFrame {
         // TODO add your handling code here:
         new SlideshowPresenter().setVisible(true);
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void SelectImageFolder(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SelectImageFolder
+        // Create a JFileChooser instance
+        javax.swing.JFileChooser folderChooser = new javax.swing.JFileChooser();
+
+        // Set it to select directories only
+        folderChooser.setFileSelectionMode(javax.swing.JFileChooser.DIRECTORIES_ONLY);
+
+        // Open the dialog and get the result
+        int returnValue = folderChooser.showOpenDialog(this);
+
+        // Check if the user selected a folder
+        if (returnValue == javax.swing.JFileChooser.APPROVE_OPTION) {
+            java.io.File selectedFolder = folderChooser.getSelectedFile();
+            System.out.println("Selected Folder: " + selectedFolder.getAbsolutePath());
+
+            // Create the SlideShowImages folder in the current working directory
+            java.io.File programFolder = new java.io.File(System.getProperty("user.dir"), "SlideShowImages");
+            if (!programFolder.exists()) {
+                if (programFolder.mkdir()) {
+                    System.out.println("SlideShowImages folder created at: " + programFolder.getAbsolutePath());
+                } else {
+                    System.err.println("Failed to create SlideShowImages folder.");
+                    return;
+                }
+            }
+
+            // Get the list of files in the selected directory
+            java.io.File[] files = selectedFolder.listFiles();
+
+            if (files != null) {
+                System.out.println("Files detected in selected folder:");
+                for (java.io.File file : files) {
+                    System.out.println(file.getAbsolutePath());
+
+                    // Check if the file is an image (case-insensitive extension check)
+                    String fileName = file.getName().toLowerCase();
+                    if (file.isFile() && (fileName.endsWith(".jpg") || 
+                                          fileName.endsWith(".png") || 
+                                          fileName.endsWith(".jpeg") || 
+                                          fileName.endsWith(".gif"))) {
+                        try {
+                            // Copy the file to the SlideShowImages folder
+                            java.nio.file.Path source = file.toPath();
+                            java.nio.file.Path target = programFolder.toPath().resolve(file.getName());
+                            System.out.println("Copying file: " + source.toString() + " to " + target.toString());
+                            java.nio.file.Files.copy(source, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                            System.out.println("Copied: " + file.getName());
+                        } catch (java.io.IOException ex) {
+                            System.err.println("Error copying file: " + file.getAbsolutePath());
+                            ex.printStackTrace();
+                        }
+                    } else {
+                        System.out.println("Skipped non-image file: " + file.getName());
+                    }
+                }
+                System.out.println("Image files copied successfully to: " + programFolder.getAbsolutePath());
+            } else {
+                System.out.println("The selected folder is empty or an error occurred.");
+            }
+        } else {
+            System.out.println("No folder selected.");
+        }
+
+        // Print working directory to confirm location
+        System.out.println("Working Directory: " + System.getProperty("user.dir"));
+    }//GEN-LAST:event_SelectImageFolder
 
     /**
      * @param args the command line arguments
@@ -103,6 +184,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton SelectImageFolderButton;
     private javax.swing.JButton jButton1;
     // End of variables declaration//GEN-END:variables
 }

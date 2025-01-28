@@ -10,6 +10,7 @@
 /nbbuild/
 /nbdist/
 /nboutput/
+/target/
 
 # Java specific
 *.class
@@ -29,3 +30,6 @@
 Thumbs.db
 .idea/
 *.iml
+
+# Project-specific folders
+Senior_Project/SlideShowImages
