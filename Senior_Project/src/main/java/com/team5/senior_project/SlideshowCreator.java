@@ -4,19 +4,37 @@
  */
 package com.team5.senior_project;
 
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 /**
  *
  * @author Conner Williams
  */
 public class SlideshowCreator extends javax.swing.JFrame {
 
+    private java.io.File[] imageFiles;
+    private final int[] index = {0};
+    
     /**
      * Creates new form SlideshowCreator
      */
     public SlideshowCreator() {
         initComponents();
     }
-
+    
+    private void updateImage() {
+        imageLabel.setIcon(new javax.swing.ImageIcon(imageFiles[index[0]].getAbsolutePath()));
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -26,50 +44,218 @@ public class SlideshowCreator extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jButton1 = new javax.swing.JButton();
+        presenterButton = new javax.swing.JButton();
+        firstSlideButton = new javax.swing.JButton();
+        imageLabel = new javax.swing.JLabel();
+        nextSlideButton = new javax.swing.JButton();
+        previousSlideButton = new javax.swing.JButton();
+        lastSlideButton = new javax.swing.JButton();
+        menuBar = new javax.swing.JMenuBar();
+        jMenu3 = new javax.swing.JMenu();
+        selectFolderMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Slideshow Creator");
 
-        jButton1.setText("Test Button");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        presenterButton.setText("Open Presenter");
+        presenterButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                presenterButtonActionPerformed(evt);
             }
         });
+
+        firstSlideButton.setText("First");
+        firstSlideButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                firstSlideButtonActionPerformed(evt);
+            }
+        });
+
+        nextSlideButton.setText("Next");
+        nextSlideButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nextSlideButtonActionPerformed(evt);
+            }
+        });
+
+        previousSlideButton.setText("Previous");
+        previousSlideButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                previousSlideButtonActionPerformed(evt);
+            }
+        });
+
+        lastSlideButton.setText("Last");
+        lastSlideButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                lastSlideButtonActionPerformed(evt);
+            }
+        });
+
+        jMenu3.setText("File");
+
+        selectFolderMenuItem.setText("Select Folder");
+        selectFolderMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                selectFolderMenuItemActionPerformed(evt);
+            }
+        });
+        jMenu3.add(selectFolderMenuItem);
+
+        menuBar.add(jMenu3);
+
+        setJMenuBar(menuBar);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(585, Short.MAX_VALUE)
+                .addComponent(presenterButton)
+                .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addGap(143, 143, 143)
+                .addComponent(firstSlideButton)
+                .addGap(39, 39, 39)
+                .addComponent(previousSlideButton)
+                .addGap(44, 44, 44)
+                .addComponent(nextSlideButton)
+                .addGap(43, 43, 43)
+                .addComponent(lastSlideButton)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
-                    .addGap(0, 0, Short.MAX_VALUE)
-                    .addComponent(jButton1)
-                    .addGap(0, 0, Short.MAX_VALUE)))
+                    .addContainerGap()
+                    .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 690, Short.MAX_VALUE)
+                    .addContainerGap()))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(8, 8, 8)
+                .addComponent(presenterButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 364, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(firstSlideButton)
+                    .addComponent(nextSlideButton)
+                    .addComponent(previousSlideButton)
+                    .addComponent(lastSlideButton))
+                .addGap(16, 16, 16))
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addGap(0, 0, Short.MAX_VALUE)
-                    .addComponent(jButton1)
-                    .addGap(0, 0, Short.MAX_VALUE)))
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addContainerGap(36, Short.MAX_VALUE)
+                    .addComponent(imageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 353, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(45, Short.MAX_VALUE)))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void presenterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_presenterButtonActionPerformed
         // TODO add your handling code here:
         new SlideshowPresenter().setVisible(true);
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_presenterButtonActionPerformed
+
+    private void firstSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_firstSlideButtonActionPerformed
+        index[0] = 0;
+        updateImage();
+    }//GEN-LAST:event_firstSlideButtonActionPerformed
+
+    private void previousSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_previousSlideButtonActionPerformed
+        index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length; // Cycle through images
+        updateImage();
+    }//GEN-LAST:event_previousSlideButtonActionPerformed
+
+    private void selectFolderMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectFolderMenuItemActionPerformed
+        // Create a JFileChooser instance
+        javax.swing.JFileChooser folderChooser = new javax.swing.JFileChooser();
+
+        // Set it to select directories only
+        folderChooser.setFileSelectionMode(javax.swing.JFileChooser.DIRECTORIES_ONLY);
+
+        // Open the dialog and get the result
+        int returnValue = folderChooser.showOpenDialog(this);
+
+        // Check if the user selected a folder
+        if (returnValue == javax.swing.JFileChooser.APPROVE_OPTION) {
+            java.io.File selectedFolder = folderChooser.getSelectedFile();
+            System.out.println("Selected Folder: " + selectedFolder.getAbsolutePath());
+
+            // Create the SlideShowImages folder in the current working directory
+            java.io.File programFolder = new java.io.File(System.getProperty("user.dir"), "SlideShowImages");
+            if (!programFolder.exists()) {
+                if (programFolder.mkdir()) {
+                    System.out.println("SlideShowImages folder created at: " + programFolder.getAbsolutePath());
+                } else {
+                    System.err.println("Failed to create SlideShowImages folder.");
+                    return;
+                }
+            }
+
+            // Get the list of files in the selected directory
+            java.io.File[] files = selectedFolder.listFiles();
+
+            if (files != null) {
+                System.out.println("Files detected in selected folder:");
+                for (java.io.File file : files) {
+                    System.out.println(file.getAbsolutePath());
+
+                    // Check if the file is an image (case-insensitive extension check)
+                    String fileName = file.getName().toLowerCase();
+                    if (file.isFile() && (fileName.endsWith(".jpg") || 
+                                          fileName.endsWith(".png") || 
+                                          fileName.endsWith(".jpeg") || 
+                                          fileName.endsWith(".gif"))) {
+                        try {
+                            // Copy the file to the SlideShowImages folder
+                            java.nio.file.Path source = file.toPath();
+                            java.nio.file.Path target = programFolder.toPath().resolve(file.getName());
+                            System.out.println("Copying file: " + source.toString() + " to " + target.toString());
+                            java.nio.file.Files.copy(source, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                            System.out.println("Copied: " + file.getName());
+                        } catch (java.io.IOException ex) {
+                            System.err.println("Error copying file: " + file.getAbsolutePath());
+                            ex.printStackTrace();
+                        }
+                    } else {
+                        System.out.println("Skipped non-image file: " + file.getName());
+                    }
+                }
+                System.out.println("Image files copied successfully to: " + programFolder.getAbsolutePath());
+                
+                // Display images in the created folder within the JFrame
+                imageFiles = programFolder.listFiles((dir, name) -> 
+                    name.toLowerCase().matches(".*\\.(jpg|jpeg|png|gif)$"));
+                if (imageFiles != null && imageFiles.length > 0) {
+                    // Load the first image
+                    updateImage();
+                }
+            } else {
+                System.out.println("The selected folder is empty or an error occurred.");
+            }
+        } else {
+            System.out.println("No folder selected.");
+        }
+
+        // Print working directory to confirm location
+        System.out.println("Working Directory: " + System.getProperty("user.dir"));
+        
+    }//GEN-LAST:event_selectFolderMenuItemActionPerformed
+
+    private void nextSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextSlideButtonActionPerformed
+        index[0] = (index[0] + 1) % imageFiles.length; // Cycle through images
+        updateImage();
+    }//GEN-LAST:event_nextSlideButtonActionPerformed
+
+    private void lastSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lastSlideButtonActionPerformed
+        index[0] = imageFiles.length - 1;
+        updateImage();
+    }//GEN-LAST:event_lastSlideButtonActionPerformed
 
     /**
      * @param args the command line arguments
-     */
+     */    
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -100,9 +286,17 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 new SlideshowCreator().setVisible(true);
             }
         });
-    }
+    } 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
+    private javax.swing.JButton firstSlideButton;
+    private javax.swing.JLabel imageLabel;
+    private javax.swing.JMenu jMenu3;
+    private javax.swing.JButton lastSlideButton;
+    private javax.swing.JMenuBar menuBar;
+    private javax.swing.JButton nextSlideButton;
+    private javax.swing.JButton presenterButton;
+    private javax.swing.JButton previousSlideButton;
+    private javax.swing.JMenuItem selectFolderMenuItem;
     // End of variables declaration//GEN-END:variables
 }
