@@ -20,9 +20,10 @@ import javax.swing.filechooser.FileNameExtensionFilter;
  * @author Conner Williams
  */
 public class SlideshowCreator extends javax.swing.JFrame {
-
-    private java.io.File[] imageFiles;
-    private final int[] index = {0};
+    
+    // Global variables needed for keeping image index and storing the image list
+    private java.io.File[] imageFiles; // image list
+    private final int[] index = {0}; // image list index
     
     /**
      * Creates new form SlideshowCreator
@@ -31,6 +32,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
         initComponents();
     }
     
+    /* 
+    Updates JLabel with the image matching the current index
+    Likely called due to index value changing
+    This is where any image modifications should likely go
+    */
     private void updateImage() {
         imageLabel.setIcon(new javax.swing.ImageIcon(imageFiles[index[0]].getAbsolutePath()));
     }
@@ -151,22 +157,25 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
+    
+    // Launches presenter application
     private void presenterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_presenterButtonActionPerformed
-        // TODO add your handling code here:
         new SlideshowPresenter().setVisible(true);
     }//GEN-LAST:event_presenterButtonActionPerformed
 
+    // Goes to the first image in the image list
     private void firstSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_firstSlideButtonActionPerformed
         index[0] = 0;
         updateImage();
     }//GEN-LAST:event_firstSlideButtonActionPerformed
-
+    
+    // Goes back one in the image list (back to previous image)
     private void previousSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_previousSlideButtonActionPerformed
         index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length; // Cycle through images
         updateImage();
     }//GEN-LAST:event_previousSlideButtonActionPerformed
 
+    // Selects image directory, copies it into our own folder, creates image list, displays first image
     private void selectFolderMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectFolderMenuItemActionPerformed
         // Create a JFileChooser instance
         javax.swing.JFileChooser folderChooser = new javax.swing.JFileChooser();
@@ -243,11 +252,13 @@ public class SlideshowCreator extends javax.swing.JFrame {
         
     }//GEN-LAST:event_selectFolderMenuItemActionPerformed
 
+    // Goes to the next image in the list
     private void nextSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextSlideButtonActionPerformed
         index[0] = (index[0] + 1) % imageFiles.length; // Cycle through images
         updateImage();
     }//GEN-LAST:event_nextSlideButtonActionPerformed
 
+    // Goes to the last image in the list
     private void lastSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lastSlideButtonActionPerformed
         index[0] = imageFiles.length - 1;
         updateImage();
