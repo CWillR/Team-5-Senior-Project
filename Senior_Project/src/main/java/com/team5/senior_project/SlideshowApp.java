@@ -14,9 +14,6 @@ package com.team5.senior_project;
 
 public class SlideshowApp {
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String args[]) {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
