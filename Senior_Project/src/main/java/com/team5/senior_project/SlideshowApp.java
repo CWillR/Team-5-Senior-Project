@@ -4,6 +4,9 @@
 
 package com.team5.senior_project;
 
+import com.formdev.flatlaf.FlatLightLaf;
+import javax.swing.UIManager;
+
 /**
  *
  * @author Team 5
@@ -17,6 +20,11 @@ public class SlideshowApp {
     public static void main(String args[]) {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(new FlatLightLaf());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             new SlideshowCreator().setVisible(true);
         });
     }

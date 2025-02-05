@@ -4,15 +4,22 @@
  */
 package com.team5.senior_project;
 
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLightLaf;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
@@ -59,6 +66,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
         menuBar = new javax.swing.JMenuBar();
         jMenu3 = new javax.swing.JMenu();
         selectFolderMenuItem = new javax.swing.JMenuItem();
+        ThemesButton = new javax.swing.JMenu();
+        LightMode = new javax.swing.JMenuItem();
+        DarkMode = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Slideshow Creator");
@@ -98,6 +108,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
         });
 
+        menuBar.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+
         jMenu3.setText("File");
 
         selectFolderMenuItem.setText("Select Folder");
@@ -110,16 +122,32 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         menuBar.add(jMenu3);
 
+        ThemesButton.setText("Themes");
+
+        LightMode.setText("FlatLaf Light");
+        LightMode.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                LightModeActionPerformed(evt);
+            }
+        });
+        ThemesButton.add(LightMode);
+
+        DarkMode.setText("FlatLaf Dark");
+        DarkMode.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                DarkModeActionPerformed(evt);
+            }
+        });
+        ThemesButton.add(DarkMode);
+
+        menuBar.add(ThemesButton);
+
         setJMenuBar(menuBar);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(585, Short.MAX_VALUE)
-                .addComponent(presenterButton)
-                .addContainerGap())
             .addGroup(layout.createSequentialGroup()
                 .addGap(143, 143, 143)
                 .addComponent(firstSlideButton)
@@ -130,29 +158,29 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addGap(43, 43, 43)
                 .addComponent(lastSlideButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 690, Short.MAX_VALUE)
-                    .addContainerGap()))
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 579, Short.MAX_VALUE)
+                        .addComponent(presenterButton))
+                    .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 690, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(8, 8, 8)
                 .addComponent(presenterButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 364, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(imageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 353, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(firstSlideButton)
                     .addComponent(nextSlideButton)
                     .addComponent(previousSlideButton)
                     .addComponent(lastSlideButton))
                 .addGap(16, 16, 16))
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                    .addContainerGap(36, Short.MAX_VALUE)
-                    .addComponent(imageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 353, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(45, Short.MAX_VALUE)))
         );
 
         pack();
@@ -264,6 +292,28 @@ public class SlideshowCreator extends javax.swing.JFrame {
         updateImage();
     }//GEN-LAST:event_lastSlideButtonActionPerformed
 
+    private void LightModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LightModeActionPerformed
+        SwingUtilities.invokeLater(()->{
+            try {
+                UIManager.setLookAndFeel(new FlatLightLaf());
+                SwingUtilities.updateComponentTreeUI(this);
+            } catch (UnsupportedLookAndFeelException ex) {
+                Logger.getLogger(SlideshowCreator.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+    }//GEN-LAST:event_LightModeActionPerformed
+
+    private void DarkModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DarkModeActionPerformed
+        SwingUtilities.invokeLater(()->{
+            try {
+                UIManager.setLookAndFeel(new FlatDarkLaf());
+                SwingUtilities.updateComponentTreeUI(this);
+            } catch (UnsupportedLookAndFeelException ex) {
+                Logger.getLogger(SlideshowCreator.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+    }//GEN-LAST:event_DarkModeActionPerformed
+
     /**
      * @param args the command line arguments
      */    
@@ -300,6 +350,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
     } 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem DarkMode;
+    private javax.swing.JMenuItem LightMode;
+    private javax.swing.JMenu ThemesButton;
     private javax.swing.JButton firstSlideButton;
     private javax.swing.JLabel imageLabel;
     private javax.swing.JMenu jMenu3;
