@@ -6,17 +6,19 @@ package com.team5.senior_project;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
-import java.awt.Image;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -37,6 +39,29 @@ public class SlideshowCreator extends javax.swing.JFrame {
      */
     public SlideshowCreator() {
         initComponents();
+    }
+    
+    // Creates global SlideShowImages folder where the program stores user images
+    public class SlideShowManager {
+        private static final File programFolder = new File(System.getProperty("user.dir"), "SlideShowImages");
+
+        static {
+            if (!programFolder.exists()) {
+                if (programFolder.mkdir()) {
+                    System.out.println("SlideShowImages folder created at: " + programFolder.getAbsolutePath());
+                } else {
+                    System.err.println("Failed to create SlideShowImages folder.");
+                }
+            }
+        }
+
+        public static File getProgramFolder() {
+            return programFolder;
+        }
+
+        public static void main(String[] args) {
+            System.out.println("Accessing SlideShowImages folder: " + SlideShowManager.getProgramFolder().getAbsolutePath());
+        }
     }
     
     /* 
@@ -66,6 +91,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         menuBar = new javax.swing.JMenuBar();
         jMenu3 = new javax.swing.JMenu();
         selectFolderMenuItem = new javax.swing.JMenuItem();
+        AddImage = new javax.swing.JMenuItem();
         ThemesButton = new javax.swing.JMenu();
         LightMode = new javax.swing.JMenuItem();
         DarkMode = new javax.swing.JMenuItem();
@@ -119,6 +145,14 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
         });
         jMenu3.add(selectFolderMenuItem);
+
+        AddImage.setText("Add Image");
+        AddImage.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                AddImageActionPerformed(evt);
+            }
+        });
+        jMenu3.add(AddImage);
 
         menuBar.add(jMenu3);
 
@@ -203,39 +237,38 @@ public class SlideshowCreator extends javax.swing.JFrame {
         updateImage();
     }//GEN-LAST:event_previousSlideButtonActionPerformed
 
-    // Selects image directory, copies it into our own folder, creates image list, displays first image
+    // Selects folder of images to add to our image folder and sequentially to the image index for display
     private void selectFolderMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectFolderMenuItemActionPerformed
         // Create a JFileChooser instance
-        javax.swing.JFileChooser folderChooser = new javax.swing.JFileChooser();
+        JFileChooser folderChooser = new JFileChooser();
 
         // Set it to select directories only
-        folderChooser.setFileSelectionMode(javax.swing.JFileChooser.DIRECTORIES_ONLY);
+        folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
         // Open the dialog and get the result
         int returnValue = folderChooser.showOpenDialog(this);
 
         // Check if the user selected a folder
-        if (returnValue == javax.swing.JFileChooser.APPROVE_OPTION) {
-            java.io.File selectedFolder = folderChooser.getSelectedFile();
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            File selectedFolder = folderChooser.getSelectedFile();
             System.out.println("Selected Folder: " + selectedFolder.getAbsolutePath());
 
-            // Create the SlideShowImages folder in the current working directory
-            java.io.File programFolder = new java.io.File(System.getProperty("user.dir"), "SlideShowImages");
-            if (!programFolder.exists()) {
-                if (programFolder.mkdir()) {
-                    System.out.println("SlideShowImages folder created at: " + programFolder.getAbsolutePath());
-                } else {
-                    System.err.println("Failed to create SlideShowImages folder.");
-                    return;
-                }
-            }
-
             // Get the list of files in the selected directory
-            java.io.File[] files = selectedFolder.listFiles();
+            File[] files = selectedFolder.listFiles();
 
             if (files != null) {
                 System.out.println("Files detected in selected folder:");
-                for (java.io.File file : files) {
+
+                // Get the existing images if the array is already initialized
+                List<File> imageList = (imageFiles != null) ? new ArrayList<>(Arrays.asList(imageFiles)) : new ArrayList<>();
+                Set<String> existingImageNames = new HashSet<>();
+
+                // Store existing image names to prevent duplicates
+                for (File img : imageList) {
+                    existingImageNames.add(img.getName().toLowerCase());
+                }
+
+                for (File file : files) {
                     System.out.println(file.getAbsolutePath());
 
                     // Check if the file is an image (case-insensitive extension check)
@@ -244,30 +277,37 @@ public class SlideshowCreator extends javax.swing.JFrame {
                                           fileName.endsWith(".png") || 
                                           fileName.endsWith(".jpeg") || 
                                           fileName.endsWith(".gif"))) {
-                        try {
-                            // Copy the file to the SlideShowImages folder
-                            java.nio.file.Path source = file.toPath();
-                            java.nio.file.Path target = programFolder.toPath().resolve(file.getName());
-                            System.out.println("Copying file: " + source.toString() + " to " + target.toString());
-                            java.nio.file.Files.copy(source, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                            System.out.println("Copied: " + file.getName());
-                        } catch (java.io.IOException ex) {
-                            System.err.println("Error copying file: " + file.getAbsolutePath());
-                            ex.printStackTrace();
+                        if (!existingImageNames.contains(file.getName().toLowerCase())) {
+                            try {
+                                // Copy the file to the SlideShowImages folder
+                                Path source = file.toPath();
+                                Path target = SlideShowManager.getProgramFolder().toPath().resolve(file.getName());
+                                System.out.println("Copying file: " + source.toString() + " to " + target.toString());
+                                Files.copy(source, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                                System.out.println("Copied: " + file.getName());
+
+                                // Add new image to the list
+                                imageList.add(target.toFile());
+                            } catch (IOException ex) {
+                                System.err.println("Error copying file: " + file.getAbsolutePath());
+                            }
+                        } else {
+                            System.out.println("Skipped duplicate image: " + file.getName());
                         }
                     } else {
                         System.out.println("Skipped non-image file: " + file.getName());
                     }
                 }
-                System.out.println("Image files copied successfully to: " + programFolder.getAbsolutePath());
-                
-                // Display images in the created folder within the JFrame
-                imageFiles = programFolder.listFiles((dir, name) -> 
-                    name.toLowerCase().matches(".*\\.(jpg|jpeg|png|gif)$"));
-                if (imageFiles != null && imageFiles.length > 0) {
-                    // Load the first image
+
+                // Convert list back to array
+                imageFiles = imageList.toArray(new File[0]);
+
+                // Display the first image if available
+                if (imageFiles.length > 0) {
                     updateImage();
                 }
+
+                System.out.println("Image files copied successfully to: " + SlideShowManager.getProgramFolder().getAbsolutePath());
             } else {
                 System.out.println("The selected folder is empty or an error occurred.");
             }
@@ -277,7 +317,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         // Print working directory to confirm location
         System.out.println("Working Directory: " + System.getProperty("user.dir"));
-        
     }//GEN-LAST:event_selectFolderMenuItemActionPerformed
 
     // Goes to the next image in the list
@@ -292,6 +331,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         updateImage();
     }//GEN-LAST:event_lastSlideButtonActionPerformed
 
+    // Sets UI design to FlatLightLaf (light mode version of Flat Laf)
     private void LightModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LightModeActionPerformed
         SwingUtilities.invokeLater(()->{
             try {
@@ -303,6 +343,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         });
     }//GEN-LAST:event_LightModeActionPerformed
 
+    // Sets UI design to FlatDarkLaf (dark mode version of Flat Laf)
     private void DarkModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DarkModeActionPerformed
         SwingUtilities.invokeLater(()->{
             try {
@@ -314,6 +355,66 @@ public class SlideshowCreator extends javax.swing.JFrame {
         });
     }//GEN-LAST:event_DarkModeActionPerformed
 
+    // Selects image to add to our image folder and adds it sequentially to the image index for display
+    private void AddImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AddImageActionPerformed
+        // Create a JFileChooser instance
+        JFileChooser fileChooser = new JFileChooser();
+
+        // Set file selection mode to only files
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        // Set a file filter to only allow image files
+        FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
+            "Image files (*.jpg, *.jpeg, *.png, *.gif)", "jpg", "jpeg", "png", "gif");
+        fileChooser.setFileFilter(imageFilter);
+
+        // Open the dialog and get the result
+        int returnValue = fileChooser.showOpenDialog(this);
+
+        // Check if the user selected a file
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            System.out.println("Selected Image: " + selectedFile.getAbsolutePath());
+
+            // Define the target folder
+            File targetFolder = SlideShowManager.getProgramFolder();
+            File targetFile = new File(targetFolder, selectedFile.getName());
+
+            try {
+                // Copy the file to the target folder, replacing if it already exists
+                Files.copy(selectedFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                System.out.println("Copied image to: " + targetFile.getAbsolutePath());
+
+                // Check if the imageFiles array exists, if not initialize it
+                if (imageFiles == null) {
+                    imageFiles = new File[] { targetFile };
+                } else {
+                    // Ensure the image is not already in the array
+                    boolean exists = false;
+                    for (File file : imageFiles) {
+                        if (file.getName().equals(targetFile.getName())) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (!exists) {
+                        // Expand array to include the new image
+                        imageFiles = Arrays.copyOf(imageFiles, imageFiles.length + 1);
+                        imageFiles[imageFiles.length - 1] = targetFile;
+                    }
+                }
+
+                // Display the newly added image
+                updateImage();
+
+            } catch (IOException ex) {
+                System.err.println("Error copying image: " + selectedFile.getAbsolutePath());
+            }
+        } else {
+            System.out.println("No image selected.");
+        }
+    }//GEN-LAST:event_AddImageActionPerformed
+ 
     /**
      * @param args the command line arguments
      */    
@@ -350,6 +451,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     } 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem AddImage;
     private javax.swing.JMenuItem DarkMode;
     private javax.swing.JMenuItem LightMode;
     private javax.swing.JMenu ThemesButton;
