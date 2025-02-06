@@ -6,6 +6,7 @@ package com.team5.senior_project;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,11 +19,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.filechooser.FileView;
 
 /**
  *
@@ -242,8 +246,39 @@ public class SlideshowCreator extends javax.swing.JFrame {
         // Create a JFileChooser instance
         JFileChooser folderChooser = new JFileChooser();
 
-        // Set it to select directories only
-        folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+           // Set it to select files & directories
+        folderChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        
+        // Filter only image files
+        FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
+        "Image files (*.jpg, *.jpeg, *.png, *.gif)", "jpg", "jpeg", "png", "gif");
+        folderChooser.setFileFilter(imageFilter);
+        
+        // Custom FileView for image previews to show thumbnails
+        folderChooser.setFileView(new FileView() {
+        @Override
+        // Check if the file is an image and return a thumbnail icon
+        public Icon getIcon(File f) {
+            if (f.isFile() && (f.getName().toLowerCase().endsWith(".jpg") ||
+                               f.getName().toLowerCase().endsWith(".jpeg") ||
+                               f.getName().toLowerCase().endsWith(".png") ||
+                               f.getName().toLowerCase().endsWith(".gif"))) {
+                return getThumbnailIcon(f);   // Get thumbnail for images
+            }
+            return super.getIcon(f);
+        }
+        
+        private Icon getThumbnailIcon(File file) {
+            try {
+                // Generate thumbnail by resizing the image to 50x50 pixels
+                ImageIcon icon = new ImageIcon(file.getAbsolutePath());
+                Image image = icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH); // Resize the image
+                return new ImageIcon(image);
+            } catch (Exception e) {
+                return null;  // Return null if there is an issue generating the thumbnail
+            }
+        }
+    });
 
         // Open the dialog and get the result
         int returnValue = folderChooser.showOpenDialog(this);
@@ -251,6 +286,12 @@ public class SlideshowCreator extends javax.swing.JFrame {
         // Check if the user selected a folder
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             File selectedFolder = folderChooser.getSelectedFile();
+            System.out.println("Selected Folder: " + selectedFolder.getAbsolutePath());
+
+            // If a file is selected instead of a folder, get its parent directory
+        if (selectedFolder.isFile()) {
+            selectedFolder = selectedFolder.getParentFile();
+        }
             System.out.println("Selected Folder: " + selectedFolder.getAbsolutePath());
 
             // Get the list of files in the selected directory
@@ -362,22 +403,59 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         // Set file selection mode to only files
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        
+        // Enable multiple file selection
+        fileChooser.setMultiSelectionEnabled(true);
 
         // Set a file filter to only allow image files
         FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
             "Image files (*.jpg, *.jpeg, *.png, *.gif)", "jpg", "jpeg", "png", "gif");
         fileChooser.setFileFilter(imageFilter);
+        
+        // Custom FileView for image previews
+        fileChooser.setFileView(new FileView() 
+        {
+            @Override
+            public Icon getIcon(File f) 
+            {
+                if (f.isFile() && (f.getName().toLowerCase().endsWith(".jpg") ||
+                               f.getName().toLowerCase().endsWith(".jpeg") ||
+                               f.getName().toLowerCase().endsWith(".png") ||
+                               f.getName().toLowerCase().endsWith(".gif"))) 
+            {
+                return getThumbnailIcon(f);
+            }
+            return super.getIcon(f);
+            }
+            
+            private Icon getThumbnailIcon(File file) 
+            {
+                try 
+                {
+                    ImageIcon icon = new ImageIcon(file.getAbsolutePath());
+                    Image image = icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH); // Resize the image
+                    return new ImageIcon(image);
+                } catch (Exception e) 
+                {
+                    return null;
+                }
+            }
+        });
 
         // Open the dialog and get the result
         int returnValue = fileChooser.showOpenDialog(this);
 
         // Check if the user selected a file
         if (returnValue == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            System.out.println("Selected Image: " + selectedFile.getAbsolutePath());
+            File[] selectedFiles = fileChooser.getSelectedFiles(); // Get the selected files
+            System.out.println("Selected Images:");
 
             // Define the target folder
             File targetFolder = SlideShowManager.getProgramFolder();
+            for (File selectedFile : selectedFiles) 
+            {
+            System.out.println("Selected Image: " + selectedFile.getAbsolutePath());
+            
             File targetFile = new File(targetFolder, selectedFile.getName());
 
             try {
@@ -409,6 +487,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
             } catch (IOException ex) {
                 System.err.println("Error copying image: " + selectedFile.getAbsolutePath());
+            }
             }
         } else {
             System.out.println("No image selected.");
