@@ -23,6 +23,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.util.prefs.Preferences;
 
 /**
  *
@@ -33,12 +34,31 @@ public class SlideshowCreator extends javax.swing.JFrame {
     // Global variables needed for keeping image index and storing the image list
     private java.io.File[] imageFiles; // image list
     private final int[] index = {0}; // image list index
-    
+    private static final Preferences prefs = Preferences.userNodeForPackage(SlideshowCreator.class);
+
     /**
      * Creates new form SlideshowCreator
      */
     public SlideshowCreator() {
         initComponents();
+        applySavedTheme(); // Apply saved theme when starting
+    }
+    
+    // Probably want to move the things into their own file later
+    private void applySavedTheme() {
+        SwingUtilities.invokeLater(() -> {
+            String theme = prefs.get("theme", "light"); // Default to light mode
+            try {
+                if ("dark".equals(theme)) {
+                    UIManager.setLookAndFeel(new FlatDarkLaf());
+                } else {
+                    UIManager.setLookAndFeel(new FlatLightLaf());
+                }
+                SwingUtilities.updateComponentTreeUI(this);
+            } catch (UnsupportedLookAndFeelException ex) {
+                Logger.getLogger(SlideshowCreator.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
     }
     
     // Creates global SlideShowImages folder where the program stores user images
@@ -333,10 +353,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
     // Sets UI design to FlatLightLaf (light mode version of Flat Laf)
     private void LightModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LightModeActionPerformed
-        SwingUtilities.invokeLater(()->{
+        SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(new FlatLightLaf());
                 SwingUtilities.updateComponentTreeUI(this);
+                prefs.put("theme", "light"); // Save preference
             } catch (UnsupportedLookAndFeelException ex) {
                 Logger.getLogger(SlideshowCreator.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -345,10 +366,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
     // Sets UI design to FlatDarkLaf (dark mode version of Flat Laf)
     private void DarkModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DarkModeActionPerformed
-        SwingUtilities.invokeLater(()->{
+        SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(new FlatDarkLaf());
                 SwingUtilities.updateComponentTreeUI(this);
+                prefs.put("theme", "dark"); // Save preference
             } catch (UnsupportedLookAndFeelException ex) {
                 Logger.getLogger(SlideshowCreator.class.getName()).log(Level.SEVERE, null, ex);
             }
