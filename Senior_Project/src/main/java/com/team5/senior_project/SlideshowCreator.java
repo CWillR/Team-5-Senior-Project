@@ -6,7 +6,6 @@ package com.team5.senior_project;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
-import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,14 +18,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.filechooser.FileView;
+import java.util.prefs.Preferences;
 
 /**
  *
@@ -37,12 +34,31 @@ public class SlideshowCreator extends javax.swing.JFrame {
     // Global variables needed for keeping image index and storing the image list
     private java.io.File[] imageFiles; // image list
     private final int[] index = {0}; // image list index
-    
+    private static final Preferences prefs = Preferences.userNodeForPackage(SlideshowCreator.class);
+
     /**
      * Creates new form SlideshowCreator
      */
     public SlideshowCreator() {
         initComponents();
+        applySavedTheme(); // Apply saved theme when starting
+    }
+    
+    // Probably want to move the things into their own file later
+    private void applySavedTheme() {
+        SwingUtilities.invokeLater(() -> {
+            String theme = prefs.get("theme", "light"); // Default to light mode
+            try {
+                if ("dark".equals(theme)) {
+                    UIManager.setLookAndFeel(new FlatDarkLaf());
+                } else {
+                    UIManager.setLookAndFeel(new FlatLightLaf());
+                }
+                SwingUtilities.updateComponentTreeUI(this);
+            } catch (UnsupportedLookAndFeelException ex) {
+                Logger.getLogger(SlideshowCreator.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
     }
     
     // Creates global SlideShowImages folder where the program stores user images
@@ -246,39 +262,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
         // Create a JFileChooser instance
         JFileChooser folderChooser = new JFileChooser();
 
-           // Set it to select files & directories
-        folderChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-        
-        // Filter only image files
-        FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
-        "Image files (*.jpg, *.jpeg, *.png, *.gif)", "jpg", "jpeg", "png", "gif");
-        folderChooser.setFileFilter(imageFilter);
-        
-        // Custom FileView for image previews to show thumbnails
-        folderChooser.setFileView(new FileView() {
-        @Override
-        // Check if the file is an image and return a thumbnail icon
-        public Icon getIcon(File f) {
-            if (f.isFile() && (f.getName().toLowerCase().endsWith(".jpg") ||
-                               f.getName().toLowerCase().endsWith(".jpeg") ||
-                               f.getName().toLowerCase().endsWith(".png") ||
-                               f.getName().toLowerCase().endsWith(".gif"))) {
-                return getThumbnailIcon(f);   // Get thumbnail for images
-            }
-            return super.getIcon(f);
-        }
-        
-        private Icon getThumbnailIcon(File file) {
-            try {
-                // Generate thumbnail by resizing the image to 50x50 pixels
-                ImageIcon icon = new ImageIcon(file.getAbsolutePath());
-                Image image = icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH); // Resize the image
-                return new ImageIcon(image);
-            } catch (Exception e) {
-                return null;  // Return null if there is an issue generating the thumbnail
-            }
-        }
-    });
+        // Set it to select directories only
+        folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
         // Open the dialog and get the result
         int returnValue = folderChooser.showOpenDialog(this);
@@ -286,12 +271,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
         // Check if the user selected a folder
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             File selectedFolder = folderChooser.getSelectedFile();
-            System.out.println("Selected Folder: " + selectedFolder.getAbsolutePath());
-
-            // If a file is selected instead of a folder, get its parent directory
-        if (selectedFolder.isFile()) {
-            selectedFolder = selectedFolder.getParentFile();
-        }
             System.out.println("Selected Folder: " + selectedFolder.getAbsolutePath());
 
             // Get the list of files in the selected directory
@@ -374,10 +353,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
     // Sets UI design to FlatLightLaf (light mode version of Flat Laf)
     private void LightModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LightModeActionPerformed
-        SwingUtilities.invokeLater(()->{
+        SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(new FlatLightLaf());
                 SwingUtilities.updateComponentTreeUI(this);
+                prefs.put("theme", "light"); // Save preference
             } catch (UnsupportedLookAndFeelException ex) {
                 Logger.getLogger(SlideshowCreator.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -386,10 +366,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
     // Sets UI design to FlatDarkLaf (dark mode version of Flat Laf)
     private void DarkModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DarkModeActionPerformed
-        SwingUtilities.invokeLater(()->{
+        SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(new FlatDarkLaf());
                 SwingUtilities.updateComponentTreeUI(this);
+                prefs.put("theme", "dark"); // Save preference
             } catch (UnsupportedLookAndFeelException ex) {
                 Logger.getLogger(SlideshowCreator.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -403,59 +384,22 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         // Set file selection mode to only files
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        
-        // Enable multiple file selection
-        fileChooser.setMultiSelectionEnabled(true);
 
         // Set a file filter to only allow image files
         FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
             "Image files (*.jpg, *.jpeg, *.png, *.gif)", "jpg", "jpeg", "png", "gif");
         fileChooser.setFileFilter(imageFilter);
-        
-        // Custom FileView for image previews
-        fileChooser.setFileView(new FileView() 
-        {
-            @Override
-            public Icon getIcon(File f) 
-            {
-                if (f.isFile() && (f.getName().toLowerCase().endsWith(".jpg") ||
-                               f.getName().toLowerCase().endsWith(".jpeg") ||
-                               f.getName().toLowerCase().endsWith(".png") ||
-                               f.getName().toLowerCase().endsWith(".gif"))) 
-            {
-                return getThumbnailIcon(f);
-            }
-            return super.getIcon(f);
-            }
-            
-            private Icon getThumbnailIcon(File file) 
-            {
-                try 
-                {
-                    ImageIcon icon = new ImageIcon(file.getAbsolutePath());
-                    Image image = icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH); // Resize the image
-                    return new ImageIcon(image);
-                } catch (Exception e) 
-                {
-                    return null;
-                }
-            }
-        });
 
         // Open the dialog and get the result
         int returnValue = fileChooser.showOpenDialog(this);
 
         // Check if the user selected a file
         if (returnValue == JFileChooser.APPROVE_OPTION) {
-            File[] selectedFiles = fileChooser.getSelectedFiles(); // Get the selected files
-            System.out.println("Selected Images:");
+            File selectedFile = fileChooser.getSelectedFile();
+            System.out.println("Selected Image: " + selectedFile.getAbsolutePath());
 
             // Define the target folder
             File targetFolder = SlideShowManager.getProgramFolder();
-            for (File selectedFile : selectedFiles) 
-            {
-            System.out.println("Selected Image: " + selectedFile.getAbsolutePath());
-            
             File targetFile = new File(targetFolder, selectedFile.getName());
 
             try {
@@ -487,7 +431,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
             } catch (IOException ex) {
                 System.err.println("Error copying image: " + selectedFile.getAbsolutePath());
-            }
             }
         } else {
             System.out.println("No image selected.");
