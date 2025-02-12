@@ -17,6 +17,8 @@
 *.war
 *.ear
 /Senior_Project/target
+/Senior_Project/SlideShowImages/
+/Senior_Project/SavedSlideShows/
 
 # Miscellaneous
 *.log
@@ -31,4 +33,3 @@ Thumbs.db
 .idea/
 *.iml
 
-/Senior_Project/SlideShowImages/
