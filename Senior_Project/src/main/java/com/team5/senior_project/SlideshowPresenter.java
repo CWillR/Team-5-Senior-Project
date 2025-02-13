@@ -4,17 +4,103 @@
  */
 package com.team5.senior_project;
 
+import java.awt.Image;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+
 /**
  *
- * @author Conner Williams
+ * @author Team 5
  */
 public class SlideshowPresenter extends javax.swing.JFrame {
 
+    private java.io.File[] imageFiles; // image list
+    private final int[] index = {0}; // image list index
+    
     /**
      * Creates new form SlideshowPresenter
      */
     public SlideshowPresenter() {
         initComponents();
+    }
+    
+    // Loads built slideshow into the SlideShowPresenter JLabel
+    private void loadSlideshow(File loadFile) {
+        List<File> loadedImages = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(loadFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                File imageFile = new File(line);
+                if (imageFile.exists()) {
+                    loadedImages.add(imageFile);
+                } else {
+                    System.err.println("Warning: File not found: " + line);
+                }
+            }
+
+            if (!loadedImages.isEmpty()) {
+                imageFiles = loadedImages.toArray(new File[0]);
+                index[0] = 0; // Reset index to start
+                updateImage();
+                System.out.println("Slideshow loaded successfully.");
+            } else {
+                System.err.println("No valid images found in the slideshow file.");
+            }
+
+        } catch (IOException e) {
+            System.err.println("Error loading slideshow: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    // Updates the image in the SlideShowPresenter
+    private void updateImage() {
+        if (imageFiles != null && imageFiles.length > 0) {
+            // Load the image from the file
+            ImageIcon originalIcon = new ImageIcon(imageFiles[index[0]].getAbsolutePath());
+            Image originalImage = originalIcon.getImage();
+
+            // Get the width and height of the JLabel
+            int labelWidth = imageLabel.getWidth();
+            int labelHeight = imageLabel.getHeight();
+
+            // Calculate the scaling ratio
+            double widthRatio = (double) labelWidth / originalImage.getWidth(null);
+            double heightRatio = (double) labelHeight / originalImage.getHeight(null);
+
+            // Find the smaller ratio to preserve aspect ratio
+            double scaleRatio = Math.min(widthRatio, heightRatio);
+
+            // Calculate new dimensions while maintaining the aspect ratio
+            int newWidth = (int) (originalImage.getWidth(null) * scaleRatio);
+            int newHeight = (int) (originalImage.getHeight(null) * scaleRatio);
+
+            // Scale the image to the new size
+            Image resizedImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+
+            // Set the resized image as the label icon
+            imageLabel.setIcon(new ImageIcon(resizedImage));
+        }
+    }
+    
+    // Loads the folder for created slideshows
+    public class SlideShowManager {
+        private static final File programFolder = new File(System.getProperty("user.dir"), "SavedSlideShows");
+
+        public static File getProgramFolder() {
+            return programFolder;
+        }
+
+        public static void main(String[] args) {
+            System.out.println("Accessing SlideShowImages folder: " + SlideShowManager.getProgramFolder().getAbsolutePath());
+        }
     }
 
     /**
@@ -26,22 +112,134 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        imageLabel = new javax.swing.JLabel();
+        firstSlideButton = new javax.swing.JButton();
+        previousSlideButton = new javax.swing.JButton();
+        nextSlideButton = new javax.swing.JButton();
+        lastSlideButton = new javax.swing.JButton();
+        jMenuBar1 = new javax.swing.JMenuBar();
+        jMenu1 = new javax.swing.JMenu();
+        openSlideMenuItem = new javax.swing.JMenuItem();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Slideshow Presenter");
+        setPreferredSize(new java.awt.Dimension(702, 458));
+
+        firstSlideButton.setText("First");
+        firstSlideButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                firstSlideButtonActionPerformed(evt);
+            }
+        });
+
+        previousSlideButton.setText("Previous");
+        previousSlideButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                previousSlideButtonActionPerformed(evt);
+            }
+        });
+
+        nextSlideButton.setText("Next");
+        nextSlideButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nextSlideButtonActionPerformed(evt);
+            }
+        });
+
+        lastSlideButton.setText("Last");
+        lastSlideButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                lastSlideButtonActionPerformed(evt);
+            }
+        });
+
+        jMenu1.setText("File");
+
+        openSlideMenuItem.setText("Open Slide");
+        openSlideMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openSlideMenuItemActionPerformed(evt);
+            }
+        });
+        jMenu1.add(openSlideMenuItem);
+
+        jMenuBar1.add(jMenu1);
+
+        setJMenuBar(jMenuBar1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addGap(141, 141, 141)
+                .addComponent(firstSlideButton)
+                .addGap(39, 39, 39)
+                .addComponent(previousSlideButton)
+                .addGap(44, 44, 44)
+                .addComponent(nextSlideButton)
+                .addGap(43, 43, 43)
+                .addComponent(lastSlideButton)
+                .addContainerGap(142, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(35, 35, 35)
+                .addComponent(imageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 353, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(firstSlideButton)
+                    .addComponent(nextSlideButton)
+                    .addComponent(previousSlideButton)
+                    .addComponent(lastSlideButton))
+                .addContainerGap(18, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    // Opens FileChooser for user to select a saved slideshow to load
+    private void openSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openSlideMenuItemActionPerformed
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Load Slideshow");
+        fileChooser.setCurrentDirectory(SlideShowManager.getProgramFolder());
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Slideshow Files (*.ssx)", "ssx"));
+
+        int userSelection = fileChooser.showOpenDialog(null);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToLoad = fileChooser.getSelectedFile();
+            loadSlideshow(fileToLoad);
+        }
+    }//GEN-LAST:event_openSlideMenuItemActionPerformed
+
+    // Goes to first slide
+    private void firstSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_firstSlideButtonActionPerformed
+        index[0] = 0;
+        updateImage();
+    }//GEN-LAST:event_firstSlideButtonActionPerformed
+
+    // Goes to the previous slide
+    private void previousSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_previousSlideButtonActionPerformed
+        index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length; // Cycle through images
+        updateImage();
+    }//GEN-LAST:event_previousSlideButtonActionPerformed
+
+    // Goes to the next slide
+    private void nextSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextSlideButtonActionPerformed
+        index[0] = (index[0] + 1) % imageFiles.length; // Cycle through images
+        updateImage();
+    }//GEN-LAST:event_nextSlideButtonActionPerformed
+
+    // Goes to last slide
+    private void lastSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lastSlideButtonActionPerformed
+        index[0] = imageFiles.length - 1;
+        updateImage();
+    }//GEN-LAST:event_lastSlideButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -79,5 +277,13 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton firstSlideButton;
+    private javax.swing.JLabel imageLabel;
+    private javax.swing.JMenu jMenu1;
+    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JButton lastSlideButton;
+    private javax.swing.JButton nextSlideButton;
+    private javax.swing.JMenuItem openSlideMenuItem;
+    private javax.swing.JButton previousSlideButton;
     // End of variables declaration//GEN-END:variables
 }
