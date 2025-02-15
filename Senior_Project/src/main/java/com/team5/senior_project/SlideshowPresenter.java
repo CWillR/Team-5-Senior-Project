@@ -13,6 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
+import javax.swing.Timer;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  *
@@ -22,7 +25,8 @@ public class SlideshowPresenter extends javax.swing.JFrame {
 
     private java.io.File[] imageFiles; // image list
     private final int[] index = {0}; // image list index
-    
+    private Timer slideShowTimer;
+
     /**
      * Creates new form SlideshowPresenter
      */
@@ -31,34 +35,51 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     }
     
     // Loads built slideshow into the SlideShowPresenter JLabel
-    private void loadSlideshow(File loadFile) {
-        List<File> loadedImages = new ArrayList<>();
+private void loadSlideshow(File loadFile) {
+    List<File> loadedImages = new ArrayList<>();
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(loadFile))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                File imageFile = new File(line);
-                if (imageFile.exists()) {
-                    loadedImages.add(imageFile);
-                } else {
-                    System.err.println("Warning: File not found: " + line);
-                }
-            }
-
-            if (!loadedImages.isEmpty()) {
-                imageFiles = loadedImages.toArray(new File[0]);
-                index[0] = 0; // Reset index to start
-                updateImage();
-                System.out.println("Slideshow loaded successfully.");
+    try (BufferedReader reader = new BufferedReader(new FileReader(loadFile))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            File imageFile = new File(line);
+            if (imageFile.exists()) {
+                loadedImages.add(imageFile);
             } else {
-                System.err.println("No valid images found in the slideshow file.");
+                System.err.println("Warning: File not found: " + line);
+            }
+        }
+
+        if (!loadedImages.isEmpty()) {
+            imageFiles = loadedImages.toArray(new File[0]);
+            index[0] = 0; // Reset index to start
+            updateImage();
+            System.out.println("Slideshow loaded successfully.");
+
+            // If there's an existing timer, stop it before starting a new one
+            if (slideShowTimer != null && slideShowTimer.isRunning()) {
+                slideShowTimer.stop();
             }
 
-        } catch (IOException e) {
-            System.err.println("Error loading slideshow: " + e.getMessage());
-            e.printStackTrace();
+            // Create a new timer that advances the slide every 8000ms (8 seconds)
+            slideShowTimer = new Timer(8000, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    // Cycle to the next image
+                    index[0] = (index[0] + 1) % imageFiles.length;
+                    updateImage();
+                }
+            });
+            slideShowTimer.start();
+
+        } else {
+            System.err.println("No valid images found in the slideshow file.");
         }
+
+    } catch (IOException e) {
+        System.err.println("Error loading slideshow: " + e.getMessage());
+        e.printStackTrace();
     }
+}
     
     // Updates the image in the SlideShowPresenter
     private void updateImage() {
@@ -117,6 +138,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         previousSlideButton = new javax.swing.JButton();
         nextSlideButton = new javax.swing.JButton();
         lastSlideButton = new javax.swing.JButton();
+        beginButton = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         openSlideMenuItem = new javax.swing.JMenuItem();
@@ -153,6 +175,13 @@ public class SlideshowPresenter extends javax.swing.JFrame {
             }
         });
 
+        beginButton.setText("Begin");
+        beginButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                beginButtonAction(evt);
+            }
+        });
+
         jMenu1.setText("File");
 
         openSlideMenuItem.setText("Open Slide");
@@ -172,7 +201,9 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(309, 309, 309)
+                .addComponent(beginButton)
+                .addGap(59, 59, 59)
                 .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
             .addGroup(layout.createSequentialGroup()
@@ -190,7 +221,9 @@ public class SlideshowPresenter extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(35, 35, 35)
-                .addComponent(imageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 353, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(imageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 353, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(beginButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(firstSlideButton)
@@ -241,6 +274,29 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         updateImage();
     }//GEN-LAST:event_lastSlideButtonActionPerformed
 
+    private void beginButtonAction(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_beginButtonAction
+        if (imageFiles == null || imageFiles.length == 0) {
+            System.err.println("No images loaded. Please load a slideshow file first.");
+            return;
+        }
+
+        // Stop any existing timer before starting a new one
+        if (slideShowTimer != null && slideShowTimer.isRunning()) {
+            slideShowTimer.stop();
+        }
+
+        // Create and start a Timer to change images every 8 seconds (8000 ms)
+        slideShowTimer = new javax.swing.Timer(8000, new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                index[0] = (index[0] + 1) % imageFiles.length;
+                updateImage();
+            }
+        });
+        slideShowTimer.start();
+        System.out.println("Slideshow started.");
+    }//GEN-LAST:event_beginButtonAction
+
     /**
      * @param args the command line arguments
      */
@@ -277,6 +333,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton beginButton;
     private javax.swing.JButton firstSlideButton;
     private javax.swing.JLabel imageLabel;
     private javax.swing.JMenu jMenu1;
