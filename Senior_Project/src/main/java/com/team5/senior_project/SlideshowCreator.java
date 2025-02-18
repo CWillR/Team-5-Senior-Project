@@ -7,8 +7,10 @@ package com.team5.senior_project;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import java.awt.Image;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,6 +32,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileView;
 import java.util.prefs.Preferences;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -41,7 +44,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private java.io.File[] imageFiles; // image list
     private final int[] index = {0}; // image list index
     private static final Preferences prefs = Preferences.userNodeForPackage(SlideshowCreator.class);
-
+    private File workingFile = null; // stores location of most recently saved slideshow file (file currently being worked on)
+    
     /**
      * Creates new form SlideshowCreator
      */
@@ -68,51 +72,36 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }
     
     // Creates global SlideShowImages folder where the program stores user images
-    public class SlideShowManager {
-        private static final File programFolder = new File(System.getProperty("user.dir"), "SlideShowImages");
+    public class SlideShowFileManager {
+        private static final File imagesFolder = new File(System.getProperty("user.dir"), "SlideShowImages");
+        private static final File savedSlidesFolder = new File(System.getProperty("user.dir"), "SavedSlideShows");
 
         static {
-            if (!programFolder.exists()) {
-                if (programFolder.mkdir()) {
-                    System.out.println("SlideShowImages folder created at: " + programFolder.getAbsolutePath());
+            if (!imagesFolder.exists()) {
+                if (imagesFolder.mkdir()) {
+                    System.out.println("SlideShowImages folder created at: " + imagesFolder.getAbsolutePath());
                 } else {
                     System.err.println("Failed to create SlideShowImages folder.");
                 }
             }
-        }
-
-        public static File getProgramFolder() {
-            return programFolder;
-        }
-
-        public static void main(String[] args) {
-            System.out.println("Accessing SlideShowImages folder: " + SlideShowManager.getProgramFolder().getAbsolutePath());
-        }
-    }
-    
-    // Creates global SavedSlideShows folder where the program stores saved created slideshows
-    public class SlideShowSaveFolder {
-        private static final File saveFolder = new File(System.getProperty("user.dir"), "SavedSlideShows");
-
-        static {
-            if (!saveFolder.exists()) {
-                if (saveFolder.mkdir()) {
-                    System.out.println("SlideShowImages folder created at: " + saveFolder.getAbsolutePath());
+            if (!savedSlidesFolder.exists()) {
+                if (savedSlidesFolder.mkdir()) {
+                    System.out.println("SlideShowImages folder created at: " + savedSlidesFolder.getAbsolutePath());
                 } else {
                     System.err.println("Failed to create SavedSlideShows folder.");
                 }
             }
         }
 
-        public static File getSaveFolder() {
-            return saveFolder;
+        public static File getImagesFolder() {
+            return imagesFolder;
         }
-
-        public static void main(String[] args) {
-            System.out.println("Accessing SavedSlideShows folder: " + SlideShowManager.getProgramFolder().getAbsolutePath());
+        
+        public static File getSavedSlidesFolder() {
+            return savedSlidesFolder;
         }
     }
-    
+       
     /* 
     Updates JLabel with the image matching the current index
     Likely called due to index value changing
@@ -161,6 +150,37 @@ public class SlideshowCreator extends javax.swing.JFrame {
         }
     }
     
+    // Loads built slideshow into the SlideShowCreator JLabel when a file is selected
+    private void loadSlideshow(File loadFile) {
+        List<File> loadedImages = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(loadFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                File imageFile = new File(line);
+                if (imageFile.exists()) {
+                    loadedImages.add(imageFile);
+                } else {
+                    System.err.println("Warning: File not found: " + line);
+                }
+            }
+
+            if (!loadedImages.isEmpty()) {
+                imageFiles = loadedImages.toArray(new File[0]);
+                index[0] = 0; // Reset index to start
+                updateImage();
+                System.out.println("Slideshow loaded successfully.");
+            } else {
+                System.err.println("No valid images found in the slideshow file.");
+            }
+
+        } catch (IOException e) {
+            System.err.println("Error loading slideshow: " + e.getMessage());
+            e.printStackTrace();
+        }
+        workingFile = loadFile;
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -180,7 +200,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
         jMenu3 = new javax.swing.JMenu();
         selectFolderMenuItem = new javax.swing.JMenuItem();
         addImageMenuItem = new javax.swing.JMenuItem();
+        saveAsMenuItem = new javax.swing.JMenuItem();
         saveMenuItem = new javax.swing.JMenuItem();
+        openFileMenuItem = new javax.swing.JMenuItem();
         ThemesButton = new javax.swing.JMenu();
         LightMode = new javax.swing.JMenuItem();
         DarkMode = new javax.swing.JMenuItem();
@@ -243,13 +265,29 @@ public class SlideshowCreator extends javax.swing.JFrame {
         });
         jMenu3.add(addImageMenuItem);
 
-        saveMenuItem.setText("Save Slideshow");
+        saveAsMenuItem.setText("Save As");
+        saveAsMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveAsMenuItemActionPerformed(evt);
+            }
+        });
+        jMenu3.add(saveAsMenuItem);
+
+        saveMenuItem.setText("Save");
         saveMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 saveMenuItemActionPerformed(evt);
             }
         });
         jMenu3.add(saveMenuItem);
+
+        openFileMenuItem.setText("Open File");
+        openFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openFileMenuItemActionPerformed(evt);
+            }
+        });
+        jMenu3.add(openFileMenuItem);
 
         menuBar.add(jMenu3);
 
@@ -280,22 +318,22 @@ public class SlideshowCreator extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(143, 143, 143)
+                .addContainerGap(143, Short.MAX_VALUE)
                 .addComponent(firstSlideButton)
-                .addGap(39, 39, 39)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
                 .addComponent(previousSlideButton)
-                .addGap(44, 44, 44)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
                 .addComponent(nextSlideButton)
-                .addGap(43, 43, 43)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
                 .addComponent(lastSlideButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(143, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 577, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(presenterButton))
-                    .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 688, Short.MAX_VALUE))
+                    .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -303,15 +341,15 @@ public class SlideshowCreator extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGap(8, 8, 8)
                 .addComponent(presenterButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(imageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 353, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(firstSlideButton)
                     .addComponent(nextSlideButton)
                     .addComponent(previousSlideButton)
                     .addComponent(lastSlideButton))
-                .addGap(16, 16, 16))
+                .addContainerGap(16, Short.MAX_VALUE))
         );
 
         pack();
@@ -416,7 +454,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                             try {
                                 // Copy the file to the SlideShowImages folder
                                 Path source = file.toPath();
-                                Path target = SlideShowManager.getProgramFolder().toPath().resolve(file.getName());
+                                Path target = SlideShowFileManager.getImagesFolder().toPath().resolve(file.getName());
                                 System.out.println("Copying file: " + source.toString() + " to " + target.toString());
                                 Files.copy(source, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                                 System.out.println("Copied: " + file.getName());
@@ -442,7 +480,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                     updateImage();
                 }
 
-                System.out.println("Image files copied successfully to: " + SlideShowManager.getProgramFolder().getAbsolutePath());
+                System.out.println("Image files copied successfully to: " + SlideShowFileManager.getImagesFolder().getAbsolutePath());
             } else {
                 System.out.println("The selected folder is empty or an error occurred.");
             }
@@ -547,7 +585,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             System.out.println("Selected Images:");
 
             // Define the target folder
-            File targetFolder = SlideShowManager.getProgramFolder();
+            File targetFolder = SlideShowFileManager.getImagesFolder();
             for (File selectedFile : selectedFiles) {
                 System.out.println("Selected Image: " + selectedFile.getAbsolutePath());            
                 File targetFile = new File(targetFolder, selectedFile.getName());
@@ -589,10 +627,10 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }//GEN-LAST:event_addImageMenuItemActionPerformed
 
     // Allows user to save currently created slideshow
-    private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuItemActionPerformed
+    private void saveAsMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsMenuItemActionPerformed
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Save Slideshow");
-        fileChooser.setCurrentDirectory(SlideShowSaveFolder.getSaveFolder()); // Sets directory to created folder for saved slideshows
+        fileChooser.setCurrentDirectory(SlideShowFileManager.getSavedSlidesFolder()); // Sets directory to created folder for saved slideshows
         fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Slideshow Files (*.ssx)", "ssx"));
     
         int userSelection = fileChooser.showSaveDialog(null);
@@ -601,9 +639,46 @@ public class SlideshowCreator extends javax.swing.JFrame {
             if (!fileToSave.getName().toLowerCase().endsWith(".ssx")) {
                 fileToSave = new File(fileToSave.getAbsolutePath() + ".ssx");
             }
+            
+            if (fileToSave.exists()) { // Confirmation message for if user wants to overwrite an existing file
+                int overwriteChoice = JOptionPane.showConfirmDialog(
+                        null,
+                        "A file with this name already exists. Do you want to overwrite it?",
+                        "Confirm Overwrite",
+                        JOptionPane.YES_NO_CANCEL_OPTION,
+                        JOptionPane.WARNING_MESSAGE
+                );
+                if (overwriteChoice != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            }
+            workingFile = fileToSave;
             saveSlideshow(fileToSave);
         }
+    }//GEN-LAST:event_saveAsMenuItemActionPerformed
+
+    // Overwrites the currently working file as long as it exists in the folder already, allowing easy updates
+    private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuItemActionPerformed
+        if (workingFile != null) {
+            saveSlideshow(workingFile);
+        } else {
+            JOptionPane.showMessageDialog(null, "No previously saved slideshow. Use 'Save As' first.");
+        }
     }//GEN-LAST:event_saveMenuItemActionPerformed
+
+    // Allows user to continue editing a previously made file by loading it in
+    private void openFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openFileMenuItemActionPerformed
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Load Slideshow");
+        fileChooser.setCurrentDirectory(SlideShowFileManager.getSavedSlidesFolder());
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Slideshow Files (*.ssx)", "ssx"));
+
+        int userSelection = fileChooser.showOpenDialog(null);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToLoad = fileChooser.getSelectedFile();
+            loadSlideshow(fileToLoad);
+        }
+    }//GEN-LAST:event_openFileMenuItemActionPerformed
  
     /**
      * @param args the command line arguments
@@ -631,7 +706,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(SlideshowCreator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-
+        
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
@@ -651,8 +726,10 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JButton lastSlideButton;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JButton nextSlideButton;
+    private javax.swing.JMenuItem openFileMenuItem;
     private javax.swing.JButton presenterButton;
     private javax.swing.JButton previousSlideButton;
+    private javax.swing.JMenuItem saveAsMenuItem;
     private javax.swing.JMenuItem saveMenuItem;
     private javax.swing.JMenuItem selectFolderMenuItem;
     // End of variables declaration//GEN-END:variables
