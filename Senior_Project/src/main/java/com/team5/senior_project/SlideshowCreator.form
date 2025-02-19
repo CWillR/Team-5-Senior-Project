@@ -106,8 +106,6 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-<<<<<<< HEAD
-=======
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace pref="143" max="32767" attributes="0"/>
               <Component id="firstSlideButton" min="-2" max="-2" attributes="0"/>
@@ -119,10 +117,8 @@
               <Component id="lastSlideButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace pref="143" max="32767" attributes="0"/>
           </Group>
->>>>>>> main
           <Group type="102" attributes="0">
               <Group type="103" groupAlignment="0" attributes="0">
-<<<<<<< HEAD
                   <Group type="102" attributes="0">
                       <EmptySpace min="-2" pref="143" max="-2" attributes="0"/>
                       <Component id="firstSlideButton" min="-2" max="-2" attributes="0"/>
@@ -145,13 +141,6 @@
                           <Component id="TimelinePanel" alignment="1" max="32767" attributes="0"/>
                       </Group>
                   </Group>
-=======
-                  <Group type="102" alignment="1" attributes="0">
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                      <Component id="presenterButton" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Component id="imageLabel" alignment="0" max="32767" attributes="0"/>
->>>>>>> main
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -162,28 +151,19 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
               <Component id="presenterButton" min="-2" max="-2" attributes="0"/>
-<<<<<<< HEAD
               <EmptySpace max="-2" attributes="0"/>
               <Component id="imageLabel" pref="189" max="32767" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="TimelinePanel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-=======
-              <EmptySpace max="32767" attributes="0"/>
-              <Component id="imageLabel" pref="353" max="32767" attributes="0"/>
-              <EmptySpace max="32767" attributes="0"/>
->>>>>>> main
+
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="firstSlideButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="nextSlideButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="previousSlideButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lastSlideButton" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-<<<<<<< HEAD
               <EmptySpace max="32767" attributes="0"/>
-=======
-              <EmptySpace pref="16" max="32767" attributes="0"/>
->>>>>>> main
           </Group>
       </Group>
     </DimensionLayout>
