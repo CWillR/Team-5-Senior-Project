@@ -44,6 +44,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private static final Preferences prefs = Preferences.userNodeForPackage(SlideshowCreator.class);
     private TimelinePanel timelinePanel;
 
+    
+
     /**
      * Creates new form SlideshowCreator
      */
@@ -65,6 +67,22 @@ public class SlideshowCreator extends javax.swing.JFrame {
         // Set the timeline change listener so that any reordering refreshes the main image display.
         timelinePanel.setTimelineChangeListener(() -> {
             updateImage();
+        });
+        
+        timelinePanel.getImageList().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                File selectedFile = timelinePanel.getImageList().getSelectedValue();
+                if (selectedFile != null && imageFiles != null) {
+                    // Update the index based on the selected file
+                    for (int i = 0; i < imageFiles.length; i++) {
+                        if (imageFiles[i].equals(selectedFile)) {
+                            index[0] = i;
+                            break;
+                        }
+                    }
+                    updateImage();
+                }
+            }
         });
     }
     
@@ -339,8 +357,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGap(8, 8, 8)
                 .addComponent(presenterButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(imageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(imageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
                 .addComponent(TimelinePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)

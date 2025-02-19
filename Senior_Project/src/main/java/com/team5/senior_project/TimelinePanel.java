@@ -111,9 +111,12 @@ public class TimelinePanel extends javax.swing.JPanel {
         return images;
     }
 
+    public JList<File> getImageList() {
+        return imageList;
+    }
+
     // --- Custom Cell Renderer for Thumbnails ---
     private static class ImageListCellRenderer extends JLabel implements ListCellRenderer<File> {
-
         public ImageListCellRenderer() {
             setOpaque(true);
             setHorizontalAlignment(SwingConstants.CENTER);
@@ -122,21 +125,27 @@ public class TimelinePanel extends javax.swing.JPanel {
 
         @Override
         public Component getListCellRendererComponent(JList<? extends File> list, File value,
-                int index, boolean isSelected, boolean cellHasFocus) {
-            // Create an icon from the image file
+            int index, boolean isSelected, boolean cellHasFocus) {
+            // Create an icon from the image file and scale it
             ImageIcon icon = new ImageIcon(value.getAbsolutePath());
-            // Scale the image to a thumbnail (adjust the size as needed)
             Image image = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
             setIcon(new ImageIcon(image));
-            
-            // Only show the image name if the toggle is true
+
+            // Toggle image name display
             if (TimelinePanel.SHOW_IMAGE_NAMES) {
                 setText(value.getName());
             } else {
                 setText("");
             }
 
-            // Optional: Change background when selected
+            // Add a border if selected
+            if (isSelected) {
+                setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.BLUE, 2));
+            } else {
+                setBorder(null);
+            }
+
+            // Set background and foreground colors
             if (isSelected) {
                 setBackground(list.getSelectionBackground());
                 setForeground(list.getSelectionForeground());
@@ -144,7 +153,6 @@ public class TimelinePanel extends javax.swing.JPanel {
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
             }
-
             return this;
         }
     }
