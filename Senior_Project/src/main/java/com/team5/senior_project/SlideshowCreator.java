@@ -224,8 +224,18 @@ public class SlideshowCreator extends javax.swing.JFrame {
             if (!loadedImages.isEmpty()) {
                 imageFiles = loadedImages.toArray(new File[0]);
                 index[0] = 0; // Reset index to start
-                updateImage();
+
+                // Update the timeline panel with loaded images
+                timelinePanel.setImages(loadedImages);
+                timelinePanel.revalidate();
+                timelinePanel.repaint();
+
+                updateImage(); // Ensure first image is displayed
                 System.out.println("Slideshow loaded successfully.");
+
+                // Auto-select the first image in the timeline
+                timelinePanel.getImageList().setSelectedIndex(0);
+                timelinePanel.getImageList().ensureIndexIsVisible(0);
             } else {
                 System.err.println("No valid images found in the slideshow file.");
             }
@@ -386,17 +396,15 @@ public class SlideshowCreator extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(143, 143, 143)
+                .addContainerGap(143, Short.MAX_VALUE)
                 .addComponent(firstSlideButton)
-                .addGap(39, 39, 39)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
                 .addComponent(previousSlideButton)
-                .addGap(44, 44, 44)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
                 .addComponent(nextSlideButton)
-                .addGap(43, 43, 43)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
                 .addComponent(lastSlideButton)
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addContainerGap(143, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -404,8 +412,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 584, Short.MAX_VALUE)
                         .addComponent(presenterButton))
-                    .addComponent(TimelinePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-
+                    .addComponent(TimelinePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -418,14 +425,12 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(TimelinePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(firstSlideButton)
                     .addComponent(nextSlideButton)
                     .addComponent(previousSlideButton)
                     .addComponent(lastSlideButton))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-
         );
 
         pack();
