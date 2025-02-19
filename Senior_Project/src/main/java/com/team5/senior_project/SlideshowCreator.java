@@ -155,37 +155,35 @@ public class SlideshowCreator extends javax.swing.JFrame {
     This is where any image modifications should likely go
     */
     private void updateImage() {
+        // Rebuild the imageFiles array from the current timeline ordering.
+        if (timelinePanel != null) {
+            List<File> orderedImages = timelinePanel.getImages();
+            if (!orderedImages.isEmpty()) {
+                imageFiles = orderedImages.toArray(new File[0]);
+            }
+        }
+
         if (imageFiles != null && imageFiles.length > 0) {
-            // Ensure the current index is valid
+            // Ensure the current index is valid.
             if (index[0] < 0 || index[0] >= imageFiles.length) {
                 index[0] = 0;
             }
 
-            // Load the image from the file using the valid index
+            // Load and scale the image from the updated array.
             ImageIcon originalIcon = new ImageIcon(imageFiles[index[0]].getAbsolutePath());
             Image originalImage = originalIcon.getImage();
-
-            // Get the width and height of the image label
             int labelWidth = imageLabel.getWidth();
             int labelHeight = imageLabel.getHeight();
-
-            // Calculate the scaling ratio to preserve aspect ratio
             double widthRatio = (double) labelWidth / originalImage.getWidth(null);
             double heightRatio = (double) labelHeight / originalImage.getHeight(null);
             double scaleRatio = Math.min(widthRatio, heightRatio);
-
-            // Calculate new dimensions while preserving the aspect ratio
             int newWidth = (int) (originalImage.getWidth(null) * scaleRatio);
             int newHeight = (int) (originalImage.getHeight(null) * scaleRatio);
-
-            // Scale the image to the new dimensions
             Image resizedImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-
-            // Set the resized image as the label icon
             imageLabel.setIcon(new ImageIcon(resizedImage));
         }
     }
-    
+
     // Writes the current information for the slides to the .ssx in saveMenuItemActionPerformed class
     private void saveSlideshow(File saveFile) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(saveFile))) {
@@ -380,14 +378,22 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
     // Goes to the first image in the image list
     private void firstSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_firstSlideButtonActionPerformed
-        index[0] = 0;
-        updateImage();
+        if (imageFiles != null && imageFiles.length > 0) {
+            index[0] = 0;
+            updateImage();
+            timelinePanel.getImageList().setSelectedIndex(index[0]);
+            timelinePanel.getImageList().ensureIndexIsVisible(index[0]);
+        }
     }//GEN-LAST:event_firstSlideButtonActionPerformed
     
     // Goes back one in the image list (back to previous image)
     private void previousSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_previousSlideButtonActionPerformed
-        index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length; // Cycle through images
-        updateImage();
+        if (imageFiles != null && imageFiles.length > 0) {
+            index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length; // Cycle through images
+            updateImage();
+            timelinePanel.getImageList().setSelectedIndex(index[0]);
+            timelinePanel.getImageList().ensureIndexIsVisible(index[0]);
+        }
     }//GEN-LAST:event_previousSlideButtonActionPerformed
 
     // Selects folder of images to add to our image folder and sequentially to the image index for display
@@ -517,18 +523,23 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
     // Goes to the next image in the list
     private void nextSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextSlideButtonActionPerformed
-        index[0] = (index[0] + 1) % imageFiles.length; // Cycle through images
-        updateImage();
-        
-        timelinePanel.setImages(Arrays.asList(imageFiles));
-        timelinePanel.revalidate();
-        timelinePanel.repaint();
+        if (imageFiles != null && imageFiles.length > 0) {
+            index[0] = (index[0] + 1) % imageFiles.length; // Cycle through images
+            updateImage();
+            // Update the timeline list's selection to reflect the new index
+            timelinePanel.getImageList().setSelectedIndex(index[0]);
+            timelinePanel.getImageList().ensureIndexIsVisible(index[0]);
+        }
     }//GEN-LAST:event_nextSlideButtonActionPerformed
 
     // Goes to the last image in the list
     private void lastSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lastSlideButtonActionPerformed
-        index[0] = imageFiles.length - 1;
-        updateImage();
+        if (imageFiles != null && imageFiles.length > 0) {
+            index[0] = imageFiles.length - 1;
+            updateImage();
+            timelinePanel.getImageList().setSelectedIndex(index[0]);
+            timelinePanel.getImageList().ensureIndexIsVisible(index[0]);
+        }
     }//GEN-LAST:event_lastSlideButtonActionPerformed
 
     // Sets UI design to FlatLightLaf (light mode version of Flat Laf)
@@ -559,97 +570,86 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
     // Selects image to add to our image folder and adds it sequentially to the image index for display
     private void addImageMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addImageMenuItemActionPerformed
-        // Create a JFileChooser instance
-        JFileChooser fileChooser = new JFileChooser();
+       JFileChooser fileChooser = new JFileChooser();
+       fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+       fileChooser.setMultiSelectionEnabled(true);
+       FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
+               "Image files (*.jpg, *.jpeg, *.png, *.gif)", "jpg", "jpeg", "png", "gif");
+       fileChooser.setFileFilter(imageFilter);
 
-        // Set file selection mode to only files
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+       // Custom FileView for image previews
+       fileChooser.setFileView(new FileView() {
+           @Override
+           public Icon getIcon(File f) {
+               if (f.isFile() && (f.getName().toLowerCase().endsWith(".jpg") ||
+                                    f.getName().toLowerCase().endsWith(".jpeg") ||
+                                    f.getName().toLowerCase().endsWith(".png") ||
+                                    f.getName().toLowerCase().endsWith(".gif"))) {
+                   return getThumbnailIcon(f);
+               }
+               return super.getIcon(f);
+           }
 
-        // Enable multiple file selection
-        fileChooser.setMultiSelectionEnabled(true);
+           private Icon getThumbnailIcon(File file) {
+               try {
+                   ImageIcon icon = new ImageIcon(file.getAbsolutePath());
+                   Image image = icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
+                   return new ImageIcon(image);
+               } catch (Exception e) {
+                   return null;
+               }
+           }
+       });
 
-        // Set a file filter to only allow image files
-        FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
-            "Image files (*.jpg, *.jpeg, *.png, *.gif)", "jpg", "jpeg", "png", "gif");
-        fileChooser.setFileFilter(imageFilter);
+       int returnValue = fileChooser.showOpenDialog(this);
+       if (returnValue == JFileChooser.APPROVE_OPTION) {
+           File[] selectedFiles = fileChooser.getSelectedFiles();
+           System.out.println("Selected Images:");
 
-        // Custom FileView for image previews
-        fileChooser.setFileView(new FileView() {
-            @Override
-            public Icon getIcon(File f) {
-                if (f.isFile() && (f.getName().toLowerCase().endsWith(".jpg") ||
-                                     f.getName().toLowerCase().endsWith(".jpeg") ||
-                                     f.getName().toLowerCase().endsWith(".png") ||
-                                     f.getName().toLowerCase().endsWith(".gif"))) {
-                    return getThumbnailIcon(f);
-                }
-                return super.getIcon(f);
-            }
+           // Accumulate the current images (if any) into a list.
+           List<File> newImages = new ArrayList<>();
+           if (imageFiles != null) {
+               newImages.addAll(Arrays.asList(imageFiles));
+           }
 
-            private Icon getThumbnailIcon(File file) {
-                try {
-                    ImageIcon icon = new ImageIcon(file.getAbsolutePath());
-                    Image image = icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
-                    return new ImageIcon(image);
-                } catch (Exception e) {
-                    return null;
-                }
-            }
-        });
+           // Define the target folder.
+           File targetFolder = SlideShowManager.getProgramFolder();
+           for (File selectedFile : selectedFiles) {
+               System.out.println("Selected Image: " + selectedFile.getAbsolutePath());
+               String originalName = selectedFile.getName();
+               File targetFile = new File(targetFolder, originalName);
+               int counter = 1;
+               // Ensure a unique file name.
+               while (targetFile.exists()) {
+                   int dotIndex = originalName.lastIndexOf('.');
+                   String nameWithoutExt = (dotIndex > 0) ? originalName.substring(0, dotIndex) : originalName;
+                   String ext = (dotIndex > 0) ? originalName.substring(dotIndex) : "";
+                   targetFile = new File(targetFolder, nameWithoutExt + " (" + counter + ")" + ext);
+                   counter++;
+               }
+               try {
+                   Files.copy(selectedFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                   System.out.println("Copied image to: " + targetFile.getAbsolutePath());
+                   newImages.add(targetFile);
+               } catch (IOException ex) {
+                   System.err.println("Error copying image: " + selectedFile.getAbsolutePath());
+               }
+           }
 
-        // Open the dialog and get the result
-        int returnValue = fileChooser.showOpenDialog(this);
-
-        // Check if the user selected a file
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            File[] selectedFiles = fileChooser.getSelectedFiles(); // Get the selected files
-            System.out.println("Selected Images:");
-
-            // Define the target folder
-            File targetFolder = SlideShowManager.getProgramFolder();
-            for (File selectedFile : selectedFiles) {
-                System.out.println("Selected Image: " + selectedFile.getAbsolutePath());            
-                File targetFile = new File(targetFolder, selectedFile.getName());
-
-                try {
-                    // Copy the file to the target folder, replacing if it already exists
-                    Files.copy(selectedFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    System.out.println("Copied image to: " + targetFile.getAbsolutePath());
-
-                    // Check if the imageFiles array exists, if not initialize it
-                    if (imageFiles == null) {
-                        imageFiles = new File[] { targetFile };
-                    } else {
-                        // Ensure the image is not already in the array
-                        boolean exists = false;
-                        for (File file : imageFiles) {
-                            if (file.getName().equals(targetFile.getName())) {
-                                exists = true;
-                                break;
-                            }
-                        }
-                        if (!exists) {
-                            // Expand array to include the new image
-                            imageFiles = Arrays.copyOf(imageFiles, imageFiles.length + 1);
-                            imageFiles[imageFiles.length - 1] = targetFile;
-                        }
-                    }
-
-                    // Display the newly added image
-                    updateImage();
-
-                    // Immediately update the timeline panel with the new list of images
-                    timelinePanel.setImages(Arrays.asList(imageFiles));
-                    timelinePanel.revalidate();
-                    timelinePanel.repaint();
-
-                } catch (IOException ex) {
-                    System.err.println("Error copying image: " + selectedFile.getAbsolutePath());
-                }
-            }
-        } else {
-            System.out.println("No image selected.");
-        }
+           // Update the global array and timeline panel once.
+           imageFiles = newImages.toArray(new File[0]);
+           updateImage();
+           timelinePanel.setImages(newImages);
+           // Auto-select and highlight the first image.
+           if (newImages.size() > 0) {
+               timelinePanel.getImageList().setSelectedIndex(0);
+               timelinePanel.getImageList().ensureIndexIsVisible(0);
+           }
+           timelinePanel.revalidate();
+           timelinePanel.repaint();
+       } else {
+           System.out.println("No image selected.");
+       }
     }//GEN-LAST:event_addImageMenuItemActionPerformed
 
     // Allows user to save currently created slideshow

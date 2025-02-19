@@ -160,25 +160,15 @@ public class TimelinePanel extends javax.swing.JPanel {
     // --- TransferHandler for Reordering Items in the JList ---
     private static class ListItemTransferHandler extends TransferHandler {
         private int[] indices = null;
-        private int addIndex = -1; // Location where items were added
-        private int addCount = 0;  // Number of items added
+        private int addIndex = -1; // Where items were inserted.
+        private int addCount = 0;  // Number of items inserted.
 
         @Override
         protected Transferable createTransferable(JComponent c) {
             JList<?> list = (JList<?>) c;
             indices = list.getSelectedIndices();
             List<?> values = list.getSelectedValuesList();
-            // Instead of using DataHandler, we use our own ListTransferable.
             return new ListTransferable(values);
-        }
-
-        @Override
-        public boolean canImport(TransferSupport info) {
-            // Only support drops (not clipboard paste)
-            if (!info.isDrop()) {
-                return false;
-            }
-            return info.isDataFlavorSupported(ListTransferable.localFlavor);
         }
 
         @Override
@@ -187,23 +177,33 @@ public class TimelinePanel extends javax.swing.JPanel {
         }
 
         @Override
+        public boolean canImport(TransferSupport info) {
+            if (!info.isDrop()) {
+                return false;
+            }
+            return info.isDataFlavorSupported(ListTransferable.localFlavor);
+        }
+
+        @Override
         public boolean importData(TransferSupport info) {
             if (!canImport(info)) {
                 return false;
             }
             JList<?> target = (JList<?>) info.getComponent();
-            DefaultListModel listModel = (DefaultListModel) target.getModel();
+            DefaultListModel model = (DefaultListModel) target.getModel();
             JList.DropLocation dl = (JList.DropLocation) info.getDropLocation();
             int index = dl.getIndex();
+            if (index < 0) {
+                index = model.getSize();
+            }
+            addIndex = index;
             try {
                 @SuppressWarnings("unchecked")
-                List<Object> values = (List<Object>) info.getTransferable()
-                        .getTransferData(ListTransferable.localFlavor);
-                addIndex = index;
+                List<Object> values = (List<Object>) info.getTransferable().getTransferData(ListTransferable.localFlavor);
                 addCount = values.size();
+                // Insert items at the drop index.
                 for (Object o : values) {
-                    listModel.add(index++, o);
-                    target.getSelectionModel().addSelectionInterval(index - 1, index - 1);
+                    model.add(index++, o);
                 }
                 return true;
             } catch (UnsupportedFlavorException | IOException ex) {
@@ -214,10 +214,10 @@ public class TimelinePanel extends javax.swing.JPanel {
 
         @Override
         protected void exportDone(JComponent c, Transferable data, int action) {
-            if ((action == MOVE) && (indices != null)) {
+            if (action == MOVE && indices != null) {
                 JList source = (JList) c;
                 DefaultListModel model = (DefaultListModel) source.getModel();
-                // Adjust indices if items were added before removal
+                // Adjust indices if items were inserted before removal.
                 if (addCount > 0) {
                     for (int i = indices.length - 1; i >= 0; i--) {
                         if (indices[i] >= addIndex) {
@@ -225,7 +225,7 @@ public class TimelinePanel extends javax.swing.JPanel {
                         }
                     }
                 }
-                // Remove the original items
+                // Remove the original items.
                 for (int i = indices.length - 1; i >= 0; i--) {
                     model.remove(indices[i]);
                 }
