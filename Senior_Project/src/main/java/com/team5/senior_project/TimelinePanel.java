@@ -19,6 +19,8 @@ import javax.swing.TransferHandler;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 import java.awt.datatransfer.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 // Removed: import javax.activation.DataHandler;
 
 /**
@@ -31,6 +33,22 @@ public class TimelinePanel extends javax.swing.JPanel {
 
     private DefaultListModel<File> listModel;
     private JList<File> imageList;
+    
+    // Toggle for showing image names in the timeline preview.
+    public static boolean SHOW_IMAGE_NAMES = false;
+
+    // Define the listener interface
+    public interface TimelineChangeListener {
+        void onTimelineChanged();
+    }
+
+    // Listener reference
+    private TimelineChangeListener timelineChangeListener;
+
+    // Setter for the listener
+    public void setTimelineChangeListener(TimelineChangeListener listener) {
+        this.timelineChangeListener = listener;
+    }
 
     /**
      * Creates new form TimelinePanel
@@ -40,19 +58,40 @@ public class TimelinePanel extends javax.swing.JPanel {
         listModel = new DefaultListModel<>();
         imageList = new JList<>(listModel);
 
-        // Use a custom renderer to show a thumbnail and the file name
+        // Use a custom renderer and configure list appearance
         imageList.setCellRenderer(new ImageListCellRenderer());
-        // Arrange items horizontally (like a timeline)
         imageList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         imageList.setVisibleRowCount(1);
-
-        // Enable drag and drop reordering
         imageList.setDragEnabled(true);
         imageList.setDropMode(DropMode.INSERT);
         imageList.setTransferHandler(new ListItemTransferHandler());
 
         setLayout(new BorderLayout());
         add(new JScrollPane(imageList), BorderLayout.CENTER);
+
+        // Add a ListDataListener to notify when the list changes (reordering, additions, removals)
+        listModel.addListDataListener(new ListDataListener() {
+            @Override
+            public void intervalAdded(ListDataEvent e) {
+                if (timelineChangeListener != null) {
+                    timelineChangeListener.onTimelineChanged();
+                }
+            }
+
+            @Override
+            public void intervalRemoved(ListDataEvent e) {
+                if (timelineChangeListener != null) {
+                    timelineChangeListener.onTimelineChanged();
+                }
+            }
+
+            @Override
+            public void contentsChanged(ListDataEvent e) {
+                if (timelineChangeListener != null) {
+                    timelineChangeListener.onTimelineChanged();
+                }
+            }
+        });
     }
 
     // Method to update the timeline with a new list of images
@@ -89,7 +128,13 @@ public class TimelinePanel extends javax.swing.JPanel {
             // Scale the image to a thumbnail (adjust the size as needed)
             Image image = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
             setIcon(new ImageIcon(image));
-            setText(value.getName());
+            
+            // Only show the image name if the toggle is true
+            if (TimelinePanel.SHOW_IMAGE_NAMES) {
+                setText(value.getName());
+            } else {
+                setText("");
+            }
 
             // Optional: Change background when selected
             if (isSelected) {

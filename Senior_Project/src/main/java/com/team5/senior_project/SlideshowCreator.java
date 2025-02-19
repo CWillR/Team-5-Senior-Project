@@ -50,7 +50,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     public SlideshowCreator() {
         initComponents();
         applySavedTheme(); // Apply saved theme when starting
-        
+
         if (this.TimelinePanel == null) {
             // Create a new placeholder if it wasn’t added by the designer
             this.TimelinePanel = new javax.swing.JPanel();
@@ -61,6 +61,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
         this.TimelinePanel.add(timelinePanel, BorderLayout.CENTER);
         this.TimelinePanel.revalidate();
         this.TimelinePanel.repaint();
+
+        // Set the timeline change listener so that any reordering refreshes the main image display.
+        timelinePanel.setTimelineChangeListener(() -> {
+            updateImage();
+        });
     }
     
     // Probably want to move the things into their own file later
@@ -133,26 +138,29 @@ public class SlideshowCreator extends javax.swing.JFrame {
     */
     private void updateImage() {
         if (imageFiles != null && imageFiles.length > 0) {
-            // Load the image from the file
+            // Ensure the current index is valid
+            if (index[0] < 0 || index[0] >= imageFiles.length) {
+                index[0] = 0;
+            }
+
+            // Load the image from the file using the valid index
             ImageIcon originalIcon = new ImageIcon(imageFiles[index[0]].getAbsolutePath());
             Image originalImage = originalIcon.getImage();
 
-            // Get the width and height of the JLabel
+            // Get the width and height of the image label
             int labelWidth = imageLabel.getWidth();
             int labelHeight = imageLabel.getHeight();
 
-            // Calculate the scaling ratio
+            // Calculate the scaling ratio to preserve aspect ratio
             double widthRatio = (double) labelWidth / originalImage.getWidth(null);
             double heightRatio = (double) labelHeight / originalImage.getHeight(null);
-
-            // Find the smaller ratio to preserve aspect ratio
             double scaleRatio = Math.min(widthRatio, heightRatio);
 
-            // Calculate new dimensions while maintaining the aspect ratio
+            // Calculate new dimensions while preserving the aspect ratio
             int newWidth = (int) (originalImage.getWidth(null) * scaleRatio);
             int newHeight = (int) (originalImage.getHeight(null) * scaleRatio);
 
-            // Scale the image to the new size
+            // Scale the image to the new dimensions
             Image resizedImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
 
             // Set the resized image as the label icon
@@ -241,11 +249,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
         TimelinePanel.setLayout(TimelinePanelLayout);
         TimelinePanelLayout.setHorizontalGroup(
             TimelinePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         TimelinePanelLayout.setVerticalGroup(
             TimelinePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
+            .addGap(0, 106, Short.MAX_VALUE)
         );
 
         menuBar.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -305,25 +313,25 @@ public class SlideshowCreator extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(143, 143, 143)
-                .addComponent(firstSlideButton)
-                .addGap(39, 39, 39)
-                .addComponent(previousSlideButton)
-                .addGap(44, 44, 44)
-                .addComponent(nextSlideButton)
-                .addGap(43, 43, 43)
-                .addComponent(lastSlideButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 577, Short.MAX_VALUE)
-                        .addComponent(presenterButton))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 582, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(TimelinePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(143, 143, 143)
+                        .addComponent(firstSlideButton)
+                        .addGap(39, 39, 39)
+                        .addComponent(previousSlideButton)
+                        .addGap(44, 44, 44)
+                        .addComponent(nextSlideButton)
+                        .addGap(43, 43, 43)
+                        .addComponent(lastSlideButton)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(TimelinePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addGap(0, 584, Short.MAX_VALUE)
+                                .addComponent(presenterButton)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -331,21 +339,17 @@ public class SlideshowCreator extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGap(8, 8, 8)
                 .addComponent(presenterButton)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(imageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 353, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(firstSlideButton)
-                            .addComponent(nextSlideButton)
-                            .addComponent(previousSlideButton)
-                            .addComponent(lastSlideButton))
-                        .addGap(16, 16, 16))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(104, 104, 104)
-                        .addComponent(TimelinePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(imageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
+                .addComponent(TimelinePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(firstSlideButton)
+                    .addComponent(nextSlideButton)
+                    .addComponent(previousSlideButton)
+                    .addComponent(lastSlideButton))
+                .addGap(16, 16, 16))
         );
 
         pack();
@@ -542,40 +546,34 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         // Set file selection mode to only files
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-       
+
         // Enable multiple file selection
         fileChooser.setMultiSelectionEnabled(true);
-        
+
         // Set a file filter to only allow image files
         FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
             "Image files (*.jpg, *.jpeg, *.png, *.gif)", "jpg", "jpeg", "png", "gif");
         fileChooser.setFileFilter(imageFilter);
-        
+
         // Custom FileView for image previews
-        fileChooser.setFileView(new FileView() 
-        {
+        fileChooser.setFileView(new FileView() {
             @Override
-            public Icon getIcon(File f) 
-            {
+            public Icon getIcon(File f) {
                 if (f.isFile() && (f.getName().toLowerCase().endsWith(".jpg") ||
-                               f.getName().toLowerCase().endsWith(".jpeg") ||
-                               f.getName().toLowerCase().endsWith(".png") ||
-                               f.getName().toLowerCase().endsWith(".gif"))) 
-            {
-                return getThumbnailIcon(f);
+                                     f.getName().toLowerCase().endsWith(".jpeg") ||
+                                     f.getName().toLowerCase().endsWith(".png") ||
+                                     f.getName().toLowerCase().endsWith(".gif"))) {
+                    return getThumbnailIcon(f);
+                }
+                return super.getIcon(f);
             }
-            return super.getIcon(f);
-            }
-            
-            private Icon getThumbnailIcon(File file) 
-            {
-                try 
-                {
+
+            private Icon getThumbnailIcon(File file) {
+                try {
                     ImageIcon icon = new ImageIcon(file.getAbsolutePath());
-                    Image image = icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH); // Resize the image
+                    Image image = icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
                     return new ImageIcon(image);
-                } catch (Exception e) 
-                {
+                } catch (Exception e) {
                     return null;
                 }
             }
@@ -595,32 +593,37 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 System.out.println("Selected Image: " + selectedFile.getAbsolutePath());            
                 File targetFile = new File(targetFolder, selectedFile.getName());
 
-            try {
-                // Copy the file to the target folder, replacing if it already exists
-                Files.copy(selectedFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                System.out.println("Copied image to: " + targetFile.getAbsolutePath());
+                try {
+                    // Copy the file to the target folder, replacing if it already exists
+                    Files.copy(selectedFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    System.out.println("Copied image to: " + targetFile.getAbsolutePath());
 
-                // Check if the imageFiles array exists, if not initialize it
-                if (imageFiles == null) {
-                    imageFiles = new File[] { targetFile };
-                } else {
-                    // Ensure the image is not already in the array
-                    boolean exists = false;
-                    for (File file : imageFiles) {
-                        if (file.getName().equals(targetFile.getName())) {
-                            exists = true;
-                            break;
+                    // Check if the imageFiles array exists, if not initialize it
+                    if (imageFiles == null) {
+                        imageFiles = new File[] { targetFile };
+                    } else {
+                        // Ensure the image is not already in the array
+                        boolean exists = false;
+                        for (File file : imageFiles) {
+                            if (file.getName().equals(targetFile.getName())) {
+                                exists = true;
+                                break;
+                            }
+                        }
+                        if (!exists) {
+                            // Expand array to include the new image
+                            imageFiles = Arrays.copyOf(imageFiles, imageFiles.length + 1);
+                            imageFiles[imageFiles.length - 1] = targetFile;
                         }
                     }
-                    if (!exists) {
-                        // Expand array to include the new image
-                        imageFiles = Arrays.copyOf(imageFiles, imageFiles.length + 1);
-                        imageFiles[imageFiles.length - 1] = targetFile;
-                    }
-                }
 
-                // Display the newly added image
-                updateImage();
+                    // Display the newly added image
+                    updateImage();
+
+                    // Immediately update the timeline panel with the new list of images
+                    timelinePanel.setImages(Arrays.asList(imageFiles));
+                    timelinePanel.revalidate();
+                    timelinePanel.repaint();
 
                 } catch (IOException ex) {
                     System.err.println("Error copying image: " + selectedFile.getAbsolutePath());
