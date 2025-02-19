@@ -169,18 +169,39 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 index[0] = 0;
             }
 
-            // Load and scale the image from the updated array.
-            ImageIcon originalIcon = new ImageIcon(imageFiles[index[0]].getAbsolutePath());
-            Image originalImage = originalIcon.getImage();
+            // Get the dimensions of the image label.
             int labelWidth = imageLabel.getWidth();
             int labelHeight = imageLabel.getHeight();
+
+            // Fallback to preferred size if necessary.
+            if (labelWidth <= 0 || labelHeight <= 0) {
+                labelWidth = imageLabel.getPreferredSize().width;
+                labelHeight = imageLabel.getPreferredSize().height;
+            }
+
+            // Load the image.
+            ImageIcon originalIcon = new ImageIcon(imageFiles[index[0]].getAbsolutePath());
+            Image originalImage = originalIcon.getImage();
+
+            // Calculate the scaling ratio to fit the image within the label while preserving aspect ratio.
             double widthRatio = (double) labelWidth / originalImage.getWidth(null);
             double heightRatio = (double) labelHeight / originalImage.getHeight(null);
             double scaleRatio = Math.min(widthRatio, heightRatio);
+
+            // Calculate the new dimensions.
             int newWidth = (int) (originalImage.getWidth(null) * scaleRatio);
             int newHeight = (int) (originalImage.getHeight(null) * scaleRatio);
+
+            // Scale the image.
             Image resizedImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-            imageLabel.setIcon(new ImageIcon(resizedImage));
+            ImageIcon resizedIcon = new ImageIcon(resizedImage);
+
+            // Set the scaled image as the icon.
+            imageLabel.setIcon(resizedIcon);
+
+            // Center the image in the label.
+            imageLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+            imageLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
         }
     }
 
@@ -269,7 +290,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         );
         TimelinePanelLayout.setVerticalGroup(
             TimelinePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 106, Short.MAX_VALUE)
+            .addGap(0, 149, Short.MAX_VALUE)
         );
 
         menuBar.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -343,11 +364,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(TimelinePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addGap(0, 584, Short.MAX_VALUE)
-                                .addComponent(presenterButton)))))
+                                .addComponent(presenterButton))
+                            .addComponent(TimelinePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -355,17 +376,17 @@ public class SlideshowCreator extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGap(8, 8, 8)
                 .addComponent(presenterButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(imageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
                 .addComponent(TimelinePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(firstSlideButton)
                     .addComponent(nextSlideButton)
                     .addComponent(previousSlideButton)
                     .addComponent(lastSlideButton))
-                .addGap(16, 16, 16))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
