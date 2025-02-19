@@ -69,7 +69,7 @@ public class TimelinePanel extends javax.swing.JPanel {
         setLayout(new BorderLayout());
         add(new JScrollPane(imageList), BorderLayout.CENTER);
 
-        // Add a ListDataListener to notify when the list changes (reordering, additions, removals)
+        // ListDataListener to notify when the list changes (reordering, additions, removals)
         listModel.addListDataListener(new ListDataListener() {
             @Override
             public void intervalAdded(ListDataEvent e) {

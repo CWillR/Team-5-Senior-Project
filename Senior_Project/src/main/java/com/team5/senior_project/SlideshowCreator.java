@@ -54,7 +54,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
         applySavedTheme(); // Apply saved theme when starting
 
         if (this.TimelinePanel == null) {
-            // Create a new placeholder if it wasn’t added by the designer
             this.TimelinePanel = new javax.swing.JPanel();
         }
         this.TimelinePanel.removeAll();
@@ -86,7 +85,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         });
     }
     
-    // Probably want to move the things into their own file later
+    // Want to move into own file later
     private void applySavedTheme() {
         SwingUtilities.invokeLater(() -> {
             String theme = prefs.get("theme", "light"); // Default to light mode
