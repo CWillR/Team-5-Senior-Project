@@ -1,8 +1,11 @@
 package com.team5.senior_project;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Image;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,6 +16,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.TransferHandler;
@@ -21,18 +25,26 @@ import javax.swing.SwingConstants;
 import java.awt.datatransfer.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-// Removed: import javax.activation.DataHandler;
 
 /**
- * TimelinePanel displays a list of image thumbnails in a horizontal timeline
+ * TimelinePanel displays a list of image thumbnails and transition items in a horizontal timeline
  * and allows drag-and-drop reordering.
+ *
+ * Transition items represent transitions between images, holding a transition type and duration.
+ * 
+ * In the timeline, a transition box is automatically inserted between images.
+ * Additionally, if a transition is dragged onto another transition, they swap.
+ *
+ * The ordering is always normalized to: image, transition, image, transition, ... ending with an image.
+ * For backward compatibility, getImageList() returns a JList<File> containing only image files.
  *
  * @author jackh
  */
 public class TimelinePanel extends javax.swing.JPanel {
 
-    private DefaultListModel<File> listModel;
-    private JList<File> imageList;
+    // The list model now holds objects (File or TransitionItem)
+    private DefaultListModel<Object> listModel;
+    private JList<Object> timelineList;
     
     // Toggle for showing image names in the timeline preview.
     public static boolean SHOW_IMAGE_NAMES = false;
@@ -56,20 +68,55 @@ public class TimelinePanel extends javax.swing.JPanel {
     public TimelinePanel() {
         initComponents();
         listModel = new DefaultListModel<>();
-        imageList = new JList<>(listModel);
+        timelineList = new JList<>(listModel);
 
-        // Use a custom renderer and configure list appearance
-        imageList.setCellRenderer(new ImageListCellRenderer());
-        imageList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
-        imageList.setVisibleRowCount(1);
-        imageList.setDragEnabled(true);
-        imageList.setDropMode(DropMode.INSERT);
-        imageList.setTransferHandler(new ListItemTransferHandler());
+        // Use a custom renderer that handles both images and transitions.
+        timelineList.setCellRenderer(new TimelineListCellRenderer());
+        timelineList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+        timelineList.setVisibleRowCount(1);
+        timelineList.setDragEnabled(true);
+        timelineList.setDropMode(DropMode.INSERT);
+        timelineList.setTransferHandler(new ListItemTransferHandler());
+        
+        // Add mouse listener for editing transition durations on double-click.
+        timelineList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int index = timelineList.locationToIndex(e.getPoint());
+                if (index != -1) {
+                    Object item = listModel.get(index);
+                    if (item instanceof TransitionItem && e.getClickCount() == 2) {
+                        TransitionItem transition = (TransitionItem) item;
+                        String input = JOptionPane.showInputDialog(
+                                TimelinePanel.this, 
+                                "Enter transition duration in seconds:",
+                                transition.getDuration() / 1000);
+                        if (input != null) {
+                            try {
+                                int seconds = Integer.parseInt(input.trim());
+                                if (seconds < 0) {
+                                    throw new NumberFormatException();
+                                }
+                                transition.setDuration(seconds * 1000);
+                                // Update the model to reflect the change.
+                                listModel.set(index, transition);
+                            } catch (NumberFormatException ex) {
+                                JOptionPane.showMessageDialog(
+                                    TimelinePanel.this, 
+                                    "Please enter a valid non-negative integer.",
+                                    "Invalid Input",
+                                    JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
         setLayout(new BorderLayout());
-        add(new JScrollPane(imageList), BorderLayout.CENTER);
+        add(new JScrollPane(timelineList), BorderLayout.CENTER);
 
-        // ListDataListener to notify when the list changes (reordering, additions, removals)
+        // ListDataListener to notify when the list changes.
         listModel.addListDataListener(new ListDataListener() {
             @Override
             public void intervalAdded(ListDataEvent e) {
@@ -77,14 +124,12 @@ public class TimelinePanel extends javax.swing.JPanel {
                     timelineChangeListener.onTimelineChanged();
                 }
             }
-
             @Override
             public void intervalRemoved(ListDataEvent e) {
                 if (timelineChangeListener != null) {
                     timelineChangeListener.onTimelineChanged();
                 }
             }
-
             @Override
             public void contentsChanged(ListDataEvent e) {
                 if (timelineChangeListener != null) {
@@ -94,75 +139,174 @@ public class TimelinePanel extends javax.swing.JPanel {
         });
     }
 
-    // Method to update the timeline with a new list of images
+    /**
+     * Updates the timeline with a new list of image files.
+     * This method automatically inserts a default transition box
+     * (default: type "Fade", duration 2 seconds) between each adjacent pair of images.
+     *
+     * @param images a List of image files.
+     */
     public void setImages(List<File> images) {
         listModel.clear();
-        for (File file : images) {
-            listModel.addElement(file);
+        for (int i = 0; i < images.size(); i++) {
+            listModel.addElement(images.get(i));
+            // Insert a default transition between images (except after the last image)
+            if (i < images.size() - 1) {
+                listModel.addElement(new TransitionItem("Fade", 2000));
+            }
         }
     }
 
-    // Retrieve the current ordering from the timeline
+    /**
+     * Inserts a transition item at the specified index.
+     *
+     * @param index the index where the transition should be inserted.
+     * @param transition the TransitionItem to insert.
+     */
+    public void insertTransition(int index, TransitionItem transition) {
+        listModel.add(index, transition);
+        normalizeTimeline();
+    }
+
+    /**
+     * Retrieves only the image Files from the timeline (ignoring transitions).
+     *
+     * @return a List of Files.
+     */
     public List<File> getImages() {
         List<File> images = new ArrayList<>();
         for (int i = 0; i < listModel.getSize(); i++) {
-            images.add(listModel.get(i));
+            Object obj = listModel.get(i);
+            if (obj instanceof File) {
+                images.add((File) obj);
+            }
         }
         return images;
     }
 
-    public JList<File> getImageList() {
-        return imageList;
+    /**
+     * Retrieves the complete list of timeline items (images and transitions).
+     *
+     * @return a List of Objects (File and TransitionItem).
+     */
+    public List<Object> getTimelineItems() {
+        List<Object> items = new ArrayList<>();
+        for (int i = 0; i < listModel.getSize(); i++) {
+            items.add(listModel.get(i));
+        }
+        return items;
     }
 
-    // --- Custom Cell Renderer for Thumbnails ---
-    private static class ImageListCellRenderer extends JLabel implements ListCellRenderer<File> {
-        public ImageListCellRenderer() {
+    /**
+     * Returns the timeline JList containing images and transitions.
+     *
+     * @return the JList of timeline items.
+     */
+    public JList<Object> getTimelineList() {
+        return timelineList;
+    }
+    
+    /**
+     * For backward compatibility, getImageList() returns a JList<File> containing only image files.
+     *
+     * @return a JList of Files.
+     */
+    public JList<File> getImageList() {
+        DefaultListModel<File> fileModel = new DefaultListModel<>();
+        for (int i = 0; i < listModel.getSize(); i++) {
+            Object obj = listModel.get(i);
+            if (obj instanceof File) {
+                fileModel.addElement((File) obj);
+            }
+        }
+        return new JList<>(fileModel);
+    }
+
+    /**
+     * Normalizes the timeline ordering so that:
+     * - The first item is an image.
+     * - Items alternate: image, transition, image, transition, ... ending with an image.
+     * - For each adjacent pair of images, the corresponding transition is taken from the
+     *   collected transitions (preserving its custom duration) if available; otherwise,
+     *   a default transition (Fade, 2 seconds) is inserted.
+     */
+    private void normalizeTimeline() {
+        List<File> images = new ArrayList<>();
+        List<TransitionItem> transitions = new ArrayList<>();
+        // Collect images and transitions from the current model (in order)
+        for (int i = 0; i < listModel.getSize(); i++) {
+            Object obj = listModel.get(i);
+            if (obj instanceof File) {
+                images.add((File) obj);
+            } else if (obj instanceof TransitionItem) {
+                transitions.add((TransitionItem) obj);
+            }
+        }
+        List<Object> normalized = new ArrayList<>();
+        for (int i = 0; i < images.size(); i++) {
+            normalized.add(images.get(i));
+            if (i < images.size() - 1) {
+                if (i < transitions.size()) {
+                    normalized.add(transitions.get(i));
+                } else {
+                    normalized.add(new TransitionItem("Fade", 2000));
+                }
+            }
+        }
+        listModel.clear();
+        for (Object obj : normalized) {
+            listModel.addElement(obj);
+        }
+    }
+
+    // --- Custom Cell Renderer for Images and Transitions ---
+    private static class TimelineListCellRenderer extends JLabel implements ListCellRenderer<Object> {
+        public TimelineListCellRenderer() {
             setOpaque(true);
             setHorizontalAlignment(SwingConstants.CENTER);
             setVerticalAlignment(SwingConstants.CENTER);
         }
-
         @Override
-        public Component getListCellRendererComponent(JList<? extends File> list, File value,
-            int index, boolean isSelected, boolean cellHasFocus) {
-            // Create an icon from the image file and scale it
-            ImageIcon icon = new ImageIcon(value.getAbsolutePath());
-            Image image = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
-            setIcon(new ImageIcon(image));
-
-            // Toggle image name display
-            if (TimelinePanel.SHOW_IMAGE_NAMES) {
-                setText(value.getName());
+        public Component getListCellRendererComponent(JList<?> list, Object value,
+                int index, boolean isSelected, boolean cellHasFocus) {
+            if (value instanceof File) {
+                // Render image thumbnail.
+                File file = (File) value;
+                ImageIcon icon = new ImageIcon(file.getAbsolutePath());
+                Image image = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+                setIcon(new ImageIcon(image));
+                setText(SHOW_IMAGE_NAMES ? file.getName() : "");
+                setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
+                setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
+            } else if (value instanceof TransitionItem) {
+                // Render transition placeholder with duration in seconds.
+                TransitionItem transition = (TransitionItem) value;
+                setIcon(null);
+                setText("<html><center>Transition:<br>" 
+                        + transition.getTransitionType() 
+                        + "<br>Duration: " + (transition.getDuration() / 1000) + " s</center></html>");
+                setBackground(Color.LIGHT_GRAY);
+                setForeground(Color.BLACK);
             } else {
-                setText("");
+                setText(value.toString());
+                setIcon(null);
             }
-
-            // Add a border if selected
             if (isSelected) {
-                setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.BLUE, 2));
+                setBorder(javax.swing.BorderFactory.createLineBorder(Color.BLUE, 2));
             } else {
                 setBorder(null);
-            }
-
-            // Set background and foreground colors
-            if (isSelected) {
-                setBackground(list.getSelectionBackground());
-                setForeground(list.getSelectionForeground());
-            } else {
-                setBackground(list.getBackground());
-                setForeground(list.getForeground());
             }
             return this;
         }
     }
 
     // --- TransferHandler for Reordering Items in the JList ---
-    private static class ListItemTransferHandler extends TransferHandler {
+    // (Non-static so we can call normalizeTimeline())
+    private class ListItemTransferHandler extends TransferHandler {
         private int[] indices = null;
         private int addIndex = -1; // Where items were inserted.
         private int addCount = 0;  // Number of items inserted.
-
+        private boolean swapOccurred = false; // Indicates if a swap was performed.
         @Override
         protected Transferable createTransferable(JComponent c) {
             JList<?> list = (JList<?>) c;
@@ -170,12 +314,10 @@ public class TimelinePanel extends javax.swing.JPanel {
             List<?> values = list.getSelectedValuesList();
             return new ListTransferable(values);
         }
-
         @Override
         public int getSourceActions(JComponent c) {
             return MOVE;
         }
-
         @Override
         public boolean canImport(TransferSupport info) {
             if (!info.isDrop()) {
@@ -183,7 +325,6 @@ public class TimelinePanel extends javax.swing.JPanel {
             }
             return info.isDataFlavorSupported(ListTransferable.localFlavor);
         }
-
         @Override
         public boolean importData(TransferSupport info) {
             if (!canImport(info)) {
@@ -200,8 +341,19 @@ public class TimelinePanel extends javax.swing.JPanel {
             try {
                 @SuppressWarnings("unchecked")
                 List<Object> values = (List<Object>) info.getTransferable().getTransferData(ListTransferable.localFlavor);
+                // If exactly one element is dragged and it is a TransitionItem, and the target slot already contains a TransitionItem, swap them.
+                if (values.size() == 1 && values.get(0) instanceof TransitionItem) {
+                    if (index < model.getSize() && model.getElementAt(index) instanceof TransitionItem) {
+                        Object draggedItem = values.get(0);
+                        int originalIndex = indices[0];
+                        Object targetItem = model.getElementAt(index);
+                        model.set(index, draggedItem);
+                        model.set(originalIndex, targetItem);
+                        swapOccurred = true;
+                        return true;
+                    }
+                }
                 addCount = values.size();
-                // Insert items at the drop index.
                 for (Object o : values) {
                     model.add(index++, o);
                 }
@@ -211,13 +363,11 @@ public class TimelinePanel extends javax.swing.JPanel {
             }
             return false;
         }
-
         @Override
         protected void exportDone(JComponent c, Transferable data, int action) {
-            if (action == MOVE && indices != null) {
+            if (!swapOccurred && action == MOVE && indices != null) {
                 JList source = (JList) c;
                 DefaultListModel model = (DefaultListModel) source.getModel();
-                // Adjust indices if items were inserted before removal.
                 if (addCount > 0) {
                     for (int i = indices.length - 1; i >= 0; i--) {
                         if (indices[i] >= addIndex) {
@@ -225,7 +375,6 @@ public class TimelinePanel extends javax.swing.JPanel {
                         }
                     }
                 }
-                // Remove the original items.
                 for (int i = indices.length - 1; i >= 0; i--) {
                     model.remove(indices[i]);
                 }
@@ -233,6 +382,8 @@ public class TimelinePanel extends javax.swing.JPanel {
             indices = null;
             addCount = 0;
             addIndex = -1;
+            swapOccurred = false;
+            normalizeTimeline();
         }
     }
 
@@ -240,32 +391,26 @@ public class TimelinePanel extends javax.swing.JPanel {
     private static class ListTransferable implements Transferable {
         private final List<?> data;
         public static final DataFlavor localFlavor;
-
         static {
             DataFlavor flavor = null;
             try {
-                // Create a DataFlavor that represents a List
                 flavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=java.util.List");
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
             localFlavor = flavor;
         }
-
         public ListTransferable(List<?> data) {
             this.data = data;
         }
-
         @Override
         public DataFlavor[] getTransferDataFlavors() {
             return new DataFlavor[]{localFlavor};
         }
-
         @Override
         public boolean isDataFlavorSupported(DataFlavor flavor) {
             return localFlavor.equals(flavor);
         }
-
         @Override
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
             if (isDataFlavorSupported(flavor)) {
@@ -276,12 +421,37 @@ public class TimelinePanel extends javax.swing.JPanel {
     }
 
     /**
+     * TransitionItem represents a transition between images.
+     * It holds a transition type and a duration (in milliseconds).
+     */
+    public static class TransitionItem {
+        private String transitionType;
+        private int duration; // Duration in milliseconds
+        public TransitionItem(String transitionType, int duration) {
+            this.transitionType = transitionType;
+            this.duration = duration;
+        }
+        public String getTransitionType() {
+            return transitionType;
+        }
+        public void setTransitionType(String transitionType) {
+            this.transitionType = transitionType;
+        }
+        public int getDuration() {
+            return duration;
+        }
+        public void setDuration(int duration) {
+            this.duration = duration;
+        }
+    }
+
+    /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">
     private void initComponents() {
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -294,9 +464,5 @@ public class TimelinePanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 300, Short.MAX_VALUE)
         );
-    }// </editor-fold>//GEN-END:initComponents
-
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    // End of variables declaration//GEN-END:variables
+    }// </editor-fold>
 }
