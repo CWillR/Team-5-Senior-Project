@@ -25,15 +25,15 @@ public class SlideshowPresenter extends javax.swing.JFrame {
 
     private java.io.File[] imageFiles; // image list
     private final int[] index = {0}; // image list index
-    private Timer slideShowTimer;
-
+     private Timer slideShowTimer;
+     
     /**
      * Creates new form SlideshowPresenter
      */
     public SlideshowPresenter() {
         initComponents();
     }
-    
+
     // Loads built slideshow into the SlideShowPresenter JLabel
 private void loadSlideshow(File loadFile) {
     List<File> loadedImages = new ArrayList<>();
@@ -112,18 +112,18 @@ private void loadSlideshow(File loadFile) {
     }
     
     // Loads the folder for created slideshows
-    public class SlideShowManager {
-        private static final File programFolder = new File(System.getProperty("user.dir"), "SavedSlideShows");
+    public class SlideShowFileManager {
+        private static final File savedSlidesFolder = new File(System.getProperty("user.dir"), "SavedSlideShows");
 
-        public static File getProgramFolder() {
-            return programFolder;
+        public static File getSavedSlidesFolder() {
+            return savedSlidesFolder;
         }
 
         public static void main(String[] args) {
-            System.out.println("Accessing SlideShowImages folder: " + SlideShowManager.getProgramFolder().getAbsolutePath());
+            System.out.println("Accessing SlideShowImages folder: " + SlideShowFileManager.getSavedSlidesFolder().getAbsolutePath());
         }
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -145,7 +145,6 @@ private void loadSlideshow(File loadFile) {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Slideshow Presenter");
-        setPreferredSize(new java.awt.Dimension(702, 458));
 
         firstSlideButton.setText("First");
         firstSlideButton.addActionListener(new java.awt.event.ActionListener() {
@@ -201,37 +200,37 @@ private void loadSlideshow(File loadFile) {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(309, 309, 309)
-                .addComponent(beginButton)
-                .addGap(59, 59, 59)
-                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
+                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 688, Short.MAX_VALUE)
                 .addContainerGap())
             .addGroup(layout.createSequentialGroup()
-                .addGap(141, 141, 141)
+                .addContainerGap(143, Short.MAX_VALUE)
                 .addComponent(firstSlideButton)
-                .addGap(39, 39, 39)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
                 .addComponent(previousSlideButton)
-                .addGap(44, 44, 44)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
                 .addComponent(nextSlideButton)
-                .addGap(43, 43, 43)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
                 .addComponent(lastSlideButton)
-                .addContainerGap(142, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
+                .addComponent(beginButton)
+                .addContainerGap(143, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(35, 35, 35)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(imageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 353, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(beginButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addContainerGap(35, Short.MAX_VALUE)
+                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(firstSlideButton)
-                    .addComponent(nextSlideButton)
                     .addComponent(previousSlideButton)
-                    .addComponent(lastSlideButton))
-                .addContainerGap(18, Short.MAX_VALUE))
+                    .addComponent(nextSlideButton)
+                    .addComponent(lastSlideButton)
+                    .addComponent(beginButton))
+                .addContainerGap(16, Short.MAX_VALUE))
         );
+
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -240,7 +239,7 @@ private void loadSlideshow(File loadFile) {
     private void openSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openSlideMenuItemActionPerformed
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Load Slideshow");
-        fileChooser.setCurrentDirectory(SlideShowManager.getProgramFolder());
+        fileChooser.setCurrentDirectory(SlideShowFileManager.getSavedSlidesFolder());
         fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Slideshow Files (*.ssx)", "ssx"));
 
         int userSelection = fileChooser.showOpenDialog(null);
@@ -323,7 +322,6 @@ private void loadSlideshow(File loadFile) {
             java.util.logging.Logger.getLogger(SlideshowPresenter.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
