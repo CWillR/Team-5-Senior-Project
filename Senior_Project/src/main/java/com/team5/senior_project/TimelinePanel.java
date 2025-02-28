@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.BorderFactory;
+import java.awt.CardLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
 import javax.swing.ImageIcon;
@@ -28,8 +30,13 @@ import javax.swing.event.ListDataListener;
 
 public class TimelinePanel extends JPanel {
 
+    // Card names
+    private final String CARD_LIST = "LIST";
+    private final String CARD_PLACEHOLDER = "PLACEHOLDER";
+    
     private DefaultListModel<File> listModel;
     private JList<File> imageList;
+    private JLabel placeholderLabel;
     
     // Toggle for showing image names in the timeline preview.
     public static boolean SHOW_IMAGE_NAMES = false;
@@ -45,7 +52,10 @@ public class TimelinePanel extends JPanel {
     }
     
     public TimelinePanel() {
-        // Build the UI directly without calling initComponents()
+        // Use CardLayout to switch between list view and placeholder.
+        setLayout(new CardLayout());
+        
+        // Create the list model and image list.
         listModel = new DefaultListModel<>();
         imageList = new JList<>(listModel);
         imageList.setCellRenderer(new ImageListCellRenderer());
@@ -55,38 +65,64 @@ public class TimelinePanel extends JPanel {
         imageList.setDropMode(DropMode.INSERT);
         imageList.setTransferHandler(new ListItemTransferHandler());
         
-        setLayout(new BorderLayout());
-        add(new JScrollPane(imageList), BorderLayout.CENTER);
+        // Create a scroll pane for the image list.
+        JScrollPane listScrollPane = new JScrollPane(imageList);
+        add(listScrollPane, CARD_LIST);
         
-        // Notify listener whenever the list changes.
+        // Create a placeholder label for an empty timeline.
+        placeholderLabel = new JLabel("Drop images here to start timeline", SwingConstants.CENTER);
+        placeholderLabel.setOpaque(true);
+        placeholderLabel.setBackground(Color.LIGHT_GRAY);
+        add(placeholderLabel, CARD_PLACEHOLDER);
+        
+        // Initially show placeholder if no images are present.
+        updateCard();
+        
+        // Listen for changes in the model to update the card.
         listModel.addListDataListener(new ListDataListener() {
             @Override
             public void intervalAdded(ListDataEvent e) {
                 if (timelineChangeListener != null) {
                     timelineChangeListener.onTimelineChanged();
                 }
+                updateCard();
             }
             @Override
             public void intervalRemoved(ListDataEvent e) {
                 if (timelineChangeListener != null) {
                     timelineChangeListener.onTimelineChanged();
                 }
+                updateCard();
             }
             @Override
             public void contentsChanged(ListDataEvent e) {
                 if (timelineChangeListener != null) {
                     timelineChangeListener.onTimelineChanged();
                 }
+                updateCard();
             }
         });
+    }
+    
+    // Updates the visible card based on whether there are images.
+    private void updateCard() {
+        CardLayout cl = (CardLayout) getLayout();
+        if (listModel.isEmpty()) {
+            cl.show(this, CARD_PLACEHOLDER);
+        } else {
+            cl.show(this, CARD_LIST);
+        }
     }
     
     // Sets the timeline images.
     public void setImages(List<File> images) {
         listModel.clear();
-        for (File file : images) {
-            listModel.addElement(file);
+        if (images != null) {
+            for (File file : images) {
+                listModel.addElement(file);
+            }
         }
+        updateCard();
     }
     
     // Retrieves the current ordering.
@@ -113,6 +149,7 @@ public class TimelinePanel extends JPanel {
         public Component getListCellRendererComponent(JList<? extends File> list, File value,
                                                       int index, boolean isSelected, boolean cellHasFocus) {
             ImageIcon icon = new ImageIcon(value.getAbsolutePath());
+            // Scale the image to 100x100; adjust if needed.
             Image image = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
             setIcon(new ImageIcon(image));
             setText(SHOW_IMAGE_NAMES ? value.getName() : "");
@@ -143,9 +180,9 @@ public class TimelinePanel extends JPanel {
         
         @Override
         public int getSourceActions(JComponent c) {
-            return MOVE;
+            return COPY_OR_MOVE;
         }
-        
+
         @Override
         public boolean canImport(TransferHandler.TransferSupport info) {
             return info.isDataFlavorSupported(ListTransferable.localFlavor)
