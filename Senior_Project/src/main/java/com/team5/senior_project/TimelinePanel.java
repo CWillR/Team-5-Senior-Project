@@ -1,6 +1,7 @@
 package com.team5.senior_project;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Image;
 import java.io.File;
@@ -11,25 +12,21 @@ import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.TransferHandler;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
-import java.awt.datatransfer.*;
+import javax.swing.TransferHandler;
+import javax.swing.border.LineBorder;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-// Removed: import javax.activation.DataHandler;
 
-/**
- * TimelinePanel displays a list of image thumbnails in a horizontal timeline
- * and allows drag-and-drop reordering.
- *
- * @author jackh
- */
-public class TimelinePanel extends javax.swing.JPanel {
+public class TimelinePanel extends JPanel {
 
     private DefaultListModel<File> listModel;
     private JList<File> imageList;
@@ -37,39 +34,31 @@ public class TimelinePanel extends javax.swing.JPanel {
     // Toggle for showing image names in the timeline preview.
     public static boolean SHOW_IMAGE_NAMES = false;
 
-    // Define the listener interface
+    // Listener interface for timeline changes.
     public interface TimelineChangeListener {
         void onTimelineChanged();
     }
-
-    // Listener reference
     private TimelineChangeListener timelineChangeListener;
-
-    // Setter for the listener
+    
     public void setTimelineChangeListener(TimelineChangeListener listener) {
         this.timelineChangeListener = listener;
     }
-
-    /**
-     * Creates new form TimelinePanel
-     */
+    
     public TimelinePanel() {
-        initComponents();
+        // Build the UI directly without calling initComponents()
         listModel = new DefaultListModel<>();
         imageList = new JList<>(listModel);
-
-        // Use a custom renderer and configure list appearance
         imageList.setCellRenderer(new ImageListCellRenderer());
         imageList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         imageList.setVisibleRowCount(1);
         imageList.setDragEnabled(true);
         imageList.setDropMode(DropMode.INSERT);
         imageList.setTransferHandler(new ListItemTransferHandler());
-
+        
         setLayout(new BorderLayout());
         add(new JScrollPane(imageList), BorderLayout.CENTER);
-
-        // ListDataListener to notify when the list changes (reordering, additions, removals)
+        
+        // Notify listener whenever the list changes.
         listModel.addListDataListener(new ListDataListener() {
             @Override
             public void intervalAdded(ListDataEvent e) {
@@ -77,14 +66,12 @@ public class TimelinePanel extends javax.swing.JPanel {
                     timelineChangeListener.onTimelineChanged();
                 }
             }
-
             @Override
             public void intervalRemoved(ListDataEvent e) {
                 if (timelineChangeListener != null) {
                     timelineChangeListener.onTimelineChanged();
                 }
             }
-
             @Override
             public void contentsChanged(ListDataEvent e) {
                 if (timelineChangeListener != null) {
@@ -93,16 +80,16 @@ public class TimelinePanel extends javax.swing.JPanel {
             }
         });
     }
-
-    // Method to update the timeline with a new list of images
+    
+    // Sets the timeline images.
     public void setImages(List<File> images) {
         listModel.clear();
         for (File file : images) {
             listModel.addElement(file);
         }
     }
-
-    // Retrieve the current ordering from the timeline
+    
+    // Retrieves the current ordering.
     public List<File> getImages() {
         List<File> images = new ArrayList<>();
         for (int i = 0; i < listModel.getSize(); i++) {
@@ -110,11 +97,11 @@ public class TimelinePanel extends javax.swing.JPanel {
         }
         return images;
     }
-
+    
     public JList<File> getImageList() {
         return imageList;
     }
-
+    
     // --- Custom Cell Renderer for Thumbnails ---
     private static class ImageListCellRenderer extends JLabel implements ListCellRenderer<File> {
         public ImageListCellRenderer() {
@@ -122,47 +109,30 @@ public class TimelinePanel extends javax.swing.JPanel {
             setHorizontalAlignment(SwingConstants.CENTER);
             setVerticalAlignment(SwingConstants.CENTER);
         }
-
         @Override
         public Component getListCellRendererComponent(JList<? extends File> list, File value,
-            int index, boolean isSelected, boolean cellHasFocus) {
-            // Create an icon from the image file and scale it
+                                                      int index, boolean isSelected, boolean cellHasFocus) {
             ImageIcon icon = new ImageIcon(value.getAbsolutePath());
             Image image = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
             setIcon(new ImageIcon(image));
-
-            // Toggle image name display
-            if (TimelinePanel.SHOW_IMAGE_NAMES) {
-                setText(value.getName());
-            } else {
-                setText("");
-            }
-
-            // Add a border if selected
+            setText(SHOW_IMAGE_NAMES ? value.getName() : "");
             if (isSelected) {
-                setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.BLUE, 2));
+                setBorder(new LineBorder(Color.BLUE, 2));
             } else {
                 setBorder(null);
             }
-
-            // Set background and foreground colors
-            if (isSelected) {
-                setBackground(list.getSelectionBackground());
-                setForeground(list.getSelectionForeground());
-            } else {
-                setBackground(list.getBackground());
-                setForeground(list.getForeground());
-            }
+            setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
+            setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
             return this;
         }
     }
-
-    // --- TransferHandler for Reordering Items in the JList ---
+    
+    // --- TransferHandler for Drag-and-Drop Reordering ---
     private static class ListItemTransferHandler extends TransferHandler {
         private int[] indices = null;
-        private int addIndex = -1; // Where items were inserted.
-        private int addCount = 0;  // Number of items inserted.
-
+        private int addIndex = -1;
+        private int addCount = 0;
+        
         @Override
         protected Transferable createTransferable(JComponent c) {
             JList<?> list = (JList<?>) c;
@@ -170,22 +140,20 @@ public class TimelinePanel extends javax.swing.JPanel {
             List<?> values = list.getSelectedValuesList();
             return new ListTransferable(values);
         }
-
+        
         @Override
         public int getSourceActions(JComponent c) {
             return MOVE;
         }
-
+        
         @Override
-        public boolean canImport(TransferSupport info) {
-            if (!info.isDrop()) {
-                return false;
-            }
-            return info.isDataFlavorSupported(ListTransferable.localFlavor);
+        public boolean canImport(TransferHandler.TransferSupport info) {
+            return info.isDataFlavorSupported(ListTransferable.localFlavor)
+                    || info.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
         }
-
+        
         @Override
-        public boolean importData(TransferSupport info) {
+        public boolean importData(TransferHandler.TransferSupport info) {
             if (!canImport(info)) {
                 return false;
             }
@@ -198,10 +166,19 @@ public class TimelinePanel extends javax.swing.JPanel {
             }
             addIndex = index;
             try {
-                @SuppressWarnings("unchecked")
-                List<Object> values = (List<Object>) info.getTransferable().getTransferData(ListTransferable.localFlavor);
+                List<?> values;
+                if (info.isDataFlavorSupported(ListTransferable.localFlavor)) {
+                    @SuppressWarnings("unchecked")
+                    List<Object> localValues = (List<Object>) info.getTransferable().getTransferData(ListTransferable.localFlavor);
+                    values = localValues;
+                } else if (info.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                    @SuppressWarnings("unchecked")
+                    List<Object> fileList = (List<Object>) info.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+                    values = fileList;
+                } else {
+                    return false;
+                }
                 addCount = values.size();
-                // Insert items at the drop index.
                 for (Object o : values) {
                     model.add(index++, o);
                 }
@@ -211,13 +188,12 @@ public class TimelinePanel extends javax.swing.JPanel {
             }
             return false;
         }
-
+        
         @Override
         protected void exportDone(JComponent c, Transferable data, int action) {
             if (action == MOVE && indices != null) {
                 JList source = (JList) c;
                 DefaultListModel model = (DefaultListModel) source.getModel();
-                // Adjust indices if items were inserted before removal.
                 if (addCount > 0) {
                     for (int i = indices.length - 1; i >= 0; i--) {
                         if (indices[i] >= addIndex) {
@@ -225,7 +201,6 @@ public class TimelinePanel extends javax.swing.JPanel {
                         }
                     }
                 }
-                // Remove the original items.
                 for (int i = indices.length - 1; i >= 0; i--) {
                     model.remove(indices[i]);
                 }
@@ -235,37 +210,36 @@ public class TimelinePanel extends javax.swing.JPanel {
             addIndex = -1;
         }
     }
-
+    
     // --- Custom Transferable for a List of Objects ---
     private static class ListTransferable implements Transferable {
         private final List<?> data;
         public static final DataFlavor localFlavor;
-
+        
         static {
             DataFlavor flavor = null;
             try {
-                // Create a DataFlavor that represents a List
                 flavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=java.util.List");
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
             localFlavor = flavor;
         }
-
+        
         public ListTransferable(List<?> data) {
             this.data = data;
         }
-
+        
         @Override
         public DataFlavor[] getTransferDataFlavors() {
             return new DataFlavor[]{localFlavor};
         }
-
+        
         @Override
         public boolean isDataFlavorSupported(DataFlavor flavor) {
             return localFlavor.equals(flavor);
         }
-
+        
         @Override
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
             if (isDataFlavorSupported(flavor)) {
@@ -274,29 +248,4 @@ public class TimelinePanel extends javax.swing.JPanel {
             throw new UnsupportedFlavorException(flavor);
         }
     }
-
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    // End of variables declaration//GEN-END:variables
 }
