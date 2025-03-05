@@ -1,9 +1,10 @@
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.team5.senior_project;
 
+import java.awt.Dimension;
 import java.awt.Image;
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,6 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  *
@@ -20,88 +24,69 @@ import javax.swing.JFileChooser;
  */
 public class SlideshowPresenter extends javax.swing.JFrame {
 
-    private java.io.File[] imageFiles; // image list
-    private final int[] index = {0}; // image list index
+    private List<Slide> slides = new ArrayList<>();
+    private int currentSlideIndex = 0;
    
-    /**
-     * Creates new form SlideshowPresenter
-     */
     public SlideshowPresenter() {
         initComponents();
+        imageLabel.setPreferredSize(new Dimension(600, 400)); // Adjust dimensions as needed
+        updateSlide();
+    }
+    
+    private void updateSlide() {
+         if (!slides.isEmpty() && currentSlideIndex >= 0 && currentSlideIndex < slides.size()) {
+            Slide currentSlide = slides.get(currentSlideIndex);
+            ImageIcon icon = new ImageIcon(currentSlide.getImagePath());
+            Image img = icon.getImage().getScaledInstance(imageLabel.getPreferredSize().width, imageLabel.getPreferredSize().height, Image.SCALE_SMOOTH);
+            imageLabel.setIcon(new ImageIcon(img));
+        } else {
+            imageLabel.setIcon(null);
+        }
     }
 
-    // Loads built slideshow into the SlideShowPresenter JLabel
-    private void loadSlideshow(File loadFile) {
-        List<File> loadedImages = new ArrayList<>();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(loadFile))) {
+    private void loadSlideshow(File file) {
+        slides.clear();
+        currentSlideIndex = 0;
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            StringBuilder jsonContent = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
-                File imageFile = new File(line);
-                if (imageFile.exists()) {
-                    loadedImages.add(imageFile);
-                } else {
-                    System.err.println("Warning: File not found: " + line);
-                }
+                jsonContent.append(line);
             }
+            JSONObject slideshowJson = new JSONObject(jsonContent.toString());
+            // Print slideshow-level settings for testing
+        System.out.println("Slideshow Settings:");
+        System.out.println("  Name: " + slideshowJson.getString("name"));
+        System.out.println("  Loop: " + slideshowJson.getBoolean("loop"));
+        if (slideshowJson.has("audio")) {
+            System.out.println("  Audio: " + slideshowJson.getString("audio"));
+        } else {
+            System.out.println("  Audio: null");
+        }
 
-            if (!loadedImages.isEmpty()) {
-                imageFiles = loadedImages.toArray(new File[0]);
-                index[0] = 0; // Reset index to start
-                updateImage();
-                System.out.println("Slideshow loaded successfully.");
-            } else {
-                System.err.println("No valid images found in the slideshow file.");
-            }
+        JSONArray slidesArray = slideshowJson.getJSONArray("slides");
+        for (int i = 0; i < slidesArray.length(); i++) {
+            JSONObject slideJson = slidesArray.getJSONObject(i);
+            String imagePath = slideJson.getString("image");
+            int duration = slideJson.getInt("duration");
+            String transition = slideJson.getString("transition");
+            int interval = slideJson.optInt("interval", 0);
 
-        } catch (IOException e) {
-            System.err.println("Error loading slideshow: " + e.getMessage());
+            // Print slide-level settings for testing
+            System.out.println("\n  Slide " + (i + 1) + ":");
+            System.out.println("    Image: " + imagePath);
+            System.out.println("    Duration: " + duration);
+            System.out.println("    Transition: " + transition);
+            System.out.println("    Interval: " + interval);
+
+            slides.add(new Slide(imagePath, duration, transition, interval));
+        }
+            updateSlide();
+        } catch (Exception e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading slideshow: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-    }
-    
-    // Updates the image in the SlideShowPresenter
-    private void updateImage() {
-        if (imageFiles != null && imageFiles.length > 0) {
-            // Load the image from the file
-            ImageIcon originalIcon = new ImageIcon(imageFiles[index[0]].getAbsolutePath());
-            Image originalImage = originalIcon.getImage();
-
-            // Get the width and height of the JLabel
-            int labelWidth = imageLabel.getWidth();
-            int labelHeight = imageLabel.getHeight();
-
-            // Calculate the scaling ratio
-            double widthRatio = (double) labelWidth / originalImage.getWidth(null);
-            double heightRatio = (double) labelHeight / originalImage.getHeight(null);
-
-            // Find the smaller ratio to preserve aspect ratio
-            double scaleRatio = Math.min(widthRatio, heightRatio);
-
-            // Calculate new dimensions while maintaining the aspect ratio
-            int newWidth = (int) (originalImage.getWidth(null) * scaleRatio);
-            int newHeight = (int) (originalImage.getHeight(null) * scaleRatio);
-
-            // Scale the image to the new size
-            Image resizedImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-
-            // Set the resized image as the label icon
-            imageLabel.setIcon(new ImageIcon(resizedImage));
-        }
-    }
-    
-    // Loads the folder for created slideshows
-    public class SlideShowFileManager {
-        private static final File savedSlidesFolder = new File(System.getProperty("user.dir"), "SavedSlideShows");
-
-        public static File getSavedSlidesFolder() {
-            return savedSlidesFolder;
-        }
-
-        public static void main(String[] args) {
-            System.out.println("Accessing SlideShowImages folder: " + SlideShowFileManager.getSavedSlidesFolder().getAbsolutePath());
-        }
-    }
+    }   
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -202,43 +187,42 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    // Opens FileChooser for user to select a saved slideshow to load
-    private void openSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openSlideMenuItemActionPerformed
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Load Slideshow");
-        fileChooser.setCurrentDirectory(SlideShowFileManager.getSavedSlidesFolder());
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Slideshow Files (*.ssx)", "ssx"));
-
-        int userSelection = fileChooser.showOpenDialog(null);
-        if (userSelection == JFileChooser.APPROVE_OPTION) {
-            File fileToLoad = fileChooser.getSelectedFile();
-            loadSlideshow(fileToLoad);
+    private void openSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {
+        JFileChooser fileChooser = new JFileChooser(SlideShowFileManager.getSavedSlidesFolder());
+        int returnVal = fileChooser.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            loadSlideshow(file);
         }
-    }//GEN-LAST:event_openSlideMenuItemActionPerformed
+    }
 
-    // Goes to first slide
-    private void firstSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_firstSlideButtonActionPerformed
-        index[0] = 0;
-        updateImage();
-    }//GEN-LAST:event_firstSlideButtonActionPerformed
+    private void firstSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        if (!slides.isEmpty()) {
+            currentSlideIndex = 0;
+            updateSlide();
+        }
+    }
 
-    // Goes to the previous slide
-    private void previousSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_previousSlideButtonActionPerformed
-        index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length; // Cycle through images
-        updateImage();
-    }//GEN-LAST:event_previousSlideButtonActionPerformed
+    private void previousSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        if (!slides.isEmpty() && currentSlideIndex > 0) {
+            currentSlideIndex--;
+            updateSlide();
+        }
+    }
 
-    // Goes to the next slide
-    private void nextSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextSlideButtonActionPerformed
-        index[0] = (index[0] + 1) % imageFiles.length; // Cycle through images
-        updateImage();
-    }//GEN-LAST:event_nextSlideButtonActionPerformed
+    private void nextSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        if (!slides.isEmpty() && currentSlideIndex < slides.size() - 1) {
+            currentSlideIndex++;
+            updateSlide();
+        }
+    }
 
-    // Goes to last slide
-    private void lastSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lastSlideButtonActionPerformed
-        index[0] = imageFiles.length - 1;
-        updateImage();
-    }//GEN-LAST:event_lastSlideButtonActionPerformed
+    private void lastSlideButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        if (!slides.isEmpty()) {
+            currentSlideIndex = slides.size() - 1;
+            updateSlide();
+        }
+    }
 
     /**
      * @param args the command line arguments
