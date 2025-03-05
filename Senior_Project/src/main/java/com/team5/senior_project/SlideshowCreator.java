@@ -7,6 +7,7 @@ package com.team5.senior_project;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -43,9 +44,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
     
     // Global variables needed for keeping image index and storing the image list
     private java.io.File[] imageFiles; // image list
+    private TransitionType[] imageTransitions;
     private final int[] index = {0}; // image list index
     private static final Preferences prefs = Preferences.userNodeForPackage(SlideshowCreator.class);
     private TimelinePanel timelinePanel;
+    private final Transition transitionManager = new Transition();
 
     private File workingFile = null; // stores location of most recently saved slideshow file (file currently being worked on)
     
@@ -189,6 +192,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
             // Center the image in the label.
             imageLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
             imageLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+            
+            // Set the transitionBox with this image's selected transition
+            updateTransitionBox();
         }
     }
 
@@ -223,6 +229,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
             if (!loadedImages.isEmpty()) {
                 imageFiles = loadedImages.toArray(new File[0]);
+                initTransitions();
                 index[0] = 0; // Reset index to start
 
                 // Update the timeline panel with loaded images
@@ -247,6 +254,34 @@ public class SlideshowCreator extends javax.swing.JFrame {
         workingFile = loadFile;
     }
     
+    // Creates the TransitionType array
+    // Called whenever imageFiles would be created
+    private void initTransitions() {
+        imageTransitions = new TransitionType[imageFiles.length];
+        Arrays.fill(imageTransitions, TransitionType.INSTANT);
+    }
+    
+    // Sets the JComboBox to the transition associated with the updated image
+    private void updateTransitionBox() {        
+        // Make sure the image's transition has been set, set to default if not
+        if (imageTransitions != null && imageTransitions.length > index[0]) {
+            if (imageTransitions[index[0]] == null) {
+                imageTransitions[index[0]] = TransitionType.INSTANT;
+            }
+        }
+        else {
+            // Image index is out of bounds of transition array, something went wrong
+            System.out.println("Image transitions not initialized correctly");
+            return;
+        }
+        
+        // Get the transition of the updated image
+        TransitionType transition = imageTransitions[index[0]];
+        
+        // Set the box's index to the index of the transition in its Enum
+        transitionBox.setSelectedIndex(transition.ordinal());
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -263,6 +298,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
         previousSlideButton = new javax.swing.JButton();
         lastSlideButton = new javax.swing.JButton();
         TimelinePanel = new javax.swing.JPanel();
+        transitionBox = new javax.swing.JComboBox<>();
+        transitionTest = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
         jMenu3 = new javax.swing.JMenu();
         selectFolderMenuItem = new javax.swing.JMenuItem();
@@ -322,6 +359,20 @@ public class SlideshowCreator extends javax.swing.JFrame {
             TimelinePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 149, Short.MAX_VALUE)
         );
+
+        transitionBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "No Transition", "Cross Fade", "Wipe Up", "Wipe Right", "Wipe Down", "Wipe Left" }));
+        transitionBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                transitionBoxActionPerformed(evt);
+            }
+        });
+
+        transitionTest.setText("Preview Transition");
+        transitionTest.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                transitionTestActionPerformed(evt);
+            }
+        });
 
         menuBar.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
@@ -396,23 +447,26 @@ public class SlideshowCreator extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(143, Short.MAX_VALUE)
+                .addContainerGap(144, Short.MAX_VALUE)
                 .addComponent(firstSlideButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 42, Short.MAX_VALUE)
                 .addComponent(previousSlideButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 42, Short.MAX_VALUE)
                 .addComponent(nextSlideButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 45, Short.MAX_VALUE)
                 .addComponent(lastSlideButton)
-                .addContainerGap(143, Short.MAX_VALUE))
+                .addContainerGap(144, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(TimelinePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 584, Short.MAX_VALUE)
-                        .addComponent(presenterButton))
-                    .addComponent(TimelinePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(presenterButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(transitionBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(transitionTest, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -421,7 +475,13 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addGap(8, 8, 8)
                 .addComponent(presenterButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(transitionTest)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(transitionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(TimelinePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -564,6 +624,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 // Convert list back to array
                 imageFiles = imageList.toArray(new File[0]);
 
+                imageTransitions = new TransitionType[imageFiles.length];
+                Arrays.fill(imageTransitions, TransitionType.INSTANT);
+                
                 // Display the first image if available
                 if (imageFiles.length > 0) {
                     updateImage();
@@ -770,6 +833,51 @@ public class SlideshowCreator extends javax.swing.JFrame {
             loadSlideshow(fileToLoad);
         }
     }//GEN-LAST:event_openFileMenuItemActionPerformed
+
+    // Sets the transition type for the current image
+    private void transitionBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_transitionBoxActionPerformed
+        int selectionIndex = transitionBox.getSelectedIndex();
+        imageTransitions[index[0]] = TransitionType.values()[selectionIndex];
+    }//GEN-LAST:event_transitionBoxActionPerformed
+
+    // Execute the image's chosen transition
+    // This does not update the index
+    // For now, a default image is used as the "previous image"
+    private void transitionTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_transitionTestActionPerformed
+        if (imageTransitions == null) {
+            System.out.println("Transition attempted before any have been initialized");
+            return;
+        }
+
+        // Get the image to transition to (the currently displayed image)
+        ImageIcon labelIcon = (ImageIcon)imageLabel.getIcon();
+        BufferedImage nextImage = Transition.toBufferedImage(labelIcon.getImage());
+        
+        // Get the image to transition from
+        // Try to get the previous index image
+        // If that fails, it uses a blank, gray square
+        // If that somehow fails it uses the current image instead
+        BufferedImage prevImage = nextImage;
+        int wrapIndex = (index[0] - 1 >= 0) ? index[0] - 1 : imageFiles.length - 1;
+        if (imageFiles.length >= 2) {
+            //TODO: Scale this.
+            ImageIcon prevIcon = new ImageIcon(imageFiles[wrapIndex].getAbsolutePath());
+            prevImage = Transition.toBufferedImage(prevIcon.getImage());
+        }
+        else {
+            try {
+                Image readImage = new ImageIcon("Placeholder.png").getImage();
+                if (readImage != null) {
+                    prevImage = Transition.toBufferedImage(readImage);
+                }
+            }
+            catch (Exception e) {
+                System.out.println("Error obtaining default image for transitions: " + e);
+            }
+        }
+
+        transitionManager.doTransition(prevImage, nextImage, imageLabel, imageTransitions[index[0]]);
+    }//GEN-LAST:event_transitionTestActionPerformed
  
     /**
      * @param args the command line arguments
@@ -824,5 +932,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JMenuItem saveAsMenuItem;
     private javax.swing.JMenuItem saveMenuItem;
     private javax.swing.JMenuItem selectFolderMenuItem;
+    private javax.swing.JComboBox<String> transitionBox;
+    private javax.swing.JButton transitionTest;
     // End of variables declaration//GEN-END:variables
 }

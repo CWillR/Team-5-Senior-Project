@@ -107,25 +107,29 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
-              <EmptySpace pref="143" max="32767" attributes="0"/>
+              <EmptySpace pref="144" max="32767" attributes="0"/>
               <Component id="firstSlideButton" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="41" max="32767" attributes="0"/>
+              <EmptySpace pref="42" max="32767" attributes="0"/>
               <Component id="previousSlideButton" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="41" max="32767" attributes="0"/>
+              <EmptySpace pref="42" max="32767" attributes="0"/>
               <Component id="nextSlideButton" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="41" max="32767" attributes="0"/>
+              <EmptySpace pref="45" max="32767" attributes="0"/>
               <Component id="lastSlideButton" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="143" max="32767" attributes="0"/>
+              <EmptySpace pref="144" max="32767" attributes="0"/>
           </Group>
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="imageLabel" alignment="0" max="32767" attributes="0"/>
-                  <Group type="102" alignment="1" attributes="0">
-                      <EmptySpace min="0" pref="584" max="32767" attributes="0"/>
-                      <Component id="presenterButton" min="-2" max="-2" attributes="0"/>
-                  </Group>
                   <Component id="TimelinePanel" alignment="1" max="32767" attributes="0"/>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Component id="imageLabel" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="presenterButton" max="32767" attributes="0"/>
+                          <Component id="transitionBox" max="32767" attributes="0"/>
+                          <Component id="transitionTest" alignment="0" max="32767" attributes="0"/>
+                      </Group>
+                  </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -137,7 +141,15 @@
               <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
               <Component id="presenterButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="imageLabel" pref="189" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="imageLabel" pref="189" max="32767" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Component id="transitionTest" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="transitionBox" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  </Group>
+              </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="TimelinePanel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -210,5 +222,33 @@
         </DimensionLayout>
       </Layout>
     </Container>
+    <Component class="javax.swing.JComboBox" name="transitionBox">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="6">
+            <StringItem index="0" value="No Transition"/>
+            <StringItem index="1" value="Cross Fade"/>
+            <StringItem index="2" value="Wipe Up"/>
+            <StringItem index="3" value="Wipe Right"/>
+            <StringItem index="4" value="Wipe Down"/>
+            <StringItem index="5" value="Wipe Left"/>
+          </StringArray>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="transitionBoxActionPerformed"/>
+      </Events>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
+    </Component>
+    <Component class="javax.swing.JButton" name="transitionTest">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Preview Transition"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="transitionTestActionPerformed"/>
+      </Events>
+    </Component>
   </SubComponents>
 </Form>
