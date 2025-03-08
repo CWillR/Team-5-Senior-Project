@@ -18,8 +18,13 @@ import javax.swing.TransferHandler;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 import java.awt.datatransfer.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.FileReader;
+import java.io.FileWriter;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import static javax.swing.TransferHandler.COPY_OR_MOVE;
 import static javax.swing.TransferHandler.MOVE;
 import javax.swing.border.LineBorder;
@@ -43,6 +48,9 @@ public class TimelinePanel extends javax.swing.JPanel {
     private JList<File> imageList;
     private JLabel placeholderLabel;
     public static boolean SHOW_IMAGE_NAMES = false; // Toggle for showing image names in the timeline preview.
+    private JPopupMenu contextMenu;
+    private JMenuItem removeMenuItem;
+    private File jsonFile;
     
     // Listener interface for timeline changes.
     public interface TimelineChangeListener {
@@ -60,6 +68,7 @@ public class TimelinePanel extends javax.swing.JPanel {
     // Constructor that loads images from a JSON file
     public TimelinePanel(File jsonFile) {
         this();
+        this.jsonFile = jsonFile; // Store the JSON file reference
         loadImagesFromJson(jsonFile);
     }
 
@@ -112,7 +121,65 @@ public class TimelinePanel extends javax.swing.JPanel {
                 updateCard();
             }
         });
+        initializeContextMenu();
     }
+    
+        private void initializeContextMenu() {
+        contextMenu = new JPopupMenu();
+        removeMenuItem = new JMenuItem("Remove");
+
+        removeMenuItem.addActionListener(e -> removeSelectedImage());
+
+        contextMenu.add(removeMenuItem);
+
+        imageList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    showContextMenu(e);
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    showContextMenu(e);
+                }
+            }
+        });
+    }
+    
+    private void showContextMenu(MouseEvent e) {
+        int index = imageList.locationToIndex(e.getPoint());
+        if (index != -1) {
+            imageList.setSelectedIndex(index); // Select the item under right-click
+            contextMenu.show(imageList, e.getX(), e.getY());
+        }
+    }
+    
+    private void removeSelectedImage() {
+        int selectedIndex = imageList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            listModel.remove(selectedIndex);
+            updateJsonFile();
+        }
+    }
+
+    private void updateJsonFile() {
+        if (jsonFile == null) return;
+
+        JSONArray jsonArray = new JSONArray();
+        for (int i = 0; i < listModel.size(); i++) {
+            jsonArray.put(listModel.get(i).getAbsolutePath());
+        }
+
+        try (FileWriter writer = new FileWriter(jsonFile)) {
+            writer.write(jsonArray.toString(4)); // Pretty-print JSON with indentation
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
     
     // Loads image file paths from a JSON file
     public void loadImagesFromJson(File jsonFile) {
@@ -166,7 +233,7 @@ public class TimelinePanel extends javax.swing.JPanel {
     public JList<File> getImageList() {
         return imageList;
     }
-
+    
     // --- Custom Cell Renderer for Thumbnails ---
     private static class ImageListCellRenderer extends JLabel implements ListCellRenderer<File> {
         public ImageListCellRenderer() {
