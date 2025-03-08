@@ -20,6 +20,8 @@ import javax.swing.SwingConstants;
 import java.awt.datatransfer.*;
 import java.awt.image.BufferedImage;
 import java.io.FileReader;
+import static javax.swing.TransferHandler.COPY_OR_MOVE;
+import static javax.swing.TransferHandler.MOVE;
 import javax.swing.border.LineBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -141,7 +143,7 @@ public class TimelinePanel extends javax.swing.JPanel {
         }
     }
 
-    // Method to update the timeline with a new list of images
+    // Sets the timeline images.
     public void setImages(List<File> images) {
         listModel.clear();
         if (images != null) {
@@ -152,7 +154,7 @@ public class TimelinePanel extends javax.swing.JPanel {
         updateCard();
     }
 
-    // Retrieve the current ordering from the timeline
+    // Retrieves the current ordering.
     public List<File> getImages() {
         List<File> images = new ArrayList<>();
         for (int i = 0; i < listModel.getSize(); i++) {
@@ -204,7 +206,7 @@ public class TimelinePanel extends javax.swing.JPanel {
         }
     }
 
-    // --- TransferHandler for Reordering Items in the JList ---
+    // --- TransferHandler for Drag-and-Drop Reordering ---
     private static class ListItemTransferHandler extends TransferHandler {
         private int[] indices = null; // Stores the indices of the dragged items.
         private int addIndex = -1;    // Stores the index where items are dropped.

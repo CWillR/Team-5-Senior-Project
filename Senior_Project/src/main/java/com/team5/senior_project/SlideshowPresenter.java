@@ -89,7 +89,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error loading slideshow: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-    }
+    }   
     
     /**
      * This method is called from within the constructor to initialize the form.

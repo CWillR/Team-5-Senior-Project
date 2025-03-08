@@ -12,7 +12,6 @@ import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +37,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private int index = 0; // image list index
     private Preferences prefs = Preferences.userNodeForPackage(SlideshowCreator.class);
     private List<Slide> slides = new ArrayList<>();
-    private com.team5.senior_project.SlideShowFileManager slideShowFileManager = new com.team5.senior_project.SlideShowFileManager();
+    private SlideShowFileManager slideShowFileManager = new SlideShowFileManager();
     private String audioPath = null;
     private boolean loop = true;
     private File currentSlideshowFile = null;
@@ -118,8 +117,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
             updateImageFiles(imageFiles);
 
         } catch (IOException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Error loading slideshow settings.", "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading slideshow settings.", "Error", JOptionPane.ERROR_MESSAGE);
         } catch (org.json.JSONException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Invalid JSON format in slideshow settings.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -375,11 +374,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
         });
     }//GEN-LAST:event_DarkModeActionPerformed
-
 //GEN-FIRST:event_openFileMenuItemActionPerformed
- 
 //GEN-LAST:event_openFileMenuItemActionPerformed
-
     // Overwrites the currently working file as long as it exists in the folder already, allowing easy updates
     private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuItemActionPerformed
         if (currentSlideshowName == null) {
@@ -449,8 +445,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
                         .asBufferedImage();
                     return new ImageIcon(thumbnail);
                 } catch (IOException e) {
-                        e.printStackTrace();
-                        return null; // Handle error, maybe return a default icon
+                    e.printStackTrace();
+                    return null; // Handle error, maybe return a default icon
                 }
             }
 
