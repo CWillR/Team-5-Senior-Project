@@ -6,39 +6,27 @@ package com.team5.senior_project;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
-import java.awt.Image;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.util.prefs.Preferences;
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JFileChooser;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileView;
-import java.util.prefs.Preferences;
-import java.awt.BorderLayout;
-import java.awt.image.BufferedImage;
-import javax.swing.DefaultListModel;
-import javax.swing.JOptionPane;
 import net.coobird.thumbnailator.Thumbnails;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.awt.image.BufferedImage;
 
 /**
  *
@@ -56,7 +44,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private File currentSlideshowFile = null;
     private TimelinePanel timelinePanelObject; // Declare it
     private String currentSlideshowName = null; // Class-level variable
-    
     
     /**
      * Creates new form SlideshowCreator
