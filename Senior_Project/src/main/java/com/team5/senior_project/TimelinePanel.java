@@ -336,7 +336,7 @@ public class TimelinePanel extends javax.swing.JPanel {
             throw new UnsupportedFlavorException(flavor); // Throw exception if flavor is not supported.
         }
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

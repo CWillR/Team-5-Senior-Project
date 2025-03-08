@@ -58,6 +58,16 @@ public class SlideshowCreator extends javax.swing.JFrame {
         // Set the timeline change listener so that any reordering refreshes the main image display.
         timelinePanelObject.setTimelineChangeListener(() -> {
             updateImage();
+        });      
+        
+        // Add selection listener for image changes
+        timelinePanelObject.getImageList().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) { // Ensure it's not firing multiple times unnecessarily
+                File selectedFile = timelinePanelObject.getImageList().getSelectedValue();
+                if (selectedFile != null) {
+                    updateImage(selectedFile);
+                }
+            }
         });
     }
     
@@ -171,34 +181,42 @@ public class SlideshowCreator extends javax.swing.JFrame {
         //timelineList.setModel(listModel);
     }
     
-    private void updateImage() {
-        if (imageFiles != null && !imageFiles.isEmpty() && index >= 0 && index < imageFiles.size()) {
-            File imageFile = imageFiles.get(index);
-            int labelWidth = imageLabel.getWidth();
-            int labelHeight = imageLabel.getHeight();
-            if (labelWidth <= 0 || labelHeight <= 0) {
-                labelWidth = imageLabel.getPreferredSize().width;
-                labelHeight = imageLabel.getPreferredSize().height;
-            }
-
-            ImageIcon originalIcon = new ImageIcon(imageFile.getAbsolutePath());
-            Image originalImage = originalIcon.getImage();
-
-            double widthRatio = (double) labelWidth / originalImage.getWidth(null);
-            double heightRatio = (double) labelHeight / originalImage.getHeight(null);
-            double scaleRatio = Math.min(widthRatio, heightRatio);
-
-            int newWidth = (int) (originalImage.getWidth(null) * scaleRatio);
-            int newHeight = (int) (originalImage.getHeight(null) * scaleRatio);
-
-            Image resizedImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-            ImageIcon resizedIcon = new ImageIcon(resizedImage);
-
-            imageLabel.setIcon(resizedIcon);
-
-            imageLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-            imageLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+    public void updateImage() {
+        if (!timelinePanelObject.getImages().isEmpty()) {
+            updateImage(timelinePanelObject.getImages().get(0)); // Load first image initially
         }
+    }
+
+    
+    private void updateImage(File selectedFile) {
+        if (selectedFile == null || !selectedFile.exists()) {
+            imageLabel.setIcon(null);
+            return;
+        }
+
+        int labelWidth = imageLabel.getWidth();
+        int labelHeight = imageLabel.getHeight();
+        if (labelWidth <= 0 || labelHeight <= 0) {
+            labelWidth = imageLabel.getPreferredSize().width;
+            labelHeight = imageLabel.getPreferredSize().height;
+        }
+
+        ImageIcon originalIcon = new ImageIcon(selectedFile.getAbsolutePath());
+        Image originalImage = originalIcon.getImage();
+
+        double widthRatio = (double) labelWidth / originalImage.getWidth(null);
+        double heightRatio = (double) labelHeight / originalImage.getHeight(null);
+        double scaleRatio = Math.min(widthRatio, heightRatio);
+
+        int newWidth = (int) (originalImage.getWidth(null) * scaleRatio);
+        int newHeight = (int) (originalImage.getHeight(null) * scaleRatio);
+
+        Image resizedImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+        ImageIcon resizedIcon = new ImageIcon(resizedImage);
+
+        imageLabel.setIcon(resizedIcon);
+        imageLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        imageLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
     }
     
     private void displaySlide(int index) {
@@ -564,9 +582,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private String promptForSlideshowName() {
         return JOptionPane.showInputDialog(this, "Enter Slideshow Name:", "Save Slideshow", JOptionPane.PLAIN_MESSAGE);
     }
-    
-    
-    
+        
     /**
      * @param args the command line arguments
      */    
