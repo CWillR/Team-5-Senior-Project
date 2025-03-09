@@ -34,7 +34,9 @@ import java.awt.image.BufferedImage;
 public class SlideshowCreator extends javax.swing.JFrame {
     
     private List<File> imageFiles = new ArrayList<>(); // image list
-    private int index = 0; // image list index
+    private List<File> audioFiles = new ArrayList<>(); // audio list
+    private int index = 0; // image list index (now defunct and can likely be removed)
+    private int audioIndex = 0; // tracks current audio track
     private Preferences prefs = Preferences.userNodeForPackage(SlideshowCreator.class);
     private List<Slide> slides = new ArrayList<>();
     private SlideShowFileManager slideShowFileManager = new SlideShowFileManager();
@@ -250,6 +252,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
         ThemesButton = new javax.swing.JMenu();
         LightMode = new javax.swing.JMenuItem();
         DarkMode = new javax.swing.JMenuItem();
+        audioMenu = new javax.swing.JMenu();
+        addAudioFileMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Slideshow Creator");
@@ -329,6 +333,18 @@ public class SlideshowCreator extends javax.swing.JFrame {
         ThemesButton.add(DarkMode);
 
         menuBar.add(ThemesButton);
+
+        audioMenu.setText("Audio");
+
+        addAudioFileMenuItem.setText("Add Audio File");
+        addAudioFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addAudioFileMenuItemActionPerformed(evt);
+            }
+        });
+        audioMenu.add(addAudioFileMenuItem);
+
+        menuBar.add(audioMenu);
 
         setJMenuBar(menuBar);
 
@@ -436,6 +452,30 @@ public class SlideshowCreator extends javax.swing.JFrame {
         System.exit(0); // Terminate the application
     }//GEN-LAST:event_exitMenuItemActionPerformed
 
+    private void addAudioFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addAudioFileMenuItemActionPerformed
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setMultiSelectionEnabled(true);
+        fileChooser.setFileFilter(new FileNameExtensionFilter("WAV Audio Files", "wav"));
+
+        int returnValue = fileChooser.showOpenDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            for (File file : fileChooser.getSelectedFiles()) {
+                addAudioFile(file);
+            }
+        }
+    }//GEN-LAST:event_addAudioFileMenuItemActionPerformed
+
+    public void addAudioFile(File audioFile) {
+    if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
+        audioFiles.add(audioFile);
+        if (audioFiles.size() == 1) {
+            audioIndex = 0; // Set to first file if it's the first one added
+        }
+    } else {
+        System.out.println("Invalid file format. Only .wav files are supported.");
+    }
+}
+    
     private JFileChooser createFileChooser(int selectionMode, boolean multiSelection) {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(selectionMode);
@@ -623,6 +663,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JMenuItem LightMode;
     private javax.swing.JMenu ThemesButton;
     private javax.swing.JPanel TimelinePanel;
+    private javax.swing.JMenuItem addAudioFileMenuItem;
+    private javax.swing.JMenu audioMenu;
     private javax.swing.JMenuItem createNewSlideMenuItem;
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JLabel imageLabel;
