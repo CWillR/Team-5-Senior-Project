@@ -94,10 +94,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
         String filePath = file.getAbsolutePath();
         String slideshowName = file.getName().replaceFirst("[.][^.]+$", ""); // Extract name without extension
         List<Slide> slides = getSlides();
-        String audioPath = getAudioPath();
         boolean loop = isLoop();
 
-        SlideshowSettingsSaver.saveSettingsToJson(filePath, slideshowName, slides, audioPath, loop);
+        SlideshowSettingsSaver.saveSettingsToJson(filePath, slideshowName, slides, audioFiles, loop);
     }
        
     private void loadSlideshowSettings(File file) {
@@ -219,16 +218,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
         imageLabel.setIcon(resizedIcon);
         imageLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         imageLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
-    }
-    
-    private void displaySlide(int index) {
-        if (index >= 0 && index < slides.size()) {
-            Slide slide = slides.get(index);
-            String imagePath = slide.getImagePath();
-            ImageIcon imageIcon = new ImageIcon(imagePath);
-            Image image = imageIcon.getImage().getScaledInstance(imageLabel.getWidth(), imageLabel.getHeight(), Image.SCALE_SMOOTH);
-            imageLabel.setIcon(new ImageIcon(image));
-        }
     }
     
     /**
@@ -557,6 +546,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             File targetFile = new File(targetFolder, selectedFile.getName());
             targetFile = avoidDuplicateFileNames(targetFile, selectedFile, targetFolder);
             copyImageFile(selectedFile, newImages, targetFile);
+                       
         }
         updateImageFiles(newImages);
     }

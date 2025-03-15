@@ -32,4 +32,13 @@ public class SlideShowFileManager {
         }
         return imagesFolder;
     }
+    
+       public static File getAudioFolder(String slideshowName) {
+        File slideshowDir = getSlideshowDirectory(slideshowName); // Use getSlideshowDirectory
+        File audioFolder = new File(slideshowDir, "audio");
+        if (!audioFolder.exists()) {
+            audioFolder.mkdirs();
+        }
+        return audioFolder;
+    }
 }
