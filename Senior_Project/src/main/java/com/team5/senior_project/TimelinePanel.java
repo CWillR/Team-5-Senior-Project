@@ -25,6 +25,11 @@ import javax.swing.border.LineBorder;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.datatransfer.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
@@ -64,21 +69,47 @@ public class TimelinePanel extends JPanel {
         imageList.setDragEnabled(true);
         imageList.setDropMode(DropMode.INSERT);
         imageList.setTransferHandler(new ListItemTransferHandler());
+
+        setLayout(new BorderLayout());
+        add(new JScrollPane(imageList), BorderLayout.CENTER);
         
-        // Create a scroll pane for the image list.
-        JScrollPane listScrollPane = new JScrollPane(imageList);
-        add(listScrollPane, CARD_LIST);
+        JPopupMenu popupMenu = new JPopupMenu();
+        JMenuItem removeItem = new JMenuItem("Remove");
         
-        // Create a placeholder label for an empty timeline.
-        placeholderLabel = new JLabel("Drop images here to start timeline", SwingConstants.CENTER);
-        placeholderLabel.setOpaque(true);
-        placeholderLabel.setBackground(Color.LIGHT_GRAY);
-        add(placeholderLabel, CARD_PLACEHOLDER);
-        
-        // Initially show placeholder if no images are present.
-        updateCard();
-        
-        // Listen for changes in the model to update the card.
+        removeItem.addActionListener(e -> {
+            int selectedIndex = imageList.getSelectedIndex();
+            if (selectedIndex != -1) {
+                listModel.remove(selectedIndex);
+                if (timelineChangeListener != null) {
+                    timelineChangeListener.onTimelineChanged();
+                }
+            }
+        });
+
+        popupMenu.add(removeItem);
+
+        imageList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                showPopup(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                showPopup(e);
+            }
+
+            private void showPopup(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    int index = imageList.locationToIndex(e.getPoint());
+                    if (index != -1) {
+                        imageList.setSelectedIndex(index); // Ensure right-click selects item
+                        popupMenu.show(imageList, e.getX(), e.getY());
+                    }
+                }
+            }
+        });
+
         listModel.addListDataListener(new ListDataListener() {
             @Override
             public void intervalAdded(ListDataEvent e) {
