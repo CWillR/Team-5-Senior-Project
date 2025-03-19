@@ -439,8 +439,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     // Launches presenter application
     private void presenterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_presenterButtonActionPerformed
        if (imageFiles != null && imageFiles.length > 0) {
-            // Show each image for 5000 milliseconds (5 seconds) and loop the slideshow
-            new SlideshowPresenter(imageFiles, 5000).setVisible(true);
+            new SlideshowPresenter(imageFiles, 3000, true).setVisible(true);
         } else {
             JOptionPane.showMessageDialog(this, "No images to present.");
         }
