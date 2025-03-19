@@ -14,6 +14,7 @@ import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractAction;
@@ -165,14 +166,18 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     }
     
     // Loads built slideshow into the SlideShowPresenter JLabel
-    private void loadSlideshow(File file) {
-        slides.clear();
-        currentSlideIndex = 0;
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            StringBuilder jsonContent = new StringBuilder();
+    private void loadSlideshow(File loadFile) {
+        List<File> loadedImages = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(loadFile))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                jsonContent.append(line);
+                File imageFile = new File(line);
+                if (imageFile.exists()) {
+                    loadedImages.add(imageFile);
+                } else {
+                    System.err.println("Warning: File not found: " + line);
+                }
             }
 
             if (!loadedImages.isEmpty()) {
@@ -195,30 +200,12 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                 slideShowTimer.start();
 
             } else {
-                System.out.println("  Audio: null");
+                System.err.println("No valid images found in the slideshow file.");
             }
 
-            JSONArray slidesArray = slideshowJson.getJSONArray("slides");
-            for (int i = 0; i < slidesArray.length(); i++) {
-                JSONObject slideJson = slidesArray.getJSONObject(i);
-                String imagePath = slideJson.getString("image");
-                int duration = slideJson.getInt("duration");
-                String transition = slideJson.getString("transition");
-                int interval = slideJson.optInt("interval", 0);
-
-                // Print slide-level settings for testing
-                System.out.println("\n  Slide " + (i + 1) + ":");
-                System.out.println("    Image: " + imagePath);
-                System.out.println("    Duration: " + duration);
-                System.out.println("    Transition: " + transition);
-                System.out.println("    Interval: " + interval);
-
-                slides.add(new Slide(imagePath, duration, transition, interval));
-            }
-            updateSlide();
-        } catch (Exception e) {
+        } catch (IOException e) {
+            System.err.println("Error loading slideshow: " + e.getMessage());
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error loading slideshow: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -263,7 +250,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
 
         imageLabel = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
-        fileMenu = new javax.swing.JMenu();
+        jMenu1 = new javax.swing.JMenu();
         openSlideMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -277,9 +264,9 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                 openSlideMenuItemActionPerformed(evt);
             }
         });
-        fileMenu.add(openSlideMenuItem);
+        jMenu1.add(openSlideMenuItem);
 
-        jMenuBar1.add(fileMenu);
+        jMenuBar1.add(jMenu1);
 
         setJMenuBar(jMenuBar1);
 
@@ -350,6 +337,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel imageLabel;
+    private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuItem openSlideMenuItem;
     // End of variables declaration//GEN-END:variables

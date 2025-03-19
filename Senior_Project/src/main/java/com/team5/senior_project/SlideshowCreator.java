@@ -363,8 +363,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
     
     // Launches presenter application
     private void presenterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_presenterButtonActionPerformed
-       if (imageFiles != null && imageFiles.length > 0) {
-            new SlideshowPresenter(imageFiles, 3000, true).setVisible(true);
+        if (imageFiles != null && !imageFiles.isEmpty()) {
+            File[] imageArray = imageFiles.toArray(new File[0]);
+            new SlideshowPresenter(imageArray, 3000, true).setVisible(true);
         } else {
             JOptionPane.showMessageDialog(this, "No images to present.");
         }
