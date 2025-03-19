@@ -8,11 +8,13 @@ import java.io.File;
 
 public class SlideshowPresenter extends JFrame {
     private JLabel imageLabel;
+    private JLabel pausedLabel; // Label to indicate paused state
     private File[] imageFiles;
     private int currentIndex = 0;
     private Timer timer;
     private int duration; // Duration for each slide in milliseconds
     private boolean loop; // If true, slideshow loops; if false, window closes when finished
+    private boolean paused = false; // Whether the slideshow is paused
 
     /**
      * Constructor that accepts the images to display, the duration (in milliseconds) 
@@ -27,22 +29,73 @@ public class SlideshowPresenter extends JFrame {
         this.duration = duration;
         this.loop = loop;
         initComponents();
+        initKeyBindings();
         startSlideshow();
     }
     
     private void initComponents() {
+        // Create a main panel with an OverlayLayout so components overlap
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new OverlayLayout(mainPanel));
+        
+        // Create the image label that fills the panel.
         imageLabel = new JLabel();
+        imageLabel.setAlignmentX(0.5f);
+        imageLabel.setAlignmentY(0.5f);
         imageLabel.setHorizontalAlignment(JLabel.CENTER);
         imageLabel.setVerticalAlignment(JLabel.CENTER);
-        add(imageLabel, BorderLayout.CENTER);
         
+        // Create the paused label, centered, with a larger font.
+        pausedLabel = new JLabel("Paused");
+        pausedLabel.setFont(new Font("SansSerif", Font.BOLD, 36));
+        pausedLabel.setForeground(Color.WHITE);
+        pausedLabel.setOpaque(false); // Transparent background
+        pausedLabel.setAlignmentX(0.5f);
+        pausedLabel.setAlignmentY(0.5f);
+        pausedLabel.setVisible(false); // Initially hidden
+        
+        // Add components to the main panel. The later added component is on top.
+        mainPanel.add(pausedLabel);
+        mainPanel.add(imageLabel);
+        
+        setContentPane(mainPanel);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setTitle("Slideshow Presenter");
-        setSize(800, 600);  // Adjust the size as needed
+        setSize(800, 600);
         setLocationRelativeTo(null);
     }
     
-    // Starts the timer to change images at the specified duration
+    // Set up key bindings for arrow keys and spacebar.
+    private void initKeyBindings() {
+        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getRootPane().getActionMap();
+        
+        inputMap.put(KeyStroke.getKeyStroke("RIGHT"), "nextImage");
+        actionMap.put("nextImage", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                nextImage();
+            }
+        });
+        
+        inputMap.put(KeyStroke.getKeyStroke("LEFT"), "previousImage");
+        actionMap.put("previousImage", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                previousImage();
+            }
+        });
+        
+        inputMap.put(KeyStroke.getKeyStroke("SPACE"), "togglePause");
+        actionMap.put("togglePause", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                togglePause();
+            }
+        });
+    }
+    
+    // Starts the timer to change images at the specified duration.
     private void startSlideshow() {
         if (imageFiles == null || imageFiles.length == 0) {
             JOptionPane.showMessageDialog(this, "No images to display.");
@@ -52,41 +105,83 @@ public class SlideshowPresenter extends JFrame {
         timer = new Timer(duration, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                currentIndex++;
-                if (currentIndex < imageFiles.length) {
-                    showImage(currentIndex);
-                } else {
-                    if (loop) {
-                        currentIndex = 0;
-                        showImage(currentIndex);
-                    } else {
-                        timer.stop(); // Stop the slideshow
-                        dispose();    // Close the presenter window
-                    }
-                }
+                advanceSlide();
             }
         });
         timer.start();
     }
     
-    // Displays the image at the given index, scaling it to fit the label
+    // Advances to the next slide.
+    private void advanceSlide() {
+        currentIndex++;
+        if (currentIndex < imageFiles.length) {
+            showImage(currentIndex);
+        } else {
+            if (loop) {
+                currentIndex = 0;
+                showImage(currentIndex);
+            } else {
+                timer.stop();
+                dispose();
+            }
+        }
+    }
+    
+    // Shows the previous image.
+    private void previousImage() {
+        resetTimer();
+        currentIndex--;
+        if (currentIndex < 0) {
+            currentIndex = loop ? imageFiles.length - 1 : 0;
+        }
+        showImage(currentIndex);
+    }
+    
+    // Shows the next image.
+    private void nextImage() {
+        resetTimer();
+        currentIndex++;
+        if (currentIndex >= imageFiles.length) {
+            currentIndex = loop ? 0 : imageFiles.length - 1;
+        }
+        showImage(currentIndex);
+    }
+    
+    // Toggles pause/resume state and updates the paused label.
+    private void togglePause() {
+        if (paused) {
+            timer.start();
+            pausedLabel.setVisible(false);
+        } else {
+            timer.stop();
+            pausedLabel.setVisible(true);
+        }
+        paused = !paused;
+    }
+    
+    // Resets the timer to restart the duration for the current slide.
+    private void resetTimer() {
+        if (timer != null) {
+            timer.restart();
+        }
+    }
+    
+    // Displays the image at the given index, scaling it to fit the panel.
     private void showImage(int index) {
         File imageFile = imageFiles[index];
         ImageIcon icon = new ImageIcon(imageFile.getAbsolutePath());
         Image image = icon.getImage();
         
-        // Get label dimensions
-        int labelWidth = imageLabel.getWidth();
-        int labelHeight = imageLabel.getHeight();
-        if (labelWidth <= 0 || labelHeight <= 0) {
-            // If the label isn’t laid out yet, fallback to frame dimensions.
-            labelWidth = getWidth();
-            labelHeight = getHeight();
+        // Use the current content pane dimensions for scaling.
+        int panelWidth = getContentPane().getWidth();
+        int panelHeight = getContentPane().getHeight();
+        if (panelWidth <= 0 || panelHeight <= 0) {
+            panelWidth = getWidth();
+            panelHeight = getHeight();
         }
         
-        // Calculate scaling while preserving the image's aspect ratio
-        double widthRatio = (double) labelWidth / image.getWidth(null);
-        double heightRatio = (double) labelHeight / image.getHeight(null);
+        double widthRatio = (double) panelWidth / image.getWidth(null);
+        double heightRatio = (double) panelHeight / image.getHeight(null);
         double scaleRatio = Math.min(widthRatio, heightRatio);
         int newWidth = (int) (image.getWidth(null) * scaleRatio);
         int newHeight = (int) (image.getHeight(null) * scaleRatio);
