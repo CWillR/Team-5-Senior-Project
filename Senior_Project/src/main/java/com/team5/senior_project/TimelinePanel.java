@@ -13,12 +13,15 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.TransferHandler;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 import java.awt.datatransfer.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 // Removed: import javax.activation.DataHandler;
@@ -68,7 +71,44 @@ public class TimelinePanel extends javax.swing.JPanel {
 
         setLayout(new BorderLayout());
         add(new JScrollPane(imageList), BorderLayout.CENTER);
+        
+        JPopupMenu popupMenu = new JPopupMenu();
+        JMenuItem removeItem = new JMenuItem("Remove");
+        
+        removeItem.addActionListener(e -> {
+            int selectedIndex = imageList.getSelectedIndex();
+            if (selectedIndex != -1) {
+                listModel.remove(selectedIndex);
+                if (timelineChangeListener != null) {
+                    timelineChangeListener.onTimelineChanged();
+                }
+            }
+        });
 
+        popupMenu.add(removeItem);
+
+        imageList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                showPopup(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                showPopup(e);
+            }
+
+            private void showPopup(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    int index = imageList.locationToIndex(e.getPoint());
+                    if (index != -1) {
+                        imageList.setSelectedIndex(index); // Ensure right-click selects item
+                        popupMenu.show(imageList, e.getX(), e.getY());
+                    }
+                }
+            }
+        });
+        
         // ListDataListener to notify when the list changes (reordering, additions, removals)
         listModel.addListDataListener(new ListDataListener() {
             @Override
