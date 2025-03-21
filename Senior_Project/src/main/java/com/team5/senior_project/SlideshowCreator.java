@@ -117,7 +117,13 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
             JSONObject json = new JSONObject(jsonString);
             JSONArray slides = json.getJSONArray("slides"); // Corrected line: Use "slides"
-            List<File> imageFiles = new ArrayList<>();
+            //List<File> imageFiles = new ArrayList<>();
+            if (json.has("audio")) {
+                JSONArray audioArray = json.getJSONArray("audio");
+                for (int i = 0; i < audioArray.length(); i++) {
+                    audioFiles.add(new File(audioArray.getString(i)));
+                }
+            }
 
             for (int i = 0; i < slides.length(); i++) {
                 JSONObject slideObject = slides.getJSONObject(i);
@@ -126,6 +132,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 imageFiles.add(imageFile);
             }
             updateImageFiles(imageFiles);
+            
+            
 
         } catch (IOException e) {
             e.printStackTrace();
