@@ -255,7 +255,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         DarkMode = new javax.swing.JMenuItem();
         audioMenu = new javax.swing.JMenu();
         addAudioFileMenuItem = new javax.swing.JMenuItem();
-        jMenuItem1 = new javax.swing.JMenuItem();
+        playAudioMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Slideshow Creator");
@@ -346,13 +346,13 @@ public class SlideshowCreator extends javax.swing.JFrame {
         });
         audioMenu.add(addAudioFileMenuItem);
 
-        jMenuItem1.setText("Play Audio");
-        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+        playAudioMenuItem.setText("Play Audio");
+        playAudioMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jMenuItem1ActionPerformed(evt);
+                playAudioMenuItemActionPerformed(evt);
             }
         });
-        audioMenu.add(jMenuItem1);
+        audioMenu.add(playAudioMenuItem);
 
         menuBar.add(audioMenu);
 
@@ -475,7 +475,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_addAudioFileMenuItemActionPerformed
 
-    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+    private void playAudioMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playAudioMenuItemActionPerformed
         if (audioFiles != null && !audioFiles.isEmpty()) {
             Thread thread = new Thread(new Runnable() {
                 @Override
@@ -515,7 +515,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         } else {
             System.out.println("No audio files available.");
         }
-    }//GEN-LAST:event_jMenuItem1ActionPerformed
+    }//GEN-LAST:event_playAudioMenuItemActionPerformed
 
     public void addAudioFile(File audioFile) {
     if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
@@ -722,9 +722,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JLabel imageLabel;
     private javax.swing.JMenu jMenu;
-    private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JMenuItem openPreviousSlideMenuItem;
+    private javax.swing.JMenuItem playAudioMenuItem;
     private javax.swing.JButton presenterButton;
     private javax.swing.JMenuItem saveMenuItem;
     // End of variables declaration//GEN-END:variables
