@@ -1,15 +1,13 @@
 package com.team5.senior_project;
 
-import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
-import java.awt.CardLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
 import javax.swing.ImageIcon;
@@ -28,38 +26,62 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.datatransfer.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.FileReader;
+import java.io.FileWriter;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import static javax.swing.TransferHandler.COPY_OR_MOVE;
+import static javax.swing.TransferHandler.MOVE;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
+import net.coobird.thumbnailator.Thumbnails;
+import org.json.JSONArray;
 
-public class TimelinePanel extends JPanel {
+/**
+ * TimelinePanel displays a list of image thumbnails in a horizontal timeline
+ * and allows drag-and-drop reordering.
+ *
+ * @author Team 5
+ */
+public class TimelinePanel extends javax.swing.JPanel {
 
-    // Card names
+    // Card names for switching views.
     private final String CARD_LIST = "LIST";
     private final String CARD_PLACEHOLDER = "PLACEHOLDER";
-    
+
     private DefaultListModel<File> listModel;
     private JList<File> imageList;
     private JLabel placeholderLabel;
-    
-    // Toggle for showing image names in the timeline preview.
-    public static boolean SHOW_IMAGE_NAMES = false;
+    public static boolean SHOW_IMAGE_NAMES = false; // Toggle for showing image names in the timeline preview.
+    private JPopupMenu contextMenu;
+    private JMenuItem removeMenuItem;
+    private File jsonFile;
 
     // Listener interface for timeline changes.
     public interface TimelineChangeListener {
         void onTimelineChanged();
     }
     private TimelineChangeListener timelineChangeListener;
-    
+
     public void setTimelineChangeListener(TimelineChangeListener listener) {
         this.timelineChangeListener = listener;
     }
     
+    // Constructor that loads images from a JSON file.
+    public TimelinePanel(File jsonFile) {
+        this();
+        this.jsonFile = jsonFile; // Store the JSON file reference.
+        loadImagesFromJson(jsonFile);
+    }
+
+    /**
+     * Creates new form TimelinePanel
+     */
     public TimelinePanel() {
         // Use CardLayout to switch between list view and placeholder.
         setLayout(new CardLayout());
-        
+
         // Create the list model and image list.
         listModel = new DefaultListModel<>();
         imageList = new JList<>(listModel);
@@ -70,46 +92,19 @@ public class TimelinePanel extends JPanel {
         imageList.setDropMode(DropMode.INSERT);
         imageList.setTransferHandler(new ListItemTransferHandler());
 
-        setLayout(new BorderLayout());
-        add(new JScrollPane(imageList), BorderLayout.CENTER);
-        
-        JPopupMenu popupMenu = new JPopupMenu();
-        JMenuItem removeItem = new JMenuItem("Remove");
-        
-        removeItem.addActionListener(e -> {
-            int selectedIndex = imageList.getSelectedIndex();
-            if (selectedIndex != -1) {
-                listModel.remove(selectedIndex);
-                if (timelineChangeListener != null) {
-                    timelineChangeListener.onTimelineChanged();
-                }
-            }
-        });
+        // Create a scroll pane for the image list and add it as the list card.
+        JScrollPane listScrollPane = new JScrollPane(imageList);
+        add(listScrollPane, CARD_LIST);
 
-        popupMenu.add(removeItem);
+        // Create a placeholder label for an empty timeline.
+        placeholderLabel = new JLabel("Drop images here to start timeline", SwingConstants.CENTER);
+        placeholderLabel.setOpaque(true);
+        placeholderLabel.setBackground(Color.LIGHT_GRAY);
+        add(placeholderLabel, CARD_PLACEHOLDER);
+        // Initially show placeholder if no images are present.
+        updateCard();
 
-        imageList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                showPopup(e);
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                showPopup(e);
-            }
-
-            private void showPopup(MouseEvent e) {
-                if (e.isPopupTrigger()) {
-                    int index = imageList.locationToIndex(e.getPoint());
-                    if (index != -1) {
-                        imageList.setSelectedIndex(index); // Ensure right-click selects item
-                        popupMenu.show(imageList, e.getX(), e.getY());
-                    }
-                }
-            }
-        });
-
+        // Listen for changes in the model to update the visible card.
         listModel.addListDataListener(new ListDataListener() {
             @Override
             public void intervalAdded(ListDataEvent e) {
@@ -133,6 +128,77 @@ public class TimelinePanel extends JPanel {
                 updateCard();
             }
         });
+        initializeContextMenu();
+    }
+    
+    private void initializeContextMenu() {
+        contextMenu = new JPopupMenu();
+        removeMenuItem = new JMenuItem("Remove");
+        removeMenuItem.addActionListener(e -> removeSelectedImage());
+        contextMenu.add(removeMenuItem);
+
+        imageList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    showContextMenu(e);
+                }
+            }
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    showContextMenu(e);
+                }
+            }
+        });
+    }
+    
+    private void showContextMenu(MouseEvent e) {
+        int index = imageList.locationToIndex(e.getPoint());
+        if (index != -1) {
+            imageList.setSelectedIndex(index); // Select the item under right-click.
+            contextMenu.show(imageList, e.getX(), e.getY());
+        }
+    }
+    
+    private void removeSelectedImage() {
+        int selectedIndex = imageList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            listModel.remove(selectedIndex);
+            updateJsonFile();
+        }
+    }
+
+    private void updateJsonFile() {
+        if (jsonFile == null) return;
+        JSONArray jsonArray = new JSONArray();
+        for (int i = 0; i < listModel.size(); i++) {
+            jsonArray.put(listModel.get(i).getAbsolutePath());
+        }
+        try (FileWriter writer = new FileWriter(jsonFile)) {
+            writer.write(jsonArray.toString(4)); // Pretty-print JSON with indentation.
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    // Loads image file paths from a JSON file.
+    public void loadImagesFromJson(File jsonFile) {
+        try (FileReader reader = new FileReader(jsonFile)) {
+            StringBuilder content = new StringBuilder();
+            int i;
+            while ((i = reader.read()) != -1) {
+                content.append((char) i);
+            }
+            JSONArray jsonArray = new JSONArray(content.toString());
+            List<File> files = new ArrayList<>();
+            for (int j = 0; j < jsonArray.length(); j++) {
+                files.add(new File(jsonArray.getString(j)));
+            }
+            setImages(files);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     
     // Updates the visible card based on whether there are images.
@@ -179,10 +245,18 @@ public class TimelinePanel extends JPanel {
         @Override
         public Component getListCellRendererComponent(JList<? extends File> list, File value,
                                                       int index, boolean isSelected, boolean cellHasFocus) {
-            ImageIcon icon = new ImageIcon(value.getAbsolutePath());
-            // Scale the image to 100x100; adjust if needed.
-            Image image = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
-            setIcon(new ImageIcon(image));
+            try {
+                BufferedImage thumbnail = Thumbnails.of(value)
+                        .size(100, 100)
+                        .imageType(BufferedImage.TYPE_INT_RGB)
+                        .keepAspectRatio(true)
+                        .asBufferedImage();
+                setIcon(new ImageIcon(thumbnail));
+            } catch (IOException e) {
+                e.printStackTrace();
+                setText("Error");
+                setIcon(null);
+            }
             setText(SHOW_IMAGE_NAMES ? value.getName() : "");
             if (isSelected) {
                 setBorder(new LineBorder(Color.BLUE, 2));
@@ -197,12 +271,13 @@ public class TimelinePanel extends JPanel {
     
     // --- TransferHandler for Drag-and-Drop Reordering ---
     private static class ListItemTransferHandler extends TransferHandler {
-        private int[] indices = null;
-        private int addIndex = -1;
-        private int addCount = 0;
+        private int[] indices = null; // Stores the indices of the dragged items.
+        private int addIndex = -1;    // Stores the index where items are dropped.
+        private int addCount = 0;     // Stores the number of items added during the drop.
         
         @Override
         protected Transferable createTransferable(JComponent c) {
+            // Creates a Transferable object containing the selected items.
             JList<?> list = (JList<?>) c;
             indices = list.getSelectedIndices();
             List<?> values = list.getSelectedValuesList();
@@ -211,9 +286,10 @@ public class TimelinePanel extends JPanel {
         
         @Override
         public int getSourceActions(JComponent c) {
+            // Allows both copying and moving items.
             return COPY_OR_MOVE;
         }
-
+        
         @Override
         public boolean canImport(TransferHandler.TransferSupport info) {
             return info.isDataFlavorSupported(ListTransferable.localFlavor)
@@ -316,4 +392,24 @@ public class TimelinePanel extends JPanel {
             throw new UnsupportedFlavorException(flavor);
         }
     }
+    
+    // Auto-generated initComponents method.
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 400, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 300, Short.MAX_VALUE)
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // End of variables declaration//GEN-END:variables
 }
