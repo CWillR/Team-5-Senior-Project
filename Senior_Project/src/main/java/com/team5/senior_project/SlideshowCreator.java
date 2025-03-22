@@ -26,6 +26,10 @@ import java.util.logging.Logger;
 import javax.swing.filechooser.FileView;
 import net.coobird.thumbnailator.Thumbnails;
 import java.awt.image.BufferedImage;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineEvent;
 
 /**
  *
@@ -34,7 +38,9 @@ import java.awt.image.BufferedImage;
 public class SlideshowCreator extends javax.swing.JFrame {
     
     private List<File> imageFiles = new ArrayList<>(); // image list
-    private int index = 0; // image list index
+    private List<File> audioFiles = new ArrayList<>(); // audio list
+    private int index = 0; // image list index (now defunct and can likely be removed)
+    private int audioIndex = 0; // tracks current audio track
     private Preferences prefs = Preferences.userNodeForPackage(SlideshowCreator.class);
     private List<Slide> slides = new ArrayList<>();
     private SlideShowFileManager slideShowFileManager = new SlideShowFileManager();
@@ -92,10 +98,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
         String filePath = file.getAbsolutePath();
         String slideshowName = file.getName().replaceFirst("[.][^.]+$", ""); // Extract name without extension
         List<Slide> slides = getSlides();
-        String audioPath = getAudioPath();
         boolean loop = isLoop();
 
-        SlideshowSettingsSaver.saveSettingsToJson(filePath, slideshowName, slides, audioPath, loop);
+        SlideshowSettingsSaver.saveSettingsToJson(filePath, slideshowName, slides, audioFiles, loop);
     }
        
     private void loadSlideshowSettings(File file) {
@@ -116,7 +121,13 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
             JSONObject json = new JSONObject(jsonString);
             JSONArray slides = json.getJSONArray("slides"); // Corrected line: Use "slides"
-            List<File> imageFiles = new ArrayList<>();
+            //List<File> imageFiles = new ArrayList<>();
+            if (json.has("audio")) {
+                JSONArray audioArray = json.getJSONArray("audio");
+                for (int i = 0; i < audioArray.length(); i++) {
+                    audioFiles.add(new File(audioArray.getString(i)));
+                }
+            }
 
             for (int i = 0; i < slides.length(); i++) {
                 JSONObject slideObject = slides.getJSONObject(i);
@@ -125,6 +136,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 imageFiles.add(imageFile);
             }
             updateImageFiles(imageFiles);
+            
+            
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -219,16 +232,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
         imageLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
     }
     
-    private void displaySlide(int index) {
-        if (index >= 0 && index < slides.size()) {
-            Slide slide = slides.get(index);
-            String imagePath = slide.getImagePath();
-            ImageIcon imageIcon = new ImageIcon(imagePath);
-            Image image = imageIcon.getImage().getScaledInstance(imageLabel.getWidth(), imageLabel.getHeight(), Image.SCALE_SMOOTH);
-            imageLabel.setIcon(new ImageIcon(image));
-        }
-    }
-    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -250,6 +253,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
         ThemesButton = new javax.swing.JMenu();
         LightMode = new javax.swing.JMenuItem();
         DarkMode = new javax.swing.JMenuItem();
+        audioMenu = new javax.swing.JMenu();
+        addAudioFileMenuItem = new javax.swing.JMenuItem();
+        playAudioMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Slideshow Creator");
@@ -329,6 +335,26 @@ public class SlideshowCreator extends javax.swing.JFrame {
         ThemesButton.add(DarkMode);
 
         menuBar.add(ThemesButton);
+
+        audioMenu.setText("Audio");
+
+        addAudioFileMenuItem.setText("Add Audio File");
+        addAudioFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addAudioFileMenuItemActionPerformed(evt);
+            }
+        });
+        audioMenu.add(addAudioFileMenuItem);
+
+        playAudioMenuItem.setText("Play Audio");
+        playAudioMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                playAudioMenuItemActionPerformed(evt);
+            }
+        });
+        audioMenu.add(playAudioMenuItem);
+
+        menuBar.add(audioMenu);
 
         setJMenuBar(menuBar);
 
@@ -441,6 +467,72 @@ public class SlideshowCreator extends javax.swing.JFrame {
         System.exit(0); // Terminate the application
     }//GEN-LAST:event_exitMenuItemActionPerformed
 
+    private void addAudioFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addAudioFileMenuItemActionPerformed
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setMultiSelectionEnabled(true);
+        fileChooser.setFileFilter(new FileNameExtensionFilter("WAV Audio Files", "wav"));
+
+        int returnValue = fileChooser.showOpenDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            for (File file : fileChooser.getSelectedFiles()) {
+                addAudioFile(file);
+            }
+        }
+    }//GEN-LAST:event_addAudioFileMenuItemActionPerformed
+
+    private void playAudioMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playAudioMenuItemActionPerformed
+        if (audioFiles != null && !audioFiles.isEmpty()) {
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    for (File audioFile : audioFiles) {
+                        try {
+                            System.out.println("Playing file: " + audioFile.getAbsolutePath());
+                            AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+                            Clip clip = AudioSystem.getClip();
+                            clip.open(audioStream);
+
+                            final Object lock = new Object();
+                            clip.addLineListener(event -> {
+                                if (event.getType() == LineEvent.Type.STOP) {
+                                    synchronized (lock) {
+                                        lock.notify();
+                                    }
+                                }
+                            });
+
+                            clip.start();
+
+                            synchronized (lock) {
+                                lock.wait();
+                            }
+
+                            clip.close();
+                            audioStream.close();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            System.out.println("Error playing file: " + audioFile.getAbsolutePath());
+                        }
+                    }
+                }
+            });
+            thread.start();
+        } else {
+            System.out.println("No audio files available.");
+        }
+    }//GEN-LAST:event_playAudioMenuItemActionPerformed
+
+    public void addAudioFile(File audioFile) {
+    if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
+        audioFiles.add(audioFile);
+        if (audioFiles.size() == 1) {
+            audioIndex = 0; // Set to first file if it's the first one added
+        }
+    } else {
+        System.out.println("Invalid file format. Only .wav files are supported.");
+    }
+}
+    
     private JFileChooser createFileChooser(int selectionMode, boolean multiSelection) {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(selectionMode);
@@ -522,6 +614,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             File targetFile = new File(targetFolder, selectedFile.getName());
             targetFile = avoidDuplicateFileNames(targetFile, selectedFile, targetFolder);
             copyImageFile(selectedFile, newImages, targetFile);
+                       
         }
         updateImageFiles(newImages);
     }
@@ -628,12 +721,15 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JMenuItem LightMode;
     private javax.swing.JMenu ThemesButton;
     private javax.swing.JPanel TimelinePanel;
+    private javax.swing.JMenuItem addAudioFileMenuItem;
+    private javax.swing.JMenu audioMenu;
     private javax.swing.JMenuItem createNewSlideMenuItem;
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JLabel imageLabel;
     private javax.swing.JMenu jMenu;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JMenuItem openPreviousSlideMenuItem;
+    private javax.swing.JMenuItem playAudioMenuItem;
     private javax.swing.JButton presenterButton;
     private javax.swing.JMenuItem saveMenuItem;
     // End of variables declaration//GEN-END:variables
