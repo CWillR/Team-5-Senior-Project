@@ -26,6 +26,10 @@ import java.util.logging.Logger;
 import javax.swing.filechooser.FileView;
 import net.coobird.thumbnailator.Thumbnails;
 import java.awt.image.BufferedImage;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineEvent;
 
 /**
  *
@@ -251,6 +255,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         DarkMode = new javax.swing.JMenuItem();
         audioMenu = new javax.swing.JMenu();
         addAudioFileMenuItem = new javax.swing.JMenuItem();
+        jMenuItem1 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Slideshow Creator");
@@ -340,6 +345,14 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
         });
         audioMenu.add(addAudioFileMenuItem);
+
+        jMenuItem1.setText("Play Audio");
+        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem1ActionPerformed(evt);
+            }
+        });
+        audioMenu.add(jMenuItem1);
 
         menuBar.add(audioMenu);
 
@@ -461,6 +474,48 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_addAudioFileMenuItemActionPerformed
+
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+        if (audioFiles != null && !audioFiles.isEmpty()) {
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    for (File audioFile : audioFiles) {
+                        try {
+                            System.out.println("Playing file: " + audioFile.getAbsolutePath());
+                            AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+                            Clip clip = AudioSystem.getClip();
+                            clip.open(audioStream);
+
+                            final Object lock = new Object();
+                            clip.addLineListener(event -> {
+                                if (event.getType() == LineEvent.Type.STOP) {
+                                    synchronized (lock) {
+                                        lock.notify();
+                                    }
+                                }
+                            });
+
+                            clip.start();
+
+                            synchronized (lock) {
+                                lock.wait();
+                            }
+
+                            clip.close();
+                            audioStream.close();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            System.out.println("Error playing file: " + audioFile.getAbsolutePath());
+                        }
+                    }
+                }
+            });
+            thread.start();
+        } else {
+            System.out.println("No audio files available.");
+        }
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
 
     public void addAudioFile(File audioFile) {
     if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
@@ -667,6 +722,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JLabel imageLabel;
     private javax.swing.JMenu jMenu;
+    private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JMenuItem openPreviousSlideMenuItem;
     private javax.swing.JButton presenterButton;
