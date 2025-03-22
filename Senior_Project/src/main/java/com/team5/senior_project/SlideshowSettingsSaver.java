@@ -4,6 +4,7 @@
  */
 package com.team5.senior_project;
 
+import java.io.File;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.FileWriter;
@@ -12,13 +13,17 @@ import java.util.List;
 
 public class SlideshowSettingsSaver {
 
-    public static void saveSettingsToJson(String filePath, String slideshowName, List<Slide> slides, String audioPath, boolean loop) {
+    public static void saveSettingsToJson(String filePath, String slideshowName, List<Slide> slides, List<File> audioFiles, boolean loop) {
         JSONObject slideshowJson = new JSONObject();
         slideshowJson.put("name", slideshowName);
         slideshowJson.put("loop", loop);
 
-        if (audioPath != null && !audioPath.isEmpty()) {
-            slideshowJson.put("audio", audioPath);
+        if (audioFiles != null && !audioFiles.isEmpty()) {
+            JSONArray audioArray = new JSONArray();
+            for (File audioFile : audioFiles) {
+                audioArray.put(audioFile.getAbsolutePath());
+            }
+            slideshowJson.put("audio", audioArray);
         }
 
         JSONArray slidesArray = new JSONArray();
