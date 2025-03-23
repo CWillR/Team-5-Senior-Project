@@ -49,6 +49,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private File currentSlideshowFile = null;
     private TimelinePanel timelinePanelObject; // Declare it
     private String currentSlideshowName = null; // Class-level variable
+    private AudioTimelinePanel audioTimelinePanel;
     
     /**
      * Creates new form SlideshowCreator
@@ -57,10 +58,19 @@ public class SlideshowCreator extends javax.swing.JFrame {
         initComponents();
         applySavedTheme(); // Apply saved theme when starting
 
-        timelinePanelObject = new TimelinePanel(); // Initialize it
-        TimelinePanel.setLayout(new BorderLayout()); // Ensure layout is set
+        
+        timelinePanelObject = new TimelinePanel();
+        TimelinePanel.setLayout(new BorderLayout());
         TimelinePanel.add(timelinePanelObject, BorderLayout.CENTER);
-          
+
+        // Initialize audio timeline
+        audioTimelinePanel = new AudioTimelinePanel(audioFiles, calculateTotalSlideshowDuration());
+        TimelinePanel.add(audioTimelinePanel, BorderLayout.SOUTH); // Add audio bar
+
+        // Force a repaint
+        revalidate();
+        repaint();
+        
         // Set the timeline change listener so that any reordering refreshes the main image display.
         timelinePanelObject.setTimelineChangeListener(() -> {
             updateImage();
@@ -75,6 +85,30 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 }
             }
         });
+    }
+    
+    // Calculate total slideshow duration (assuming each image is shown for 5 seconds)
+    private int calculateTotalSlideshowDuration() {
+        int numImages = timelinePanelObject.getImages().size();
+        int imageDuration = 5; // Assume 5 seconds per image
+
+        int estimatedDuration = numImages * imageDuration;
+
+        // Ensure a reasonable minimum duration (e.g., 15 seconds)
+        return Math.max(estimatedDuration, 15);
+    }
+
+    // Update when images or audio change
+    private void updateAudioTimeline() {
+        if (audioTimelinePanel != null) {
+            TimelinePanel.remove(audioTimelinePanel); // Remove old panel
+        }
+
+        audioTimelinePanel = new AudioTimelinePanel(audioFiles, calculateTotalSlideshowDuration());
+        TimelinePanel.add(audioTimelinePanel, BorderLayout.SOUTH);
+
+        revalidate();
+        repaint();
     }
     
     // Want to move into own file later
@@ -127,6 +161,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 for (int i = 0; i < audioArray.length(); i++) {
                     audioFiles.add(new File(audioArray.getString(i)));
                 }
+                updateAudioTimeline();
             }
 
             for (int i = 0; i < slides.length(); i++) {
@@ -138,7 +173,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             updateImageFiles(imageFiles);
             
             
-
+            
         } catch (IOException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error loading slideshow settings.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -477,6 +512,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             for (File file : fileChooser.getSelectedFiles()) {
                 addAudioFile(file);
             }
+            updateAudioTimeline();
         }
     }//GEN-LAST:event_addAudioFileMenuItemActionPerformed
 
