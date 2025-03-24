@@ -30,6 +30,8 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  *
@@ -50,6 +52,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private TimelinePanel timelinePanelObject; // Declare it
     private String currentSlideshowName = null; // Class-level variable
     private AudioTimelinePanel audioTimelinePanel;
+    private boolean autoMode = false;
     
     /**
      * Creates new form SlideshowCreator
@@ -83,6 +86,17 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 if (selectedFile != null) {
                     updateImage(selectedFile);
                 }
+            }
+        });
+        
+        modeSelectionLabel.setVisible(false);
+        // Wait until called to make visible.
+        modeComboBox.setVisible(false);
+        // Initialize modeComboBox
+        modeComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                updateMode();
             }
         });
     }
@@ -138,6 +152,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }
        
     private void loadSlideshowSettings(File file) {
+        modeComboBox.setVisible(true);
+        modeSelectionLabel.setVisible(true);
         try {
             currentSlideshowName = file.getParentFile().getName();
             File slideshowDir = file.getParentFile();
@@ -267,6 +283,29 @@ public class SlideshowCreator extends javax.swing.JFrame {
         imageLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
     }
     
+    private void updateMode() {
+    String selectedMode = (String) modeComboBox.getSelectedItem();
+
+    if ("Change images manually".equals(selectedMode)) {
+        System.out.println("Manual Duration");
+        autoMode = false;
+        manualSlideChange(); // Call manualSlideChange() for Manual Preset
+    } else if ("Change images at a pre-set interval".equals(selectedMode)) {
+        System.out.println("Preset Duration");
+        autoMode = true;
+        autoSlideChange(); // Call autoSlideChange() for Duration Preset
+    }
+}
+     private void autoSlideChange() {
+        System.out.println("Preset Duration");
+        // Implement auto mode functionality here
+    }
+
+    private void manualSlideChange() {
+        System.out.println("Manual Duration");
+        // Implement stopping auto mode functionality here
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -279,6 +318,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
         presenterButton = new javax.swing.JButton();
         imageLabel = new javax.swing.JLabel();
         TimelinePanel = new javax.swing.JPanel();
+        modeSelectionLabel = new javax.swing.JLabel();
+        modeComboBox = new javax.swing.JComboBox<>();
         menuBar = new javax.swing.JMenuBar();
         jMenu = new javax.swing.JMenu();
         createNewSlideMenuItem = new javax.swing.JMenuItem();
@@ -312,6 +353,10 @@ public class SlideshowCreator extends javax.swing.JFrame {
             TimelinePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 149, Short.MAX_VALUE)
         );
+
+        modeSelectionLabel.setText("Select Automatic or Manual Slide Show");
+
+        modeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Manual Duration", "Preset Duration" }));
 
         menuBar.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
@@ -398,13 +443,20 @@ public class SlideshowCreator extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 584, Short.MAX_VALUE)
-                        .addComponent(presenterButton))
-                    .addComponent(TimelinePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addGap(0, 584, Short.MAX_VALUE)
+                                .addComponent(presenterButton))
+                            .addComponent(TimelinePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(modeSelectionLabel)
+                            .addComponent(modeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(25, 25, 25)
+                        .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -413,10 +465,17 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addGap(8, 8, 8)
                 .addComponent(presenterButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(TimelinePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(35, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(TimelinePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(35, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(modeSelectionLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(modeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
 
         pack();
@@ -653,6 +712,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
                        
         }
         updateImageFiles(newImages);
+        modeComboBox.setVisible(true);
+        modeSelectionLabel.setVisible(true);
     }
     
     private void clearExistingImages() {
@@ -764,6 +825,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JLabel imageLabel;
     private javax.swing.JMenu jMenu;
     private javax.swing.JMenuBar menuBar;
+    private javax.swing.JComboBox<String> modeComboBox;
+    private javax.swing.JLabel modeSelectionLabel;
     private javax.swing.JMenuItem openPreviousSlideMenuItem;
     private javax.swing.JMenuItem playAudioMenuItem;
     private javax.swing.JButton presenterButton;
