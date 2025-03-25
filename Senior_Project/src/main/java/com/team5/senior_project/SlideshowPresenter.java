@@ -79,22 +79,25 @@ public class SlideshowPresenter extends javax.swing.JFrame {
      * @param duration   Slide duration in milliseconds.
      * @param loop       If true, the slideshow will loop; if false, it stops on the last slide.
      */
-    public SlideshowPresenter(File[] imageFiles, int duration, boolean loop) {
+    public SlideshowPresenter(File[] imageFiles, int duration, boolean loop, boolean manualMode) {
         this(); // Call the no-argument constructor to initialize GUI components, key bindings, and pausedLabel.
         this.imageFiles = imageFiles;
+        this.manualMode = manualMode;
         if (imageFiles != null && imageFiles.length > 0) {
             updateImage();
-            slideShowTimer = new Timer(duration, new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    index[0] = (index[0] + 1) % imageFiles.length;
-                    updateImage();
-                    if (!loop && index[0] == imageFiles.length - 1) {
-                        slideShowTimer.stop();
+            if (!manualMode) {
+                slideShowTimer = new Timer(duration, new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        index[0] = (index[0] + 1) % imageFiles.length;
+                        updateImage();
+                        if (!loop && index[0] == imageFiles.length - 1) {
+                            slideShowTimer.stop();
+                        }
                     }
-                }
-            });
-            slideShowTimer.start();
+                });
+                slideShowTimer.start();
+            }
         }
     }
     
@@ -115,7 +118,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                 if (imageFiles != null && imageFiles.length > 0) {
                     index[0] = (index[0] + 1) % imageFiles.length;
                     updateImage();
-                    if (slideShowTimer != null) {
+                    if (!manualMode && slideShowTimer != null) {
                         slideShowTimer.restart();
                     }
                 }
@@ -130,7 +133,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                 if (imageFiles != null && imageFiles.length > 0) {
                     index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length;
                     updateImage();
-                    if (slideShowTimer != null) {
+                    if (!manualMode && slideShowTimer != null) {
                         slideShowTimer.restart();
                     }
                 }
