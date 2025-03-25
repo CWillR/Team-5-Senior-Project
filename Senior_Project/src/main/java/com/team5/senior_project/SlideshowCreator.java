@@ -20,7 +20,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.filechooser.FileView;
@@ -537,18 +539,51 @@ public class SlideshowCreator extends javax.swing.JFrame {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(selectionMode);
         fileChooser.setMultiSelectionEnabled(multiSelection);
-        FileNameExtensionFilter imageFilter = new FileNameExtensionFilter("Image files (*.jpg, *.jpeg, *.png, *.gif)", "jpg", "jpeg", "png", "gif");
+        FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
+                "Image files (*.jpg, *.jpeg, *.png, *.gif)", "jpg", "jpeg", "png", "gif");
         fileChooser.setFileFilter(imageFilter);
-        fileChooser.setFileView(createFileView());
+        fileChooser.setFileView(createFileView(fileChooser)); // Pass the file chooser instance
         return fileChooser;
     }
+
     
-    private FileView createFileView() {
+    private FileView createFileView(final JFileChooser chooser) {
         return new FileView() {
+            // Cache thumbnails...
+            private final Map<File, Icon> thumbnailCache = new HashMap<>();
+            private final Icon placeholderIcon = new ImageIcon(
+                    new BufferedImage(50, 50, BufferedImage.TYPE_INT_ARGB));
+    
             @Override
             public Icon getIcon(File f) {
                 if (f.isFile() && isImageFile(f)) {
-                    return getThumbnailIcon(f);
+                    Icon cachedIcon = thumbnailCache.get(f);
+                    if (cachedIcon != null) {
+                        return cachedIcon;
+                    } else {
+                        new SwingWorker<Icon, Void>() {
+                            @Override
+                            protected Icon doInBackground() {
+                                return getThumbnailIcon(f);
+                            }
+                            @Override
+                            protected void done() {
+                                try {
+                                    Icon icon = get();
+                                    if (icon != null) {
+                                        thumbnailCache.put(f, icon);
+                                        // Force the file chooser to repaint so the thumbnail appears immediately
+                                        SwingUtilities.invokeLater(() -> {
+                                            chooser.repaint();
+                                        });
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }.execute();
+                        return placeholderIcon;
+                    }
                 }
                 return super.getIcon(f);
             }
