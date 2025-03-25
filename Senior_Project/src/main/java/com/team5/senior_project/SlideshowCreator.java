@@ -492,8 +492,31 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-    
-    
+
+    // Launches presenter application
+    private void presenterButtonActionPerformed(java.awt.event.ActionEvent evt) {                                                
+        if (imageFiles != null && !imageFiles.isEmpty()) {
+            File[] imageArray = imageFiles.toArray(new File[0]);
+            new SlideshowPresenter(imageArray, 3000, true, false).setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(this, "No images to present.");
+        }
+    }                                               
+
+   
+    // Sets UI design to FlatLightLaf (light mode version of Flat Laf)
+    private void LightModeActionPerformed(java.awt.event.ActionEvent evt) {                                          
+        SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(new FlatLightLaf());
+                SwingUtilities.updateComponentTreeUI(this);
+                prefs.put("theme", "light"); // Save preference
+            } catch (UnsupportedLookAndFeelException ex) {
+                Logger.getLogger(SlideshowCreator.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+    }                                         
+
     // Sets UI design to FlatDarkLaf (dark mode version of Flat Laf)
     private void DarkModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DarkModeActionPerformed
         SwingUtilities.invokeLater(() -> {
@@ -533,15 +556,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
         saveSlideshowSettings(file);
     }//GEN-LAST:event_saveMenuItemActionPerformed
     
-    // Launches presenter application
-    private void presenterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_presenterButtonActionPerformed
-        if (imageFiles != null && !imageFiles.isEmpty()) {
-            File[] imageArray = imageFiles.toArray(new File[0]);
-            new SlideshowPresenter(imageArray, 3000, true).setVisible(true);
-        } else {
-            JOptionPane.showMessageDialog(this, "No images to present.");
-        }
-    }//GEN-LAST:event_presenterButtonActionPerformed
 
     // Allows user to save currently created slideshow
     private void createNewSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createNewSlideMenuItemActionPerformed
@@ -559,19 +573,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
         System.exit(0); // Terminate the application
     }//GEN-LAST:event_exitMenuItemActionPerformed
-
-    // Sets UI design to FlatLightLaf (light mode version of Flat Laf)
-    private void LightModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LightModeActionPerformed
-        SwingUtilities.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(new FlatLightLaf());
-                SwingUtilities.updateComponentTreeUI(this);
-                prefs.put("theme", "light"); // Save preference
-            } catch (UnsupportedLookAndFeelException ex) {
-                Logger.getLogger(SlideshowCreator.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        });
-    }//GEN-LAST:event_LightModeActionPerformed
     
     private void addAudioFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addAudioFileMenuItemActionPerformed
         JFileChooser fileChooser = new JFileChooser();
