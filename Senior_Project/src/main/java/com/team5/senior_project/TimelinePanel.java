@@ -6,7 +6,10 @@ import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
 import javax.swing.ImageIcon;
@@ -17,6 +20,8 @@ import javax.swing.JScrollPane;
 import javax.swing.TransferHandler;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
+
 import java.awt.datatransfer.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -236,6 +241,12 @@ public class TimelinePanel extends javax.swing.JPanel {
     
     // --- Custom Cell Renderer for Thumbnails ---
     private static class ImageListCellRenderer extends JLabel implements ListCellRenderer<File> {
+        // Shared cache for thumbnails
+        private static final Map<File, ImageIcon> thumbnailCache = new HashMap<>();
+        // Placeholder icon while loading
+        private static final ImageIcon placeholderIcon = new ImageIcon(
+                new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB));
+
         public ImageListCellRenderer() {
             setOpaque(true);
             setHorizontalAlignment(SwingConstants.CENTER);
@@ -244,31 +255,43 @@ public class TimelinePanel extends javax.swing.JPanel {
 
         @Override
         public Component getListCellRendererComponent(JList<? extends File> list, File value,
-                                                      int index, boolean isSelected, boolean cellHasFocus) {
-            try {
-                BufferedImage thumbnail = Thumbnails.of(value)
-                        .size(100, 100)
-                        .imageType(BufferedImage.TYPE_INT_RGB) // ensure rgb type
-                        .keepAspectRatio(true) // keep aspect ratio.
-                        .asBufferedImage();
-                setIcon(new ImageIcon(thumbnail));
-            } catch (IOException e) {
-                e.printStackTrace();
-                setText("Error");
-                setIcon(null);
-            }
-
-            setText(SHOW_IMAGE_NAMES ? value.getName() : "");
-
-            if (isSelected) {
-                setBorder(new LineBorder(Color.BLUE, 2));
+                                                    int index, boolean isSelected, boolean cellHasFocus) {
+            // Try to get a cached thumbnail
+            ImageIcon icon = thumbnailCache.get(value);
+            if (icon == null) {
+                // No cached thumbnail yet: show placeholder and start asynchronous loading
+                setIcon(placeholderIcon);
+                new SwingWorker<ImageIcon, Void>() {
+                    @Override
+                    protected ImageIcon doInBackground() throws Exception {
+                        BufferedImage thumb = Thumbnails.of(value)
+                                .size(100, 100)
+                                .imageType(BufferedImage.TYPE_INT_RGB)
+                                .keepAspectRatio(true)
+                                .asBufferedImage();
+                        return new ImageIcon(thumb);
+                    }
+                    @Override
+                    protected void done() {
+                        try {
+                            ImageIcon loadedIcon = get();
+                            thumbnailCache.put(value, loadedIcon);
+                            list.repaint(); // Refresh the list so the new icon shows
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                }.execute();
             } else {
-                setBorder(null);
+                // Thumbnail is available; use it
+                setIcon(icon);
             }
-
+            // Optionally show the image name
+            setText(SHOW_IMAGE_NAMES ? value.getName() : "");
+            // Handle selection styling
+            setBorder(isSelected ? new LineBorder(Color.BLUE, 2) : null);
             setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
             setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
-
             return this;
         }
     }

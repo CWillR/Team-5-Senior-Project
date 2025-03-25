@@ -621,37 +621,59 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }
 
     private void processSelectedFiles(File[] selectedFiles) {
-       if (currentSlideshowName == null) {
+        if (currentSlideshowName == null) {
             currentSlideshowName = JOptionPane.showInputDialog(this, "Enter Slideshow Name:", "New Slideshow", JOptionPane.PLAIN_MESSAGE);
             if (currentSlideshowName == null || currentSlideshowName.trim().isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Slideshow name cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-             // Check if slideshow name already exists
+            // Check if slideshow name already exists
             File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName);
             if (slideshowDir.exists() && slideshowDir.isDirectory() && slideshowDir.list().length > 0) {
                 int choice = JOptionPane.showConfirmDialog(this, "Slideshow '" + currentSlideshowName + "' already exists. Overwrite?", "Confirm Overwrite", JOptionPane.YES_NO_OPTION);
                 if (choice == JOptionPane.NO_OPTION) {
                     currentSlideshowName = null; // Reset name to prompt again
                     processSelectedFiles(selectedFiles); // Recursive call to get a new name
-                    return; // Exit current execution
-                }else {
+                    return;
+                } else {
                     // User chose yes, clear existing images
                     clearExistingImages();
                 }
             }
-        } 
-                
+        }
+        
         List<File> newImages = new ArrayList<>();
         File targetFolder = SlideShowFileManager.getImagesFolder(currentSlideshowName);
-
-        for (File selectedFile : selectedFiles) {
-            File targetFile = new File(targetFolder, selectedFile.getName());
-            targetFile = avoidDuplicateFileNames(targetFile, selectedFile, targetFolder);
-            copyImageFile(selectedFile, newImages, targetFile);
-                       
-        }
-        updateImageFiles(newImages);
+        
+        new SwingWorker<Void, File>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                for (File selectedFile : selectedFiles) {
+                    File targetFile = new File(targetFolder, selectedFile.getName());
+                    targetFile = avoidDuplicateFileNames(targetFile, selectedFile, targetFolder);
+                    copyImageFile(selectedFile, newImages, targetFile);
+                    publish(targetFile);  // Publish each processed file for incremental update
+                }
+                return null;
+            }
+            
+            @Override
+            protected void process(List<File> chunks) {
+                // Update the timeline panel incrementally
+                timelinePanelObject.setImages(newImages);
+                if (!newImages.isEmpty()) {
+                    timelinePanelObject.getImageList().setSelectedIndex(0);
+                    timelinePanelObject.getImageList().ensureIndexIsVisible(0);
+                }
+                timelinePanelObject.revalidate();
+                timelinePanelObject.repaint();
+            }
+            
+            @Override
+            protected void done() {
+                updateImageFiles(newImages);
+            }
+        }.execute();
     }
     
     private void clearExistingImages() {
