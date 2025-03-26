@@ -32,6 +32,8 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  *
@@ -51,6 +53,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private File currentSlideshowFile = null;
     private TimelinePanel timelinePanelObject; // Declare it
     private String currentSlideshowName = null; // Class-level variable
+    private final ExecutorService thumbnailExecutor = Executors.newFixedThreadPool(4);
+
     
     /**
      * Creates new form SlideshowCreator
@@ -75,6 +79,15 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 if (selectedFile != null) {
                     updateImage(selectedFile);
                 }
+            }
+        });
+        
+        // Window listener to shutdown the ExecutorService when closing the window
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                thumbnailExecutor.shutdown();
+                System.out.println("Thumbnail executor shutdown.");
             }
         });
     }
@@ -561,27 +574,17 @@ public class SlideshowCreator extends javax.swing.JFrame {
                     if (cachedIcon != null) {
                         return cachedIcon;
                     } else {
-                        new SwingWorker<Icon, Void>() {
-                            @Override
-                            protected Icon doInBackground() {
-                                return getThumbnailIcon(f);
-                            }
-                            @Override
-                            protected void done() {
-                                try {
-                                    Icon icon = get();
-                                    if (icon != null) {
-                                        thumbnailCache.put(f, icon);
-                                        // Force the file chooser to repaint so the thumbnail appears immediately
-                                        SwingUtilities.invokeLater(() -> {
-                                            chooser.repaint();
-                                        });
-                                    }
-                                } catch (Exception e) {
-                                    e.printStackTrace();
+                        thumbnailExecutor.submit(() -> {
+                            Icon icon = getThumbnailIcon(f);
+                            if (icon != null) {
+                                synchronized (thumbnailCache) {
+                                    thumbnailCache.put(f, icon);
                                 }
+                                SwingUtilities.invokeLater(() -> {
+                                    chooser.repaint();
+                                });
                             }
-                        }.execute();
+                        });
                         return placeholderIcon;
                     }
                 }
