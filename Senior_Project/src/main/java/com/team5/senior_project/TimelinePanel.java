@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
 import javax.swing.ImageIcon;
@@ -21,7 +20,6 @@ import javax.swing.TransferHandler;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
-
 import java.awt.datatransfer.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
