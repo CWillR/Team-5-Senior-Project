@@ -357,12 +357,12 @@ public class SlideshowCreator extends javax.swing.JFrame {
         imageContainer.setLayout(imageContainerLayout);
         imageContainerLayout.setHorizontalGroup(
             imageContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(imageContainerLayout.createSequentialGroup()
-                .addGap(112, 112, 112)
-                .addGroup(imageContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, imageContainerLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(imageContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, imageContainerLayout.createSequentialGroup()
-                        .addGap(0, 293, Short.MAX_VALUE)
+                    .addGroup(imageContainerLayout.createSequentialGroup()
+                        .addGap(0, 399, Short.MAX_VALUE)
                         .addComponent(presenterButton)))
                 .addContainerGap())
         );
@@ -486,8 +486,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 528, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(TimelinePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(35, Short.MAX_VALUE))
+                .addComponent(TimelinePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         pack();
@@ -837,8 +837,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JPanel musicHolder;
     private javax.swing.JMenuItem openPreviousSlideMenuItem;
-    private javax.swing.JButton presenterButton;
     private javax.swing.JMenuItem playAudioMenuItem;
+    private javax.swing.JButton presenterButton;
     private javax.swing.JMenuItem saveMenuItem;
     private javax.swing.JPanel transitionsHolder;
     // End of variables declaration//GEN-END:variables
