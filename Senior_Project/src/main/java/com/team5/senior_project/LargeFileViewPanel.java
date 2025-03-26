@@ -7,14 +7,20 @@ import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.awt.image.BufferedImage;
+import javax.swing.ImageIcon;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
-import javax.swing.ImageIcon;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.border.LineBorder;
 import java.awt.datatransfer.DataFlavor;
@@ -26,6 +32,10 @@ public class LargeFileViewPanel extends JPanel {
     private JList<File> fileList;
     private DefaultListModel<File> listModel;
     private File currentFolder;
+    private static final Map<File, ImageIcon> thumbnailCache = new ConcurrentHashMap<>();
+    private static final ExecutorService thumbnailExecutor = Executors.newFixedThreadPool(4);
+    private static final ImageIcon placeholderIcon = new ImageIcon(
+            new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB));
 
     public LargeFileViewPanel(File folder) {
         // Use a default folder if null is passed.
@@ -121,11 +131,21 @@ public class LargeFileViewPanel extends JPanel {
         
         @Override
         public Component getListCellRendererComponent(JList<? extends File> list, File value, int index,
-                                                      boolean isSelected, boolean cellHasFocus) {
-            ImageIcon icon = new ImageIcon(value.getAbsolutePath());
-            // Scale image to 100x100 pixels; adjust size as desired.
-            Image image = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
-            label.setIcon(new ImageIcon(image));
+                                                    boolean isSelected, boolean cellHasFocus) {
+            if (thumbnailCache.containsKey(value)) {
+                label.setIcon(thumbnailCache.get(value));
+            } else {
+                label.setIcon(placeholderIcon);
+                // Load the thumbnail asynchronously.
+                thumbnailExecutor.submit(() -> {
+                    ImageIcon icon = new ImageIcon(value.getAbsolutePath());
+                    Image image = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+                    ImageIcon scaledIcon = new ImageIcon(image);
+                    thumbnailCache.put(value, scaledIcon);
+                    // Repaint the list on the EDT when done.
+                    SwingUtilities.invokeLater(() -> list.repaint());
+                });
+            }
             label.setText(value.getName());
             if (isSelected) {
                 setBorder(new LineBorder(Color.BLUE, 2));

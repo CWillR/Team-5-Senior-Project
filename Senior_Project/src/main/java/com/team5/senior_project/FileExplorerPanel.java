@@ -8,17 +8,24 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.awt.image.BufferedImage;
+import net.coobird.thumbnailator.Thumbnails;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.event.TreeWillExpandListener;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.ExpandVetoException;
 
@@ -27,6 +34,10 @@ public class FileExplorerPanel extends JPanel {
     private JTree fileTree;
     private DefaultTreeModel treeModel;
     private FileSystemView fileSystemView;
+    private static final Map<File, Icon> thumbnailCache = new ConcurrentHashMap<>();
+    private static final ExecutorService thumbnailExecutor = Executors.newFixedThreadPool(4);
+    private static final Icon placeholderIcon = new ImageIcon(
+            new BufferedImage(50, 50, BufferedImage.TYPE_INT_ARGB));
 
     public FileExplorerPanel() {
         fileSystemView = FileSystemView.getFileSystemView();
@@ -100,22 +111,49 @@ public class FileExplorerPanel extends JPanel {
         }
     }
 
+    private boolean isImageFile(File file) {
+        String fileName = file.getName().toLowerCase();
+        return fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") ||
+               fileName.endsWith(".png") || fileName.endsWith(".gif");
+    }
+    
     // Custom renderer to display system icons and names.
     private class FileTreeCellRenderer extends javax.swing.tree.DefaultTreeCellRenderer {
         @Override
         public java.awt.Component getTreeCellRendererComponent(JTree tree, Object value,
-                                                               boolean sel, boolean expanded,
-                                                               boolean leaf, int row, boolean hasFocus) {
+                                                    boolean sel, boolean expanded,
+                                                    boolean leaf, int row, boolean hasFocus) {
             super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
-            // If the node represents a dummy, show nothing.
             if ("dummy".equals(node.getUserObject())) {
                 setText("");
                 setIcon(null);
             } else {
                 File file = (File) node.getUserObject();
                 setText(fileSystemView.getSystemDisplayName(file));
-                setIcon(fileSystemView.getSystemIcon(file));
+                // Check if file is an image based on extension.
+                if (isImageFile(file)) {
+                    if (thumbnailCache.containsKey(file)) {
+                        setIcon(thumbnailCache.get(file));
+                    } else {
+                        setIcon(placeholderIcon);
+                        thumbnailExecutor.submit(() -> {
+                            try {
+                                // Use Thumbnailator as in your slideshow creator.
+                                BufferedImage thumbnail = Thumbnails.of(file)
+                                        .size(50, 50)
+                                        .asBufferedImage();
+                                ImageIcon icon = new ImageIcon(thumbnail);
+                                thumbnailCache.put(file, icon);
+                                SwingUtilities.invokeLater(() -> tree.repaint());
+                            } catch (IOException ex) {
+                                ex.printStackTrace();
+                            }
+                        });
+                    }
+                } else {
+                    setIcon(fileSystemView.getSystemIcon(file));
+                }
             }
             return this;
         }
