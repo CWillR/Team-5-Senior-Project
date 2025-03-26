@@ -249,10 +249,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
         List<Slide> slides = new ArrayList<>();
         List<File> imageFiles = timelinePanelObject.getImages(); // Get the ordered files from the timeline panel.
         /* Add when implemented.
-        int duration = 
         String transition = */
         for (File imageFile: imageFiles){
-            slides.add(new Slide(imageFile.getAbsolutePath(), 5,"fade")); //Example slide.
+            slides.add(new Slide(imageFile.getAbsolutePath(),"fade")); //Example slide.
         }
         return slides;
     }
@@ -554,12 +553,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     
     // Launches presenter application
     private void presenterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_presenterButtonActionPerformed
-        if (imageFiles != null && !imageFiles.isEmpty()) {
-            File[] imageArray = imageFiles.toArray(new File[0]);
-            new SlideshowPresenter(imageArray, 3000, true).setVisible(true);
-        } else {
-            JOptionPane.showMessageDialog(this, "No images to present.");
-        }
+        new SlideshowPresenter().setVisible(true);
     }//GEN-LAST:event_presenterButtonActionPerformed
 
    

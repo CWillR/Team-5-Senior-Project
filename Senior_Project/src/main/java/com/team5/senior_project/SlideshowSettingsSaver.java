@@ -34,7 +34,6 @@ public class SlideshowSettingsSaver {
         for (Slide slide : slides) {
             JSONObject slideJson = new JSONObject();
             slideJson.put("image", slide.getImagePath());
-            slideJson.put("duration", slide.getDuration());
             slideJson.put("transition", slide.getTransition());
             slidesArray.put(slideJson);
         }
