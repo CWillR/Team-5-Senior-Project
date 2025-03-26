@@ -20,7 +20,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.filechooser.FileView;
@@ -30,6 +32,8 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  *
@@ -50,6 +54,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private TimelinePanel timelinePanelObject; // renamed timeline panel reference
     private String currentSlideshowName = null; // Class-level variable
 
+    private final ExecutorService thumbnailExecutor = Executors.newFixedThreadPool(4);
     /**
      * Creates new form SlideshowCreator
      */
@@ -100,6 +105,15 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 if (selectedFile != null) {
                     updateImage(selectedFile);
                 }
+            }
+        });
+        
+        // Window listener to shutdown the ExecutorService when closing the window
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                thumbnailExecutor.shutdown();
+                System.out.println("Thumbnail executor shutdown.");
             }
         });
     }
@@ -732,18 +746,41 @@ public class SlideshowCreator extends javax.swing.JFrame {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(selectionMode);
         fileChooser.setMultiSelectionEnabled(multiSelection);
-        FileNameExtensionFilter imageFilter = new FileNameExtensionFilter("Image files (*.jpg, *.jpeg, *.png, *.gif)", "jpg", "jpeg", "png", "gif");
+        FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
+                "Image files (*.jpg, *.jpeg, *.png, *.gif)", "jpg", "jpeg", "png", "gif");
         fileChooser.setFileFilter(imageFilter);
-        fileChooser.setFileView(createFileView());
+        fileChooser.setFileView(createFileView(fileChooser)); // Pass the file chooser instance
         return fileChooser;
     }
+
     
-    private FileView createFileView() {
+    private FileView createFileView(final JFileChooser chooser) {
         return new FileView() {
+            // Cache thumbnails...
+            private final Map<File, Icon> thumbnailCache = new HashMap<>();
+            private final Icon placeholderIcon = new ImageIcon(
+                    new BufferedImage(50, 50, BufferedImage.TYPE_INT_ARGB));
+    
             @Override
             public Icon getIcon(File f) {
                 if (f.isFile() && isImageFile(f)) {
-                    return getThumbnailIcon(f);
+                    Icon cachedIcon = thumbnailCache.get(f);
+                    if (cachedIcon != null) {
+                        return cachedIcon;
+                    } else {
+                        thumbnailExecutor.submit(() -> {
+                            Icon icon = getThumbnailIcon(f);
+                            if (icon != null) {
+                                synchronized (thumbnailCache) {
+                                    thumbnailCache.put(f, icon);
+                                }
+                                SwingUtilities.invokeLater(() -> {
+                                    chooser.repaint();
+                                });
+                            }
+                        });
+                        return placeholderIcon;
+                    }
                 }
                 return super.getIcon(f);
             }
@@ -801,16 +838,38 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 }
             }
         }
-                
+
         List<File> newImages = new ArrayList<>();
         File targetFolder = SlideShowFileManager.getImagesFolder(currentSlideshowName);
-
-        for (File selectedFile : selectedFiles) {
-            File targetFile = new File(targetFolder, selectedFile.getName());
-            targetFile = avoidDuplicateFileNames(targetFile, selectedFile, targetFolder);
-            copyImageFile(selectedFile, newImages, targetFile);
-        }
-        updateImageFiles(newImages);
+        new SwingWorker<Void, File>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                for (File selectedFile : selectedFiles) {
+                    File targetFile = new File(targetFolder, selectedFile.getName());
+                    targetFile = avoidDuplicateFileNames(targetFile, selectedFile, targetFolder);
+                    copyImageFile(selectedFile, newImages, targetFile);
+                    publish(targetFile);  // Publish each processed file for incremental update
+                }
+                return null;
+            }
+            
+            @Override
+            protected void process(List<File> chunks) {
+                // Update the timeline panel incrementally
+                timelinePanelObject.setImages(newImages);
+                if (!newImages.isEmpty()) {
+                    timelinePanelObject.getImageList().setSelectedIndex(0);
+                    timelinePanelObject.getImageList().ensureIndexIsVisible(0);
+                }
+                timelinePanelObject.revalidate();
+                timelinePanelObject.repaint();
+            }
+            
+            @Override
+            protected void done() {
+                updateImageFiles(newImages);
+            }
+        }.execute();
     }
     
     private void clearExistingImages() {
