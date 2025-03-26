@@ -15,12 +15,13 @@ import java.util.List;
 public class SlideshowSettingsSaver {
 
     public static void saveSettingsToJson(String filePath, String slideshowName, List<Slide> slides, List<File> audioFiles, 
-                                          boolean loop, String mode, int interval) {
+                                          boolean loop, String mode, int interval, String transition) {
         JSONObject slideshowJson = new JSONObject();
         slideshowJson.put("name", slideshowName);
         slideshowJson.put("loop", loop);
         slideshowJson.put("mode", mode); // Save the mode selection
         slideshowJson.put("interval", interval);
+        slideshowJson.put("transition", transition);
         
         if (audioFiles != null && !audioFiles.isEmpty()) {
             JSONArray audioArray = new JSONArray();
@@ -34,7 +35,6 @@ public class SlideshowSettingsSaver {
         for (Slide slide : slides) {
             JSONObject slideJson = new JSONObject();
             slideJson.put("image", slide.getImagePath());
-            slideJson.put("transition", slide.getTransition());
             slidesArray.put(slideJson);
         }
         slideshowJson.put("slides", slidesArray);

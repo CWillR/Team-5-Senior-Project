@@ -26,7 +26,7 @@ import org.json.JSONObject;
  */
 public class SlideshowPresenter extends javax.swing.JFrame {
 
-      private List<Slide> slides = new ArrayList<>();
+    private List<Slide> slides = new ArrayList<>();
     private int currentSlideIndex = 0;
     private int interval = 5000; // Default interval (5 seconds)
     private boolean loop = true;
@@ -72,8 +72,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
             for (int i = 0; i < slidesArray.length(); i++) {
                 JSONObject slideJson = slidesArray.getJSONObject(i);
                 String imagePath = slideJson.getString("image");
-                String transition = slideJson.getString("transition");
-                slides.add(new Slide(imagePath, transition));
+                slides.add(new Slide(imagePath));
             }
             updateSlide();
             startSlideshow();

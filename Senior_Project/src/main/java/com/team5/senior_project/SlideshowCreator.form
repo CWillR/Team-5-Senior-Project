@@ -134,25 +134,20 @@
                       </Group>
                   </Group>
                   <Group type="102" attributes="0">
+                      <EmptySpace min="-2" pref="19" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="modeComboBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="modeSelectionLabel" min="-2" max="-2" attributes="0"/>
+                          <Component id="transitionComboBox" min="-2" pref="129" max="-2" attributes="0"/>
+                          <Component id="transitionLabel" min="-2" max="-2" attributes="0"/>
+                          <Component id="intervalText" min="-2" pref="75" max="-2" attributes="0"/>
                           <Group type="102" attributes="0">
-                              <EmptySpace min="-2" pref="29" max="-2" attributes="0"/>
-                              <Component id="modeSelectionLabel" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="-2" pref="19" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="modeComboBox" min="-2" max="-2" attributes="0"/>
-                                  <Component id="intervalText" alignment="0" min="-2" pref="75" max="-2" attributes="0"/>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Component id="intervalTextField" min="-2" pref="71" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="secondsText" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                              </Group>
+                              <Component id="intervalTextField" min="-2" pref="71" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="secondsText" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace min="-2" pref="23" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="308" max="-2" attributes="0"/>
                       <Component id="imageLabel" max="32767" attributes="0"/>
                   </Group>
               </Group>
@@ -177,12 +172,18 @@
                       <Component id="modeSelectionLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="modeComboBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
-                      <Component id="intervalText" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="intervalTextField" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="secondsText" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="transitionLabel" min="-2" pref="16" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="transitionComboBox" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="1" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="intervalText" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="intervalTextField" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="secondsText" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="32767" attributes="0"/>
                   </Group>
@@ -249,6 +250,27 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="intervalTextField">
+    </Component>
+    <Component class="javax.swing.JComboBox" name="transitionComboBox">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="5">
+            <StringItem index="0" value="Wipe left"/>
+            <StringItem index="1" value="Wipe right"/>
+            <StringItem index="2" value="Wipe up"/>
+            <StringItem index="3" value="Wipe down"/>
+            <StringItem index="4" value="Crossfade"/>
+          </StringArray>
+        </Property>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
+    </Component>
+    <Component class="javax.swing.JLabel" name="transitionLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Select transition for your Slideshow"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>
