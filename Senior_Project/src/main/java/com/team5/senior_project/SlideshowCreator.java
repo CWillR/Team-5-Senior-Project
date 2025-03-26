@@ -264,6 +264,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
         largeFileViewHolder = new javax.swing.JPanel();
         transitionsHolder = new javax.swing.JPanel();
         musicHolder = new javax.swing.JPanel();
+        settings = new javax.swing.JPanel();
+        modeSelectionLabel = new javax.swing.JLabel();
+        modeComboBox = new javax.swing.JComboBox<>();
+        playbackModeLabel = new javax.swing.JLabel();
+        playbackModeBox = new javax.swing.JComboBox<>();
         imageContainer = new javax.swing.JPanel();
         presenterButton = new javax.swing.JButton();
         imageLabel = new javax.swing.JLabel();
@@ -342,8 +347,57 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Music", musicHolder);
 
+        modeSelectionLabel.setText("Select Automatic or Manual Slide Show:");
+
+        modeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Manual Duration", "Preset Duration" }));
+        modeComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                modeComboBoxActionPerformed(evt);
+            }
+        });
+
+        playbackModeLabel.setText("Playback Mode:");
+
+        playbackModeBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Loop Slideshow", "Play Once and End" }));
+        playbackModeBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                playbackModeBoxActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout settingsLayout = new javax.swing.GroupLayout(settings);
+        settings.setLayout(settingsLayout);
+        settingsLayout.setHorizontalGroup(
+            settingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(settingsLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(settingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(modeSelectionLabel)
+                    .addComponent(modeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(playbackModeLabel)
+                    .addComponent(playbackModeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(283, Short.MAX_VALUE))
+        );
+        settingsLayout.setVerticalGroup(
+            settingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(settingsLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(modeSelectionLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(modeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(playbackModeLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(playbackModeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(351, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Settings", settings);
+
         jSplitPane1.setLeftComponent(jTabbedPane1);
         jTabbedPane1.getAccessibleContext().setAccessibleName("Files");
+
+        imageContainer.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
         presenterButton.setText("Open Presenter");
         presenterButton.addActionListener(new java.awt.event.ActionListener() {
@@ -364,7 +418,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addGroup(imageContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(imageContainerLayout.createSequentialGroup()
-                        .addGap(0, 398, Short.MAX_VALUE)
+                        .addGap(0, 396, Short.MAX_VALUE)
                         .addComponent(presenterButton)))
                 .addContainerGap())
         );
@@ -374,7 +428,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(presenterButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 445, Short.MAX_VALUE)
+                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 443, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -500,7 +554,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSplitPane1)
-                    .addComponent(spacerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1027, Short.MAX_VALUE)
+                    .addComponent(spacerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(TimelinePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1027, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -508,7 +562,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 488, Short.MAX_VALUE)
+                .addComponent(jSplitPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(spacerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -654,6 +708,14 @@ public class SlideshowCreator extends javax.swing.JFrame {
             System.out.println("No audio files available.");
         }
     }//GEN-LAST:event_playAudioMenuItemActionPerformed
+
+    private void modeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_modeComboBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_modeComboBoxActionPerformed
+
+    private void playbackModeBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playbackModeBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_playbackModeBoxActionPerformed
 
     public void addAudioFile(File audioFile) {
         if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
@@ -861,11 +923,16 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JPanel largeFileViewHolder;
     private javax.swing.JMenuBar menuBar;
+    private javax.swing.JComboBox<String> modeComboBox;
+    private javax.swing.JLabel modeSelectionLabel;
     private javax.swing.JPanel musicHolder;
     private javax.swing.JMenuItem openPreviousSlideMenuItem;
     private javax.swing.JMenuItem playAudioMenuItem;
+    private javax.swing.JComboBox<String> playbackModeBox;
+    private javax.swing.JLabel playbackModeLabel;
     private javax.swing.JButton presenterButton;
     private javax.swing.JMenuItem saveMenuItem;
+    private javax.swing.JPanel settings;
     private javax.swing.JPanel spacerPanel;
     private javax.swing.JPanel transitionsHolder;
     // End of variables declaration//GEN-END:variables
