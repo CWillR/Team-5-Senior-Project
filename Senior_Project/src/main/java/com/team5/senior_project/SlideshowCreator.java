@@ -401,18 +401,18 @@ public class SlideshowCreator extends javax.swing.JFrame {
         modeComboBox = new javax.swing.JComboBox<>();
         playbackModeLabel = new javax.swing.JLabel();
         playbackModeBox = new javax.swing.JComboBox<>();
+        secondsText = new javax.swing.JLabel();
+        intervalTextField = new javax.swing.JTextField();
+        intervalText = new javax.swing.JLabel();
+        transitionComboBox = new javax.swing.JComboBox<>();
+        transitionLabel = new javax.swing.JLabel();
+        modeComboBox1 = new javax.swing.JComboBox<>();
+        modeSelectionLabel1 = new javax.swing.JLabel();
         imageContainer = new javax.swing.JPanel();
         presenterButton = new javax.swing.JButton();
         imageLabel = new javax.swing.JLabel();
         spacerPanel = new javax.swing.JPanel();
         TimelinePanel = new javax.swing.JPanel();
-        modeSelectionLabel = new javax.swing.JLabel();
-        modeComboBox = new javax.swing.JComboBox<>();
-        intervalText = new javax.swing.JLabel();
-        secondsText = new javax.swing.JLabel();
-        intervalTextField = new javax.swing.JTextField();
-        transitionComboBox = new javax.swing.JComboBox<>();
-        transitionLabel = new javax.swing.JLabel();
         menuBar = new javax.swing.JMenuBar();
         jMenu = new javax.swing.JMenu();
         createNewSlideMenuItem = new javax.swing.JMenuItem();
@@ -504,6 +504,24 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
         });
 
+        secondsText.setText("Seconds");
+
+        intervalTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                intervalTextFieldActionPerformed(evt);
+            }
+        });
+
+        intervalText.setText("Slide interval");
+
+        transitionComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Wipe left", "Wipe right", "Wipe up", "Wipe down", "Crossfade" }));
+
+        transitionLabel.setText("Select transition for your Slideshow");
+
+        modeComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Manual Duration", "Preset Duration" }));
+
+        modeSelectionLabel1.setText("Select Automatic or Manual Slide Show");
+
         javax.swing.GroupLayout settingsLayout = new javax.swing.GroupLayout(settings);
         settings.setLayout(settingsLayout);
         settingsLayout.setHorizontalGroup(
@@ -511,24 +529,56 @@ public class SlideshowCreator extends javax.swing.JFrame {
             .addGroup(settingsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(settingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(modeSelectionLabel)
-                    .addComponent(modeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(playbackModeLabel)
-                    .addComponent(playbackModeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(283, Short.MAX_VALUE))
+                    .addGroup(settingsLayout.createSequentialGroup()
+                        .addComponent(modeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(modeComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, settingsLayout.createSequentialGroup()
+                        .addComponent(modeSelectionLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 70, Short.MAX_VALUE)
+                        .addComponent(modeSelectionLabel1))
+                    .addGroup(settingsLayout.createSequentialGroup()
+                        .addComponent(playbackModeLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(intervalText))
+                    .addGroup(settingsLayout.createSequentialGroup()
+                        .addComponent(playbackModeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(secondsText)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(intervalTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, settingsLayout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGroup(settingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(transitionLabel, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(transitionComboBox, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap())
         );
         settingsLayout.setVerticalGroup(
             settingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(settingsLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(modeSelectionLabel)
+                .addGroup(settingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(modeSelectionLabel)
+                    .addComponent(modeSelectionLabel1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(modeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(settingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(modeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(modeComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(playbackModeLabel)
+                .addGroup(settingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(playbackModeLabel)
+                    .addComponent(intervalText))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(playbackModeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(351, Short.MAX_VALUE))
+                .addGroup(settingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(playbackModeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(intervalTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(secondsText))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(transitionLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(transitionComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(301, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Settings", settings);
@@ -604,23 +654,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
             TimelinePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 98, Short.MAX_VALUE)
         );
-
-        modeSelectionLabel.setText("Select Automatic or Manual Slide Show");
-
-        modeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Manual Duration", "Preset Duration" }));
-        modeComboBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                modeComboBoxActionPerformed(evt);
-            }
-        });
-
-        intervalText.setText("Slide interval");
-
-        secondsText.setText("Seconds");
-
-        transitionComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Wipe left", "Wipe right", "Wipe up", "Wipe down", "Crossfade" }));
-
-        transitionLabel.setText("Select transition for your Slideshow");
 
         menuBar.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
@@ -707,6 +740,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSplitPane1)
                     .addComponent(spacerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -721,28 +755,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(spacerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(TimelinePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(35, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(modeSelectionLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(modeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(transitionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(transitionComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(intervalText)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(intervalTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(secondsText))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addComponent(TimelinePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
         pack();
@@ -892,6 +906,10 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private void playbackModeBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playbackModeBoxActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_playbackModeBoxActionPerformed
+
+    private void intervalTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intervalTextFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_intervalTextFieldActionPerformed
 
     public void addAudioFile(File audioFile) {
     if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
@@ -1153,7 +1171,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JPanel largeFileViewHolder;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JComboBox<String> modeComboBox;
+    private javax.swing.JComboBox<String> modeComboBox1;
     private javax.swing.JLabel modeSelectionLabel;
+    private javax.swing.JLabel modeSelectionLabel1;
     private javax.swing.JPanel musicHolder;
     private javax.swing.JMenuItem openPreviousSlideMenuItem;
     private javax.swing.JMenuItem playAudioMenuItem;
@@ -1161,8 +1181,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JLabel playbackModeLabel;
     private javax.swing.JButton presenterButton;
     private javax.swing.JMenuItem saveMenuItem;
+    private javax.swing.JLabel secondsText;
     private javax.swing.JPanel settings;
     private javax.swing.JPanel spacerPanel;
+    private javax.swing.JComboBox<String> transitionComboBox;
+    private javax.swing.JLabel transitionLabel;
     private javax.swing.JPanel transitionsHolder;
     // End of variables declaration//GEN-END:variables
 }
