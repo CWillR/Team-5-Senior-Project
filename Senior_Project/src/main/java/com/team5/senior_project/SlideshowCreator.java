@@ -43,6 +43,7 @@ import java.util.concurrent.Executors;
  */
 public class SlideshowCreator extends javax.swing.JFrame {
     
+    private List<TransitionType> imageTransitions = new ArrayList<>();
     private List<File> imageFiles = new ArrayList<>(); // image list
     private final List<File> audioFiles = new ArrayList<>(); // audio list
     private int audioIndex = 0; // tracks current audio track
@@ -50,6 +51,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private final List<Slide> slides = new ArrayList<>();
     private File currentSlideshowFile = null;
     private TimelinePanel timelinePanelObject; // Declare it
+    private final Transition transitionManager = new Transition();
     private String currentSlideshowName = null; // Class-level variable
     private AudioTimelinePanel audioTimelinePanel;
     private boolean autoMode = false;
@@ -470,7 +472,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 transitionBoxActionPerformed(evt);
             }
         });
-        
+
         javax.swing.GroupLayout transitionsHolderLayout = new javax.swing.GroupLayout(transitionsHolder);
         transitionsHolder.setLayout(transitionsHolderLayout);
         transitionsHolderLayout.setHorizontalGroup(
@@ -1117,46 +1119,72 @@ public class SlideshowCreator extends javax.swing.JFrame {
         return JOptionPane.showInputDialog(this, "Enter Slideshow Name:", "Save Slideshow", JOptionPane.PLAIN_MESSAGE);
     }
 
-    // Sets the transition type for the current image
-    private void transitionBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_transitionBoxActionPerformed
+    private void transitionBoxActionPerformed(java.awt.event.ActionEvent evt) {
         int selectionIndex = transitionBox.getSelectedIndex();
-        imageTransitions[index[0]] = TransitionType.values()[selectionIndex];
-    }//GEN-LAST:event_transitionBoxActionPerformed
+        TransitionType selectedTransition = TransitionType.values()[selectionIndex];
+    
+        int currentIndex = timelinePanelObject.getImageList().getSelectedIndex();
+        if (currentIndex < 0) {
+            currentIndex = 0;
+        }
+    
+        // Now update the transition for the selected image.
+        imageTransitions.set(currentIndex, selectedTransition);
+    }
+    
 
-    private void transitionTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_transitionTestActionPerformed
-        if (imageTransitions == null) {
-            System.out.println("Transition attempted before any have been initialized");
+    private void transitionTestActionPerformed(java.awt.event.ActionEvent evt) {                                             
+        // Ensure an image is currently displayed.
+        ImageIcon labelIcon = (ImageIcon) imageLabel.getIcon();
+        if (labelIcon == null) {
+            System.out.println("No image displayed for transition.");
             return;
         }
-
-        // Get the image to transition to (the currently displayed image)
-        ImageIcon labelIcon = (ImageIcon) imageLabel.getIcon();
         BufferedImage nextImage = Transition.toBufferedImage(labelIcon.getImage());
-        
-        // Get the image to transition from
-        // Try to get the previous index image
-        // If that fails, it uses a blank, gray square
-        // If that somehow fails it uses the current image instead
+
+        // Get the current index from the timeline panel's image list.
+        int currentIndex = timelinePanelObject.getImageList().getSelectedIndex();
+        if (currentIndex < 0) {
+            currentIndex = 0; // Default to 0 if none is selected.
+        }
+
+        // Use the imageFiles List instead of an array.
+        int size = imageFiles.size();
         BufferedImage prevImage = nextImage;
-        int wrapIndex = (index[0] - 1 >= 0) ? index[0] - 1 : imageFiles.length - 1;
-        if (imageFiles.length >= 2) {
-            //TODO: Scale this.
-            ImageIcon prevIcon = new ImageIcon(imageFiles[wrapIndex].getAbsolutePath());
+        if (size >= 2) {
+            // Compute the previous index with wrap-around.
+            int prevIndex = (currentIndex - 1 >= 0) ? currentIndex - 1 : size - 1;
+            File prevFile = imageFiles.get(prevIndex);
+            ImageIcon prevIcon = new ImageIcon(prevFile.getAbsolutePath());
             prevImage = Transition.toBufferedImage(prevIcon.getImage());
         } else {
+            // If there is only one image, try to load a placeholder image.
             try {
-                Image readImage = new ImageIcon("Placeholder.png").getImage();
-                if (readImage != null) {
-                    prevImage = Transition.toBufferedImage(readImage);
+                Image placeholder = new ImageIcon("Placeholder.png").getImage();
+                if (placeholder != null) {
+                    prevImage = Transition.toBufferedImage(placeholder);
                 }
             } catch (Exception e) {
                 System.out.println("Error obtaining default image for transitions: " + e);
             }
         }
 
-        transitionManager.doTransition(prevImage, nextImage, imageLabel, imageTransitions[index[0]]);
-    }//GEN-LAST:event_transitionTestActionPerformed
- 
+        // Get the transition type from the combo box.
+        String transitionStr = (String) transitionComboBox.getSelectedItem();
+        // Convert the selected string to a TransitionType.
+        // This assumes that your TransitionType enum has a fromString() method or that the string matches an enum name.
+        TransitionType transitionType;
+        try {
+            transitionType = TransitionType.valueOf(transitionStr.toUpperCase().replace(" ", "_"));
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid transition type selected: " + transitionStr);
+            return;
+        }
+
+        // Execute the transition.
+        transitionManager.doTransition(prevImage, nextImage, imageLabel, transitionType);
+    }
+
     /**
      * @param args the command line arguments
      */    
