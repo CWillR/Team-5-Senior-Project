@@ -4,21 +4,28 @@
  */
 package com.team5.senior_project;
 
-import java.awt.Dimension;
+import java.awt.BorderLayout;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.ImageIcon;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
+import javax.swing.JFrame;
+import javax.swing.KeyStroke;
 import javax.swing.Timer;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 /**
  *
@@ -26,89 +33,212 @@ import org.json.JSONObject;
  */
 public class SlideshowPresenter extends javax.swing.JFrame {
 
-    private List<Slide> slides = new ArrayList<>();
-    private int currentSlideIndex = 0;
-    private int interval = 5000; // Default interval (5 seconds)
-    private boolean loop = true;
-    private Timer slideTimer;
+    private File[] imageFiles; // image list
+    private final int[] index = {0}; // image list index
+    private Timer slideShowTimer;
+    
+    // Fields for pause functionality
+    private boolean paused = false;
+    private javax.swing.JLabel pausedLabel;
      
     /**
-     * Creates new form SlideshowPresenter
-     *//**
      * Creates new form SlideshowPresenter
      */
     public SlideshowPresenter() {
         initComponents();
-        imageLabel.setPreferredSize(new Dimension(600, 400));
-        updateSlide();
-    }
-    
-    private void updateSlide() {
-         if (!slides.isEmpty() && currentSlideIndex >= 0 && currentSlideIndex < slides.size()) {
-            Slide currentSlide = slides.get(currentSlideIndex);
-            ImageIcon icon = new ImageIcon(currentSlide.getImagePath());
-            Image img = icon.getImage().getScaledInstance(imageLabel.getPreferredSize().width, imageLabel.getPreferredSize().height, Image.SCALE_SMOOTH);
-            imageLabel.setIcon(new ImageIcon(img));
-        } else {
-            imageLabel.setIcon(null);
-        }
-    }
-    // Loads built slideshow into the SlideShowPresenter JLabel
-    private void loadSlideshow(File file) {
-        slides.clear();
-        currentSlideIndex = 0;
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            StringBuilder jsonContent = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                jsonContent.append(line);
-            }
-            JSONObject slideshowJson = new JSONObject(jsonContent.toString());
-
-            loop = slideshowJson.getBoolean("loop");
-            interval = slideshowJson.getInt("interval") * 1000; // Convert seconds to milliseconds
-
-            JSONArray slidesArray = slideshowJson.getJSONArray("slides");
-            for (int i = 0; i < slidesArray.length(); i++) {
-                JSONObject slideJson = slidesArray.getJSONObject(i);
-                String imagePath = slideJson.getString("image");
-                slides.add(new Slide(imagePath));
-            }
-            updateSlide();
-            startSlideshow();
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error loading slideshow: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-    private void startSlideshow() {
-        if (slideTimer != null) {
-            slideTimer.stop();
-        }
-        slideTimer = new Timer(interval, new ActionListener() {
+        // Set up key bindings
+        initKeyBindings();
+        // Override the layout so that imageLabel fills the frame
+        imageLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        imageLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+        getContentPane().setLayout(new BorderLayout());
+        getContentPane().add(imageLabel, BorderLayout.CENTER);
+        // Dynamically add the paused overlay label to the layered pane.
+        pausedLabel = new javax.swing.JLabel("Paused", javax.swing.SwingConstants.CENTER);
+        pausedLabel.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 48));
+        pausedLabel.setForeground(java.awt.Color.WHITE);
+        pausedLabel.setOpaque(false);
+        pausedLabel.setVisible(false);
+        this.getLayeredPane().add(pausedLabel, new Integer(200));
+        pausedLabel.setBounds(0, 0, getWidth(), getHeight());
+        // Update pausedLabel bounds when the frame is resized.
+        addComponentListener(new ComponentAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                currentSlideIndex++;
-                if (currentSlideIndex >= slides.size()) {
-                    if (loop) {
-                        currentSlideIndex = 0;
-                    } else {
-                        stopSlideshow();
-                        return;
-                    }
-                }
-                updateSlide();
+            public void componentResized(ComponentEvent e) {
+                pausedLabel.setBounds(0, 0, getWidth(), getHeight());
             }
         });
-        slideTimer.start();
     }
-
-    private void stopSlideshow() {
-        if (slideTimer != null) {
-            slideTimer.stop();
+    
+    /**
+     * Overloaded constructor that accepts an array of image files, a slide duration (in milliseconds),
+     * and a loop flag. This constructor is useful if you want to start the presenter with a preset
+     * slideshow.
+     * 
+     * @param imageFiles Array of image files to display.
+     * @param duration   Slide duration in milliseconds.
+     * @param loop       If true, the slideshow will loop; if false, it stops on the last slide.
+     */
+    public SlideshowPresenter(File[] imageFiles, int duration, boolean loop) {
+        this(); // Call the no-argument constructor to initialize GUI components, key bindings, and pausedLabel.
+        this.imageFiles = imageFiles;
+        if (imageFiles != null && imageFiles.length > 0) {
+            updateImage();
+            slideShowTimer = new Timer(duration, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    index[0] = (index[0] + 1) % imageFiles.length;
+                    updateImage();
+                    if (!loop && index[0] == imageFiles.length - 1) {
+                        slideShowTimer.stop();
+                    }
+                }
+            });
+            slideShowTimer.start();
         }
     }
-      
+    
+    /**
+     * Initializes key bindings for the left, right arrow keys and the space bar.
+     * Right arrow advances to the next slide; left arrow goes to the previous slide.
+     * Space bar toggles pause/resume. In all cases, the timer is restarted.
+     */
+    private void initKeyBindings() {
+        InputMap im = this.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = this.getRootPane().getActionMap();
+        
+        // Right arrow binding: next image.
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "nextImage");
+        am.put("nextImage", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (imageFiles != null && imageFiles.length > 0) {
+                    index[0] = (index[0] + 1) % imageFiles.length;
+                    updateImage();
+                    if (slideShowTimer != null) {
+                        slideShowTimer.restart();
+                    }
+                }
+            }
+        });
+        
+        // Left arrow binding: previous image.
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "previousImage");
+        am.put("previousImage", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (imageFiles != null && imageFiles.length > 0) {
+                    index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length;
+                    updateImage();
+                    if (slideShowTimer != null) {
+                        slideShowTimer.restart();
+                    }
+                }
+            }
+        });
+        
+        // Space bar binding: toggle pause/resume.
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "togglePause");
+        am.put("togglePause", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                togglePause();
+            }
+        });
+    }
+    
+    /**
+     * Toggles pause/resume state. When paused, the timer stops and the "Paused" overlay is shown;
+     * when resumed, the timer restarts and the overlay is hidden.
+     */
+    private void togglePause() {
+        if (slideShowTimer != null) {
+            if (paused) {
+                slideShowTimer.start();
+                pausedLabel.setVisible(false);
+                paused = false;
+            } else {
+                slideShowTimer.stop();
+                pausedLabel.setVisible(true);
+                paused = true;
+            }
+        }
+    }
+    
+    // Loads built slideshow into the SlideShowPresenter JLabel
+    private void loadSlideshow(File loadFile) {
+        List<File> loadedImages = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(loadFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                File imageFile = new File(line);
+                if (imageFile.exists()) {
+                    loadedImages.add(imageFile);
+                } else {
+                    System.err.println("Warning: File not found: " + line);
+                }
+            }
+
+            if (!loadedImages.isEmpty()) {
+                imageFiles = loadedImages.toArray(new File[0]);
+                index[0] = 0; // Reset index to start
+                updateImage();
+                System.out.println("Slideshow loaded successfully.");
+
+                if (slideShowTimer != null && slideShowTimer.isRunning()) {
+                    slideShowTimer.stop();
+                }
+
+                slideShowTimer = new Timer(8000, new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        index[0] = (index[0] + 1) % imageFiles.length;
+                        updateImage();
+                    }
+                });
+                slideShowTimer.start();
+
+            } else {
+                System.err.println("No valid images found in the slideshow file.");
+            }
+
+        } catch (IOException e) {
+            System.err.println("Error loading slideshow: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    // Updates the image in the SlideShowPresenter
+    private void updateImage() {
+        if (imageFiles != null && imageFiles.length > 0) {
+            ImageIcon originalIcon = new ImageIcon(imageFiles[index[0]].getAbsolutePath());
+            Image originalImage = originalIcon.getImage();
+            int labelWidth = imageLabel.getWidth();
+            int labelHeight = imageLabel.getHeight();
+            double widthRatio = (double) labelWidth / originalImage.getWidth(null);
+            double heightRatio = (double) labelHeight / originalImage.getHeight(null);
+            double scaleRatio = Math.min(widthRatio, heightRatio);
+            int newWidth = (int) (originalImage.getWidth(null) * scaleRatio);
+            int newHeight = (int) (originalImage.getHeight(null) * scaleRatio);
+            Image resizedImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+            imageLabel.setIcon(new ImageIcon(resizedImage));
+        }
+    }
+    
+    // Loads the folder for created slideshows
+    public class SlideShowFileManager {
+        private static final File savedSlidesFolder = new File(System.getProperty("user.dir"), "SavedSlideShows");
+
+        public static File getSavedSlidesFolder() {
+            return savedSlidesFolder;
+        }
+
+        public static void main(String[] args) {
+            System.out.println("Accessing SlideShowImages folder: " + SlideShowFileManager.getSavedSlidesFolder().getAbsolutePath());
+        }
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -162,15 +292,17 @@ public class SlideshowPresenter extends javax.swing.JFrame {
 
     // Opens FileChooser for user to select a saved slideshow to load
     private void openSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {                                                  
-        JFileChooser fileChooser = new JFileChooser(SlideShowFileManager.getSavedSlidesFolder());
-        int returnVal = fileChooser.showOpenDialog(this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            loadSlideshow(file);
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Load Slideshow");
+        fileChooser.setCurrentDirectory(SlideShowFileManager.getSavedSlidesFolder());
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Slideshow Files (*.ssx)", "ssx"));
+
+        int userSelection = fileChooser.showOpenDialog(null);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToLoad = fileChooser.getSelectedFile();
+            loadSlideshow(fileToLoad);
         }
-    }    
-    
-    
+    }                                                  
 
     /**
      * @param args the command line arguments

@@ -284,36 +284,28 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <Component id="modeComboBox" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
-                                  <Component id="modeComboBox1" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <Group type="102" alignment="1" attributes="0">
-                                  <Component id="modeSelectionLabel" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="70" max="32767" attributes="0"/>
-                                  <Component id="modeSelectionLabel1" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="playbackModeLabel" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
-                                  <Component id="intervalText" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="playbackModeBox" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
-                                  <Component id="secondsText" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="intervalTextField" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <Group type="102" alignment="1" attributes="0">
-                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="transitionLabel" alignment="1" min="-2" max="-2" attributes="0"/>
-                                      <Component id="transitionComboBox" alignment="1" min="-2" max="-2" attributes="0"/>
+                                      <Component id="modeSelectionLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="modeComboBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="playbackModeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="playbackModeBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="intervalText" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <Component id="intervalTextField" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="secondsText" min="-2" max="-2" attributes="0"/>
+                                      </Group>
                                   </Group>
+                                  <EmptySpace pref="286" max="32767" attributes="0"/>
+                              </Group>
+                              <Group type="102" attributes="0">
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="transitionLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="transitionComboBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
                           </Group>
-                          <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -321,23 +313,13 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="modeSelectionLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="modeSelectionLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="modeSelectionLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="modeComboBox" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="intervalText" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="modeComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="modeComboBox1" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="playbackModeLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="intervalText" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="playbackModeBox" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="intervalTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="secondsText" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
@@ -345,33 +327,16 @@
                           <Component id="transitionLabel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="transitionComboBox" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="301" max="32767" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="playbackModeLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="playbackModeBox" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace pref="251" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
               </Layout>
               <SubComponents>
-                <Component class="javax.swing.JLabel" name="modeSelectionLabel">
-                  <Properties>
-                    <Property name="text" type="java.lang.String" value="Select Automatic or Manual Slide Show:"/>
-                  </Properties>
-                </Component>
-                <Component class="javax.swing.JComboBox" name="modeComboBox">
-                  <Properties>
-                    <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                      <StringArray count="2">
-                        <StringItem index="0" value="Manual Duration"/>
-                        <StringItem index="1" value="Preset Duration"/>
-                      </StringArray>
-                    </Property>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="modeComboBoxActionPerformed"/>
-                  </Events>
-                  <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
-                  </AuxValues>
-                </Component>
                 <Component class="javax.swing.JLabel" name="playbackModeLabel">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Playback Mode:"/>
@@ -429,7 +394,7 @@
                     <Property name="text" type="java.lang.String" value="Select transition for your Slideshow"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JComboBox" name="modeComboBox1">
+                <Component class="javax.swing.JComboBox" name="modeComboBox">
                   <Properties>
                     <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                       <StringArray count="2">
@@ -442,7 +407,7 @@
                     <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
                   </AuxValues>
                 </Component>
-                <Component class="javax.swing.JLabel" name="modeSelectionLabel1">
+                <Component class="javax.swing.JLabel" name="modeSelectionLabel">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Select Automatic or Manual Slide Show"/>
                   </Properties>
