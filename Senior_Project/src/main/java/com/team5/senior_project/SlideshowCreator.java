@@ -55,7 +55,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private String currentSlideshowName = null; // Class-level variable
     private final ExecutorService thumbnailExecutor = Executors.newFixedThreadPool(4);
 
-    
+
     /**
      * Creates new form SlideshowCreator
      */
@@ -63,10 +63,36 @@ public class SlideshowCreator extends javax.swing.JFrame {
         initComponents();
         applySavedTheme(); // Apply saved theme when starting
 
+        // Set up the file explorer and large file view panels
+        FileExplorerPanel fileExplorerPanel = new FileExplorerPanel();
+        fileExplorerHolder.removeAll();
+        fileExplorerHolder.setLayout(new BorderLayout());
+        fileExplorerHolder.add(fileExplorerPanel, BorderLayout.CENTER);
+        fileExplorerHolder.revalidate();
+        fileExplorerHolder.repaint();
+        
+        // Use default folder for initial large view.
+        File defaultFolder = new File(System.getProperty("user.home"));
+        LargeFileViewPanel largeFileViewPanel = new LargeFileViewPanel(defaultFolder);
+        largeFileViewHolder.removeAll();
+        largeFileViewHolder.setLayout(new BorderLayout());
+        largeFileViewHolder.add(largeFileViewPanel, BorderLayout.CENTER);
+        largeFileViewHolder.revalidate();
+        largeFileViewHolder.repaint();
+        
+        fileExplorerPanel.getFileTree().addTreeSelectionListener(e -> {
+            File selectedDir = fileExplorerPanel.getSelectedDirectory();
+            if (selectedDir != null) {
+                largeFileViewPanel.updateFolder(selectedDir);
+            }
+        });
+        
+        // Initialize the timeline panel
         timelinePanelObject = new TimelinePanel(); // Initialize it
         TimelinePanel.setLayout(new BorderLayout()); // Ensure layout is set
         TimelinePanel.add(timelinePanelObject, BorderLayout.CENTER);
-          
+        TimelinePanel.revalidate();
+        TimelinePanel.repaint();       
         // Set the timeline change listener so that any reordering refreshes the main image display.
         timelinePanelObject.setTimelineChangeListener(() -> {
             updateImage();
@@ -136,7 +162,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
             JSONObject json = new JSONObject(jsonString);
             JSONArray slides = json.getJSONArray("slides"); // Corrected line: Use "slides"
-            //List<File> imageFiles = new ArrayList<>();
             if (json.has("audio")) {
                 JSONArray audioArray = json.getJSONArray("audio");
                 for (int i = 0; i < audioArray.length(); i++) {
@@ -151,9 +176,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 imageFiles.add(imageFile);
             }
             updateImageFiles(imageFiles);
-            
-            
-
         } catch (IOException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error loading slideshow settings.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -256,8 +278,22 @@ public class SlideshowCreator extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jSplitPane1 = new javax.swing.JSplitPane();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        jSplitPane2 = new javax.swing.JSplitPane();
+        fileExplorerHolder = new javax.swing.JPanel();
+        largeFileViewHolder = new javax.swing.JPanel();
+        transitionsHolder = new javax.swing.JPanel();
+        musicHolder = new javax.swing.JPanel();
+        settings = new javax.swing.JPanel();
+        modeSelectionLabel = new javax.swing.JLabel();
+        modeComboBox = new javax.swing.JComboBox<>();
+        playbackModeLabel = new javax.swing.JLabel();
+        playbackModeBox = new javax.swing.JComboBox<>();
+        imageContainer = new javax.swing.JPanel();
         presenterButton = new javax.swing.JButton();
         imageLabel = new javax.swing.JLabel();
+        spacerPanel = new javax.swing.JPanel();
         TimelinePanel = new javax.swing.JPanel();
         menuBar = new javax.swing.JMenuBar();
         jMenu = new javax.swing.JMenu();
@@ -275,12 +311,170 @@ public class SlideshowCreator extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Slideshow Creator");
 
+        jSplitPane1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jSplitPane1.setDividerLocation(500);
+
+        javax.swing.GroupLayout fileExplorerHolderLayout = new javax.swing.GroupLayout(fileExplorerHolder);
+        fileExplorerHolder.setLayout(fileExplorerHolderLayout);
+        fileExplorerHolderLayout.setHorizontalGroup(
+            fileExplorerHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        fileExplorerHolderLayout.setVerticalGroup(
+            fileExplorerHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 451, Short.MAX_VALUE)
+        );
+
+        jSplitPane2.setLeftComponent(fileExplorerHolder);
+
+        javax.swing.GroupLayout largeFileViewHolderLayout = new javax.swing.GroupLayout(largeFileViewHolder);
+        largeFileViewHolder.setLayout(largeFileViewHolderLayout);
+        largeFileViewHolderLayout.setHorizontalGroup(
+            largeFileViewHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 494, Short.MAX_VALUE)
+        );
+        largeFileViewHolderLayout.setVerticalGroup(
+            largeFileViewHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 451, Short.MAX_VALUE)
+        );
+
+        jSplitPane2.setRightComponent(largeFileViewHolder);
+
+        jTabbedPane1.addTab("Files", jSplitPane2);
+
+        javax.swing.GroupLayout transitionsHolderLayout = new javax.swing.GroupLayout(transitionsHolder);
+        transitionsHolder.setLayout(transitionsHolderLayout);
+        transitionsHolderLayout.setHorizontalGroup(
+            transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 499, Short.MAX_VALUE)
+        );
+        transitionsHolderLayout.setVerticalGroup(
+            transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 451, Short.MAX_VALUE)
+        );
+
+        jTabbedPane1.addTab("Transitions", transitionsHolder);
+
+        javax.swing.GroupLayout musicHolderLayout = new javax.swing.GroupLayout(musicHolder);
+        musicHolder.setLayout(musicHolderLayout);
+        musicHolderLayout.setHorizontalGroup(
+            musicHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 499, Short.MAX_VALUE)
+        );
+        musicHolderLayout.setVerticalGroup(
+            musicHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 451, Short.MAX_VALUE)
+        );
+
+        jTabbedPane1.addTab("Music", musicHolder);
+
+        modeSelectionLabel.setText("Select Automatic or Manual Slide Show:");
+
+        modeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Manual Duration", "Preset Duration" }));
+        modeComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                modeComboBoxActionPerformed(evt);
+            }
+        });
+
+        playbackModeLabel.setText("Playback Mode:");
+
+        playbackModeBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Loop Slideshow", "Play Once and End" }));
+        playbackModeBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                playbackModeBoxActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout settingsLayout = new javax.swing.GroupLayout(settings);
+        settings.setLayout(settingsLayout);
+        settingsLayout.setHorizontalGroup(
+            settingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(settingsLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(settingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(modeSelectionLabel)
+                    .addComponent(modeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(playbackModeLabel)
+                    .addComponent(playbackModeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(283, Short.MAX_VALUE))
+        );
+        settingsLayout.setVerticalGroup(
+            settingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(settingsLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(modeSelectionLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(modeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(playbackModeLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(playbackModeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(351, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Settings", settings);
+
+        jSplitPane1.setLeftComponent(jTabbedPane1);
+        jTabbedPane1.getAccessibleContext().setAccessibleName("Files");
+
+        imageContainer.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+
         presenterButton.setText("Open Presenter");
         presenterButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 presenterButtonActionPerformed(evt);
             }
         });
+
+        imageLabel.setBackground(new java.awt.Color(102, 102, 102));
+        imageLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+
+        javax.swing.GroupLayout imageContainerLayout = new javax.swing.GroupLayout(imageContainer);
+        imageContainer.setLayout(imageContainerLayout);
+        imageContainerLayout.setHorizontalGroup(
+            imageContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, imageContainerLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(imageContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(imageContainerLayout.createSequentialGroup()
+                        .addGap(0, 396, Short.MAX_VALUE)
+                        .addComponent(presenterButton)))
+                .addContainerGap())
+        );
+        imageContainerLayout.setVerticalGroup(
+            imageContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, imageContainerLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(presenterButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 443, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jSplitPane1.setRightComponent(imageContainer);
+
+        spacerPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        spacerPanel.setMaximumSize(new java.awt.Dimension(32767, 16));
+        spacerPanel.setMinimumSize(new java.awt.Dimension(100, 16));
+
+        javax.swing.GroupLayout spacerPanelLayout = new javax.swing.GroupLayout(spacerPanel);
+        spacerPanel.setLayout(spacerPanelLayout);
+        spacerPanelLayout.setHorizontalGroup(
+            spacerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        spacerPanelLayout.setVerticalGroup(
+            spacerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+
+        TimelinePanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        TimelinePanel.setMaximumSize(new java.awt.Dimension(32767, 100));
+        TimelinePanel.setMinimumSize(new java.awt.Dimension(0, 100));
+        TimelinePanel.setName(""); // NOI18N
+        TimelinePanel.setPreferredSize(new java.awt.Dimension(0, 100));
 
         javax.swing.GroupLayout TimelinePanelLayout = new javax.swing.GroupLayout(TimelinePanel);
         TimelinePanel.setLayout(TimelinePanelLayout);
@@ -290,7 +484,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         );
         TimelinePanelLayout.setVerticalGroup(
             TimelinePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 149, Short.MAX_VALUE)
+            .addGap(0, 98, Short.MAX_VALUE)
         );
 
         menuBar.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -380,23 +574,21 @@ public class SlideshowCreator extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 584, Short.MAX_VALUE)
-                        .addComponent(presenterButton))
-                    .addComponent(TimelinePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jSplitPane1)
+                    .addComponent(spacerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(TimelinePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1027, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(8, 8, 8)
-                .addComponent(presenterButton)
+                .addContainerGap()
+                .addComponent(jSplitPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(spacerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(TimelinePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(35, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -406,7 +598,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private void presenterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_presenterButtonActionPerformed
         if (imageFiles != null && !imageFiles.isEmpty()) {
             File[] imageArray = imageFiles.toArray(new File[0]);
-            new SlideshowPresenter(imageArray, 3000, true).setVisible(true);
+            new SlideshowPresenter(imageArray, 3000, true, false).setVisible(true);
         } else {
             JOptionPane.showMessageDialog(this, "No images to present.");
         }
@@ -438,20 +630,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
         });
     }//GEN-LAST:event_DarkModeActionPerformed
-//GEN-FIRST:event_openFileMenuItemActionPerformed
-//GEN-LAST:event_openFileMenuItemActionPerformed
-    // Overwrites the currently working file as long as it exists in the folder already, allowing easy updates
-    private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuItemActionPerformed
-        if (currentSlideshowName == null) {
-            JOptionPane.showMessageDialog(this, "Please add images to create a slideshow first.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName); // Get the main slideshow directory
-        File file = new File(slideshowDir, currentSlideshowName + ".json"); // Save the JSON file in the main directory
-        saveSlideshowSettings(file);
-    }//GEN-LAST:event_saveMenuItemActionPerformed
-
+    
     // Allows user to save currently created slideshow
     private void openPreviousSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openPreviousSlideMenuItemActionPerformed
         JFileChooser fileChooser = new JFileChooser();
@@ -464,8 +643,22 @@ public class SlideshowCreator extends javax.swing.JFrame {
             loadSlideshowSettings(file);
         }
     }//GEN-LAST:event_openPreviousSlideMenuItemActionPerformed
+        
+    
+    // Overwrites the currently working file as long as it exists in the folder already, allowing easy updates
+    private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuItemActionPerformed
+        if (currentSlideshowName == null) {
+            JOptionPane.showMessageDialog(this, "Please add images to create a slideshow first.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-    // Selects image to add to our image folder and adds it sequentially to the image index for display
+        File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName); // Get the main slideshow directory
+        File file = new File(slideshowDir, currentSlideshowName + ".json"); // Save the JSON file in the main directory
+        saveSlideshowSettings(file);
+    }//GEN-LAST:event_saveMenuItemActionPerformed
+    
+
+    // Allows user to save currently created slideshow
     private void createNewSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createNewSlideMenuItemActionPerformed
         JFileChooser fileChooser = createFileChooser(JFileChooser.FILES_ONLY, true);
         int returnValue = fileChooser.showOpenDialog(this);
@@ -536,6 +729,14 @@ public class SlideshowCreator extends javax.swing.JFrame {
             System.out.println("No audio files available.");
         }
     }//GEN-LAST:event_playAudioMenuItemActionPerformed
+
+    private void modeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_modeComboBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_modeComboBoxActionPerformed
+
+    private void playbackModeBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playbackModeBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_playbackModeBoxActionPerformed
 
     public void addAudioFile(File audioFile) {
     if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
@@ -785,12 +986,26 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JMenu audioMenu;
     private javax.swing.JMenuItem createNewSlideMenuItem;
     private javax.swing.JMenuItem exitMenuItem;
+    private javax.swing.JPanel fileExplorerHolder;
+    private javax.swing.JPanel imageContainer;
     private javax.swing.JLabel imageLabel;
     private javax.swing.JMenu jMenu;
+    private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JSplitPane jSplitPane2;
+    private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JPanel largeFileViewHolder;
     private javax.swing.JMenuBar menuBar;
+    private javax.swing.JComboBox<String> modeComboBox;
+    private javax.swing.JLabel modeSelectionLabel;
+    private javax.swing.JPanel musicHolder;
     private javax.swing.JMenuItem openPreviousSlideMenuItem;
     private javax.swing.JMenuItem playAudioMenuItem;
+    private javax.swing.JComboBox<String> playbackModeBox;
+    private javax.swing.JLabel playbackModeLabel;
     private javax.swing.JButton presenterButton;
     private javax.swing.JMenuItem saveMenuItem;
+    private javax.swing.JPanel settings;
+    private javax.swing.JPanel spacerPanel;
+    private javax.swing.JPanel transitionsHolder;
     // End of variables declaration//GEN-END:variables
 }

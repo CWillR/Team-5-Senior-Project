@@ -8,17 +8,23 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import javax.swing.BorderFactory;
 import java.util.Map;
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.TransferHandler;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
+import javax.swing.TransferHandler;
+import javax.swing.border.LineBorder;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import javax.swing.SwingWorker;
 import java.awt.datatransfer.*;
 import java.awt.event.MouseAdapter;
@@ -30,7 +36,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import static javax.swing.TransferHandler.COPY_OR_MOVE;
 import static javax.swing.TransferHandler.MOVE;
-import javax.swing.border.LineBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import net.coobird.thumbnailator.Thumbnails;
@@ -47,6 +52,7 @@ public class TimelinePanel extends javax.swing.JPanel {
     // Card names
     private final String CARD_LIST = "LIST";
     private final String CARD_PLACEHOLDER = "PLACEHOLDER";
+
     private DefaultListModel<File> listModel;
     private JList<File> imageList;
     private JLabel placeholderLabel;
@@ -54,24 +60,21 @@ public class TimelinePanel extends javax.swing.JPanel {
     private JPopupMenu contextMenu;
     private JMenuItem removeMenuItem;
     private File jsonFile;
-    
+
     // Listener interface for timeline changes.
     public interface TimelineChangeListener {
         void onTimelineChanged();
     }
-
-    // Listener reference
     private TimelineChangeListener timelineChangeListener;
 
-    // Setter for the listener
     public void setTimelineChangeListener(TimelineChangeListener listener) {
         this.timelineChangeListener = listener;
     }
     
-    // Constructor that loads images from a JSON file
+    // Constructor that loads images from a JSON file.
     public TimelinePanel(File jsonFile) {
         this();
-        this.jsonFile = jsonFile; // Store the JSON file reference
+        this.jsonFile = jsonFile; // Store the JSON file reference.
         loadImagesFromJson(jsonFile);
     }
 
@@ -97,6 +100,7 @@ public class TimelinePanel extends javax.swing.JPanel {
         placeholderLabel = new JLabel("Drop images here to start timeline", SwingConstants.CENTER);
         placeholderLabel.setOpaque(true);
         placeholderLabel.setBackground(Color.LIGHT_GRAY);
+        placeholderLabel.setForeground(Color.BLACK);
         add(placeholderLabel, CARD_PLACEHOLDER);
         // Initially show placeholder if no images are present.
         updateCard();
@@ -127,7 +131,7 @@ public class TimelinePanel extends javax.swing.JPanel {
         initializeContextMenu();
     }
     
-        private void initializeContextMenu() {
+    private void initializeContextMenu() {
         contextMenu = new JPopupMenu();
         removeMenuItem = new JMenuItem("Remove");
 
@@ -177,7 +181,7 @@ public class TimelinePanel extends javax.swing.JPanel {
         }
 
         try (FileWriter writer = new FileWriter(jsonFile)) {
-            writer.write(jsonArray.toString(4)); // Pretty-print JSON with indentation
+            writer.write(jsonArray.toString(4)); // Pretty-print JSON with indentation.
         } catch (IOException e) {
             e.printStackTrace();
         }
