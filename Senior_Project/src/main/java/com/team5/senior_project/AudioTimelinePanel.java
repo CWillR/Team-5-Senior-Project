@@ -26,7 +26,7 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
     public AudioTimelinePanel(List<File> audioFiles, int totalSlideshowDuration) {
         this.audioFiles = audioFiles;
         this.totalSlideshowDuration = totalSlideshowDuration;
-        setPreferredSize(new Dimension(800, 50)); // Force height
+        setPreferredSize(new Dimension(800, 10)); // Force height
         setBackground(Color.LIGHT_GRAY); // Debugging: Make it visible
     }
 
@@ -64,14 +64,14 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
 
             // Draw audio segment
             g.setColor(Color.BLUE);
-            g.fillRect(x, 10, width, panelHeight - 20);
+            g.fillRect(x, 0, width, panelHeight);
             g.setColor(Color.BLACK);
-            g.drawRect(x, 10, width, panelHeight - 20);
+            g.drawRect(x, 0, width, panelHeight);
 
             // Draw a white separator if not the last segment
             if (i < audioFiles.size() - 1) {
                 g.setColor(Color.WHITE);
-                g.fillRect(x + width - 1, 10, 2, panelHeight - 20);
+                g.fillRect(x + width - 1, 0, 2, panelHeight);
             }
 
             x += width;
