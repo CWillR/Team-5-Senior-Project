@@ -392,6 +392,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
         fileExplorerHolder = new javax.swing.JPanel();
         largeFileViewHolder = new javax.swing.JPanel();
         transitionsHolder = new javax.swing.JPanel();
+        transitionBox = new javax.swing.JComboBox<>();
+        transitionTest = new javax.swing.JButton();
         musicHolder = new javax.swing.JPanel();
         settings = new javax.swing.JPanel();
         playbackModeLabel = new javax.swing.JLabel();
@@ -455,15 +457,29 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Files", jSplitPane2);
 
+        transitionBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "No Transition", "Cross Fade", "Wipe Up", "Wipe Right", "Wipe Down", "Wipe Left" }));
+
+        transitionTest.setText("Preview Transition");
+
         javax.swing.GroupLayout transitionsHolderLayout = new javax.swing.GroupLayout(transitionsHolder);
         transitionsHolder.setLayout(transitionsHolderLayout);
         transitionsHolderLayout.setHorizontalGroup(
             transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 499, Short.MAX_VALUE)
+            .addGroup(transitionsHolderLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(transitionTest)
+                    .addComponent(transitionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(367, Short.MAX_VALUE))
         );
         transitionsHolderLayout.setVerticalGroup(
             transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 470, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, transitionsHolderLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(transitionTest)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(transitionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(413, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Transitions", transitionsHolder);
@@ -1158,8 +1174,10 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JLabel secondsText;
     private javax.swing.JPanel settings;
     private javax.swing.JPanel spacerPanel;
+    private javax.swing.JComboBox<String> transitionBox;
     private javax.swing.JComboBox<String> transitionComboBox;
     private javax.swing.JLabel transitionLabel;
+    private javax.swing.JButton transitionTest;
     private javax.swing.JPanel transitionsHolder;
     // End of variables declaration//GEN-END:variables
 }
