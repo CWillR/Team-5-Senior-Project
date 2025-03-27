@@ -392,6 +392,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
         fileExplorerHolder = new javax.swing.JPanel();
         largeFileViewHolder = new javax.swing.JPanel();
         transitionsHolder = new javax.swing.JPanel();
+        transitionTest = new javax.swing.JButton();
+        transitionBox = new javax.swing.JComboBox<>();
         musicHolder = new javax.swing.JPanel();
         settings = new javax.swing.JPanel();
         playbackModeLabel = new javax.swing.JLabel();
@@ -455,15 +457,39 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Files", jSplitPane2);
 
+        transitionTest.setText("Preview Transition");
+        transitionTest.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                transitionTestActionPerformed(evt);
+            }
+        });
+
+        transitionBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "No Transition", "Cross Fade", "Wipe Up", "Wipe Right", "Wipe Down", "Wipe Left" }));
+        transitionBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                transitionBoxActionPerformed(evt);
+            }
+        });
+        
         javax.swing.GroupLayout transitionsHolderLayout = new javax.swing.GroupLayout(transitionsHolder);
         transitionsHolder.setLayout(transitionsHolderLayout);
         transitionsHolderLayout.setHorizontalGroup(
             transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 499, Short.MAX_VALUE)
+            .addGroup(transitionsHolderLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(transitionTest)
+                    .addComponent(transitionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(367, Short.MAX_VALUE))
         );
         transitionsHolderLayout.setVerticalGroup(
             transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 470, Short.MAX_VALUE)
+            .addGroup(transitionsHolderLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(transitionTest)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(transitionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(413, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Transitions", transitionsHolder);
@@ -1090,7 +1116,47 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private String promptForSlideshowName() {
         return JOptionPane.showInputDialog(this, "Enter Slideshow Name:", "Save Slideshow", JOptionPane.PLAIN_MESSAGE);
     }
+
+    // Sets the transition type for the current image
+    private void transitionBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_transitionBoxActionPerformed
+        int selectionIndex = transitionBox.getSelectedIndex();
+        imageTransitions[index[0]] = TransitionType.values()[selectionIndex];
+    }//GEN-LAST:event_transitionBoxActionPerformed
+
+    private void transitionTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_transitionTestActionPerformed
+        if (imageTransitions == null) {
+            System.out.println("Transition attempted before any have been initialized");
+            return;
+        }
+
+        // Get the image to transition to (the currently displayed image)
+        ImageIcon labelIcon = (ImageIcon) imageLabel.getIcon();
+        BufferedImage nextImage = Transition.toBufferedImage(labelIcon.getImage());
         
+        // Get the image to transition from
+        // Try to get the previous index image
+        // If that fails, it uses a blank, gray square
+        // If that somehow fails it uses the current image instead
+        BufferedImage prevImage = nextImage;
+        int wrapIndex = (index[0] - 1 >= 0) ? index[0] - 1 : imageFiles.length - 1;
+        if (imageFiles.length >= 2) {
+            //TODO: Scale this.
+            ImageIcon prevIcon = new ImageIcon(imageFiles[wrapIndex].getAbsolutePath());
+            prevImage = Transition.toBufferedImage(prevIcon.getImage());
+        } else {
+            try {
+                Image readImage = new ImageIcon("Placeholder.png").getImage();
+                if (readImage != null) {
+                    prevImage = Transition.toBufferedImage(readImage);
+                }
+            } catch (Exception e) {
+                System.out.println("Error obtaining default image for transitions: " + e);
+            }
+        }
+
+        transitionManager.doTransition(prevImage, nextImage, imageLabel, imageTransitions[index[0]]);
+    }//GEN-LAST:event_transitionTestActionPerformed
+ 
     /**
      * @param args the command line arguments
      */    
@@ -1158,8 +1224,10 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JLabel secondsText;
     private javax.swing.JPanel settings;
     private javax.swing.JPanel spacerPanel;
+    private javax.swing.JComboBox<String> transitionBox;
     private javax.swing.JComboBox<String> transitionComboBox;
     private javax.swing.JLabel transitionLabel;
+    private javax.swing.JButton transitionTest;
     private javax.swing.JPanel transitionsHolder;
     // End of variables declaration//GEN-END:variables
 }
