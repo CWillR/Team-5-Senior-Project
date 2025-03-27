@@ -104,57 +104,56 @@ public class Transition {
     // Creates a composite image 
     private void doWipeTrans(BufferedImage prevImage, BufferedImage nextImage, JLabel imageLabel, Direction dir) {
         System.out.println("Wipe transition triggered in the " + dir + " direction");
-        
+    
         timer = new Timer(UPDATE, new ActionListener(){
             float progress = 0.0f;
             @Override
             public void actionPerformed(ActionEvent e) {
                 int labelWidth = imageLabel.getWidth();
                 int labelHeight = imageLabel.getHeight();
-                progress += (float)UPDATE/(float)DURATION;
+                progress += (float) UPDATE / DURATION;
                 
                 if (progress < 1.0f) {
                     BufferedImage currentImage = new BufferedImage(labelWidth, labelHeight, BufferedImage.TYPE_INT_ARGB);
                     Graphics2D g2d = currentImage.createGraphics();
                     
-                    // Draw the prev image
+                    // Draw the previous image as background.
                     g2d.drawImage(prevImage, 0, 0, labelWidth, labelHeight, null);
-
-                    // Set the clipping region for the next image
-                    if (dir == Direction.UP) {
-                        int wipeHeight = (int) (labelHeight * progress);
-                        g2d.setClip(0, labelHeight - wipeHeight, labelWidth, wipeHeight);
+                    
+                    // Calculate offset for next image based on transition direction.
+                    int offsetX = 0;
+                    int offsetY = 0;
+                    
+                    switch (dir) {
+                        case LEFT:
+                            // Next image slides in from the right.
+                            offsetX = labelWidth - (int)(labelWidth * progress);
+                            break;
+                        case RIGHT:
+                            // Next image slides in from the left.
+                            offsetX = -labelWidth + (int)(labelWidth * progress);
+                            break;
+                        case UP:
+                            // Next image slides in from the bottom.
+                            offsetY = labelHeight - (int)(labelHeight * progress);
+                            break;
+                        case DOWN:
+                            // Next image slides in from the top.
+                            offsetY = -labelHeight + (int)(labelHeight * progress);
+                            break;
                     }
-                    if (dir == Direction.RIGHT) { //horizontal
-                        int wipeWidth = (int) (labelWidth * progress);
-                        g2d.setClip(0, 0, wipeWidth, labelHeight);
-                    } 
-                    if (dir == Direction.DOWN) {
-                        int wipeHeight = (int) (labelHeight * progress);
-                        g2d.setClip(0, 0, labelWidth, wipeHeight);
-                    }
-                    if (dir == Direction.LEFT) {
-                        int wipeWidth = (int) (labelWidth * progress);
-                        g2d.setClip(labelWidth - wipeWidth, 0, wipeWidth, labelHeight);
-                    }
-
-                    // Draw the clipped next image
-                    g2d.drawImage(nextImage, 0, 0, labelWidth, labelHeight, null);
-
+                    
+                    // Draw the next image at the calculated offset.
+                    g2d.drawImage(nextImage, offsetX, offsetY, labelWidth, labelHeight, null);
+                    
                     g2d.dispose();
-
-                    // Set the composite image on the JLabel
                     imageLabel.setIcon(new ImageIcon(currentImage));
-                }
-                else {
+                } else {
                     timer.stop();
-                    
+                    // Ensure the final image is exactly the next image.
                     imageLabel.setIcon(new ImageIcon(nextImage));
-                    
-                    // Center the image in the label.
-                    imageLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-                    imageLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
-                    
+                    imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                    imageLabel.setVerticalAlignment(SwingConstants.CENTER);
                     System.out.println("Wipe transition finished.");
                 }
             }
