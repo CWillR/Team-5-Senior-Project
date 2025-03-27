@@ -9,15 +9,10 @@ import java.awt.image.*;
 import java.awt.event.*;
 import javax.swing.*;
 
-/**
- *
- * @author Team 5
- */
 public class Transition {
     private Timer timer;
     private final int DURATION = 2500;
     private final int UPDATE = 40;  
-    
     
     public enum Direction {
         UP,
@@ -27,27 +22,57 @@ public class Transition {
     }
     
     public void doTransition(BufferedImage prevImage, BufferedImage nextImage, JLabel panel, TransitionType type) {
+        // First, create scaled versions that fit the label’s container with a black background.
+        int containerWidth = panel.getWidth();
+        int containerHeight = panel.getHeight();
+        BufferedImage scaledPrev = getScaledImage(prevImage, containerWidth, containerHeight);
+        BufferedImage scaledNext = getScaledImage(nextImage, containerWidth, containerHeight);
+        
         switch(type) {
             case INSTANT:
+                panel.setIcon(new ImageIcon(scaledNext));
                 break;
             case CROSS_FADE:
-                doCrossFadeTrans(prevImage, nextImage, panel);
+                doCrossFadeTrans(scaledPrev, scaledNext, panel);
                 break;
             case WIPE_UP:
-                doWipeTrans(prevImage, nextImage, panel, Direction.UP);
+                doWipeTrans(scaledPrev, scaledNext, panel, Direction.UP);
                 break;
             case WIPE_RIGHT:
-                doWipeTrans(prevImage, nextImage, panel, Direction.RIGHT);
+                doWipeTrans(scaledPrev, scaledNext, panel, Direction.RIGHT);
                 break;
             case WIPE_DOWN:
-                doWipeTrans(prevImage, nextImage, panel, Direction.DOWN);
+                doWipeTrans(scaledPrev, scaledNext, panel, Direction.DOWN);
                 break;
             case WIPE_LEFT:
-                doWipeTrans(prevImage, nextImage, panel, Direction.LEFT);
+                doWipeTrans(scaledPrev, scaledNext, panel, Direction.LEFT);
                 break;
         }    
     }
     
+    // Helper method to scale an image to the container dimensions while preserving the aspect ratio.
+    // It creates a new image of the container size, fills it with black, and centers the scaled image.
+    private BufferedImage getScaledImage(BufferedImage src, int containerWidth, int containerHeight) {
+        int imgWidth = src.getWidth();
+        int imgHeight = src.getHeight();
+        double scale = Math.min((double)containerWidth / imgWidth, (double)containerHeight / imgHeight);
+        int newWidth = (int)(imgWidth * scale);
+        int newHeight = (int)(imgHeight * scale);
+        
+        BufferedImage scaled = new BufferedImage(containerWidth, containerHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = scaled.createGraphics();
+        // Fill background with black
+        g2d.setColor(Color.BLACK);
+        g2d.fillRect(0, 0, containerWidth, containerHeight);
+        // Center the scaled image
+        int x = (containerWidth - newWidth) / 2;
+        int y = (containerHeight - newHeight) / 2;
+        g2d.drawImage(src, x, y, newWidth, newHeight, null);
+        g2d.dispose();
+        return scaled;
+    }
+    
+    // Updated crossfade transition using scaled images.
     private void doCrossFadeTrans(BufferedImage prevImage, BufferedImage nextImage, JLabel imageLabel) {
         System.out.println("CrossFade transition triggered");
         
@@ -55,45 +80,27 @@ public class Transition {
             float alpha = 0.0f;
             @Override
             public void actionPerformed(ActionEvent e) {
-                alpha += (float)UPDATE/(float)DURATION;
+                alpha += (float)UPDATE / (float)DURATION;
                 if (alpha < 1.0f) {
                     BufferedImage currentImage = new BufferedImage(imageLabel.getWidth(), imageLabel.getHeight(), BufferedImage.TYPE_INT_ARGB);
                     Graphics2D g2d = currentImage.createGraphics();
-
-                    // TODO: do the scaling calculations for previous image
-                    // Calculate the positional x and y offsets of the prev image
-                    // in order to align it within the label
-                    int x = (imageLabel.getWidth() - prevImage.getWidth()) / 2;
-                    int y = (imageLabel.getHeight() - prevImage.getHeight()) / 2;
                     
-                    // Draw the previous image with transparency
+                    // Draw the previous (scaled) image with inverse transparency.
                     g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f - alpha));
-                    g2d.drawImage(prevImage, x, y, prevImage.getWidth(), prevImage.getHeight(), null);
-
-                    // Calculate the positional x and y offsets of the next image
-                    // in order to align it within the label
-                    x = (imageLabel.getWidth() - nextImage.getWidth()) / 2;
-                    y = (imageLabel.getHeight() - nextImage.getHeight()) / 2;
+                    g2d.drawImage(prevImage, 0, 0, null);
                     
-                    // Draw the next image with transparency
+                    // Draw the next (scaled) image with transparency.
                     g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-                    g2d.drawImage(nextImage, x, y, nextImage.getWidth(), nextImage.getHeight(), null);
-
+                    g2d.drawImage(nextImage, 0, 0, null);
+                    
                     g2d.dispose();
-
-                    // Set the composite image on the JLabel
+                    
                     imageLabel.setIcon(new ImageIcon(currentImage));
-                }
-                // Transition is finished
-                else {
+                } else {
                     timer.stop();
-                    
                     imageLabel.setIcon(new ImageIcon(nextImage));
-                    
-                    // Center the image in the label.
-                    imageLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-                    imageLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
-                    
+                    imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                    imageLabel.setVerticalAlignment(SwingConstants.CENTER);
                     System.out.println("CrossFade transition finished.");
                 }
             }
@@ -101,7 +108,7 @@ public class Transition {
         timer.start();
     }
     
-    // Creates a composite image 
+    // Updated wipe transition using scaled images.
     private void doWipeTrans(BufferedImage prevImage, BufferedImage nextImage, JLabel imageLabel, Direction dir) {
         System.out.println("Wipe transition triggered in the " + dir + " direction");
     
@@ -118,39 +125,34 @@ public class Transition {
                     Graphics2D g2d = currentImage.createGraphics();
                     
                     // Draw the previous image as background.
-                    g2d.drawImage(prevImage, 0, 0, labelWidth, labelHeight, null);
+                    g2d.drawImage(prevImage, 0, 0, null);
                     
-                    // Calculate offset for next image based on transition direction.
+                    // Calculate offset for the next image based on transition direction.
                     int offsetX = 0;
                     int offsetY = 0;
                     
                     switch (dir) {
                         case LEFT:
-                            // Next image slides in from the right.
                             offsetX = labelWidth - (int)(labelWidth * progress);
                             break;
                         case RIGHT:
-                            // Next image slides in from the left.
                             offsetX = -labelWidth + (int)(labelWidth * progress);
                             break;
                         case UP:
-                            // Next image slides in from the bottom.
                             offsetY = labelHeight - (int)(labelHeight * progress);
                             break;
                         case DOWN:
-                            // Next image slides in from the top.
                             offsetY = -labelHeight + (int)(labelHeight * progress);
                             break;
                     }
                     
                     // Draw the next image at the calculated offset.
-                    g2d.drawImage(nextImage, offsetX, offsetY, labelWidth, labelHeight, null);
+                    g2d.drawImage(nextImage, offsetX, offsetY, null);
                     
                     g2d.dispose();
                     imageLabel.setIcon(new ImageIcon(currentImage));
                 } else {
                     timer.stop();
-                    // Ensure the final image is exactly the next image.
                     imageLabel.setIcon(new ImageIcon(nextImage));
                     imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
                     imageLabel.setVerticalAlignment(SwingConstants.CENTER);
@@ -161,24 +163,15 @@ public class Transition {
         timer.start();
     }
     
-    // Helper function, converts an Image to a BufferedImage
-    public static BufferedImage toBufferedImage(Image img)
-    {
+    // Helper function: Converts an Image to a BufferedImage.
+    public static BufferedImage toBufferedImage(Image img) {
         if (img instanceof BufferedImage) {
             return (BufferedImage) img;
         }
-
-        // Create a buffered image with transparency
         BufferedImage bimg = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-
-        // Draw the image on to the buffered image
         Graphics2D bGr = bimg.createGraphics();
         bGr.drawImage(img, 0, 0, null);
         bGr.dispose();
-
-        // Return the buffered image
         return bimg;
     }
 }
-
-    
