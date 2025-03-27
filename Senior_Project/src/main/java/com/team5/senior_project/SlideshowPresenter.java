@@ -23,7 +23,6 @@ import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.KeyStroke;
 import javax.swing.Timer;
 
@@ -302,7 +301,9 @@ public class SlideshowPresenter extends javax.swing.JFrame {
             File fileToLoad = fileChooser.getSelectedFile();
             loadSlideshow(fileToLoad);
         }
-    }                                                  
+    }    
+    
+    
 
     /**
      * @param args the command line arguments

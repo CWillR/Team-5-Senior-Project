@@ -44,14 +44,10 @@ import java.util.concurrent.Executors;
 public class SlideshowCreator extends javax.swing.JFrame {
     
     private List<File> imageFiles = new ArrayList<>(); // image list
-    private List<File> audioFiles = new ArrayList<>(); // audio list
-    private int index = 0; // image list index (now defunct and can likely be removed)
+    private final List<File> audioFiles = new ArrayList<>(); // audio list
     private int audioIndex = 0; // tracks current audio track
-    private Preferences prefs = Preferences.userNodeForPackage(SlideshowCreator.class);
-    private List<Slide> slides = new ArrayList<>();
-    private SlideShowFileManager slideShowFileManager = new SlideShowFileManager();
-    private String audioPath = null;
-    private boolean loop = true;
+    private final Preferences prefs = Preferences.userNodeForPackage(SlideshowCreator.class);
+    private final List<Slide> slides = new ArrayList<>();
     private File currentSlideshowFile = null;
     private TimelinePanel timelinePanelObject; // Declare it
     private String currentSlideshowName = null; // Class-level variable
@@ -222,6 +218,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
             JSONObject json = new JSONObject(jsonString);
             JSONArray slides = json.getJSONArray("slides"); // Corrected line: Use "slides"
+            //List<File> imageFiles = new ArrayList<>();
             if (json.has("audio")) {
                 JSONArray audioArray = json.getJSONArray("audio");
                 for (int i = 0; i < audioArray.length(); i++) {
@@ -778,6 +775,18 @@ public class SlideshowCreator extends javax.swing.JFrame {
         });
     }//GEN-LAST:event_DarkModeActionPerformed
     
+    // Overwrites the currently working file as long as it exists in the folder already, allowing easy updates
+    private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuItemActionPerformed
+        if (currentSlideshowName == null) {
+            JOptionPane.showMessageDialog(this, "Please add images to create a slideshow first.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName); // Get the main slideshow directory
+        File file = new File(slideshowDir, currentSlideshowName + ".json"); // Save the JSON file in the main directory
+        saveSlideshowSettings(file);
+    }//GEN-LAST:event_saveMenuItemActionPerformed
+
     // Allows user to save currently created slideshow
     private void openPreviousSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openPreviousSlideMenuItemActionPerformed
         JFileChooser fileChooser = new JFileChooser();
@@ -790,22 +799,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
             loadSlideshowSettings(file);
         }
     }//GEN-LAST:event_openPreviousSlideMenuItemActionPerformed
-        
-    
-    // Overwrites the currently working file as long as it exists in the folder already, allowing easy updates
-    private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuItemActionPerformed
-        if (currentSlideshowName == null) {
-            JOptionPane.showMessageDialog(this, "Please add images to create a slideshow first.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
 
-        File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName); // Get the main slideshow directory
-        File file = new File(slideshowDir, currentSlideshowName + ".json"); // Save the JSON file in the main directory
-        saveSlideshowSettings(file);
-    }//GEN-LAST:event_saveMenuItemActionPerformed
-    
-
-    // Allows user to save currently created slideshow
+    // Selects image to add to our image folder and adds it sequentially to the image index for display
     private void createNewSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createNewSlideMenuItemActionPerformed
         JFileChooser fileChooser = createFileChooser(JFileChooser.FILES_ONLY, true);
         int returnValue = fileChooser.showOpenDialog(this);
@@ -887,14 +882,14 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }//GEN-LAST:event_intervalTextFieldActionPerformed
 
     public void addAudioFile(File audioFile) {
-    if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
-        audioFiles.add(audioFile);
-        if (audioFiles.size() == 1) {
-            audioIndex = 0; // Set to first file if it's the first one added
+        if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
+            audioFiles.add(audioFile);
+            if (audioFiles.size() == 1) {
+                audioIndex = 0; // Set to first file if it's the first one added
+            }
+        } else {
+            System.out.println("Invalid file format. Only .wav files are supported.");
         }
-    } else {
-        System.out.println("Invalid file format. Only .wav files are supported.");
-    }
 }
     
     private JFileChooser createFileChooser(int selectionMode, boolean multiSelection) {
@@ -979,14 +974,14 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Slideshow name cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            // Check if slideshow name already exists
+             // Check if slideshow name already exists
             File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName);
             if (slideshowDir.exists() && slideshowDir.isDirectory() && slideshowDir.list().length > 0) {
                 int choice = JOptionPane.showConfirmDialog(this, "Slideshow '" + currentSlideshowName + "' already exists. Overwrite?", "Confirm Overwrite", JOptionPane.YES_NO_OPTION);
                 if (choice == JOptionPane.NO_OPTION) {
                     currentSlideshowName = null; // Reset name to prompt again
                     processSelectedFiles(selectedFiles); // Recursive call to get a new name
-                    return;
+                    return; // Exit current execution
                 } else {
                     // User chose yes, clear existing images
                     clearExistingImages();
