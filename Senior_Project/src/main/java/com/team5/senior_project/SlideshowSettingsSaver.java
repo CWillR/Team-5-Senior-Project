@@ -11,13 +11,18 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
+
 public class SlideshowSettingsSaver {
 
-    public static void saveSettingsToJson(String filePath, String slideshowName, List<Slide> slides, List<File> audioFiles, boolean loop) {
+    public static void saveSettingsToJson(String filePath, String slideshowName, List<Slide> slides, List<File> audioFiles, 
+                                          boolean loop, String mode, int interval, String transition) {
         JSONObject slideshowJson = new JSONObject();
         slideshowJson.put("name", slideshowName);
         slideshowJson.put("loop", loop);
-
+        slideshowJson.put("mode", mode); // Save the mode selection
+        slideshowJson.put("interval", interval);
+        slideshowJson.put("transition", transition);
+        
         if (audioFiles != null && !audioFiles.isEmpty()) {
             JSONArray audioArray = new JSONArray();
             for (File audioFile : audioFiles) {
@@ -30,9 +35,6 @@ public class SlideshowSettingsSaver {
         for (Slide slide : slides) {
             JSONObject slideJson = new JSONObject();
             slideJson.put("image", slide.getImagePath());
-            slideJson.put("duration", slide.getDuration());
-            slideJson.put("transition", slide.getTransition());
-            slideJson.put("interval", slide.getInterval());
             slidesArray.put(slideJson);
         }
         slideshowJson.put("slides", slidesArray);

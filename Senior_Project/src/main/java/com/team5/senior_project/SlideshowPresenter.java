@@ -23,7 +23,6 @@ import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.KeyStroke;
 import javax.swing.Timer;
 
@@ -36,7 +35,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     private File[] imageFiles; // image list
     private final int[] index = {0}; // image list index
     private Timer slideShowTimer;
-    private boolean manualMode = false;
+    
     // Fields for pause functionality
     private boolean paused = false;
     private javax.swing.JLabel pausedLabel;
@@ -79,25 +78,22 @@ public class SlideshowPresenter extends javax.swing.JFrame {
      * @param duration   Slide duration in milliseconds.
      * @param loop       If true, the slideshow will loop; if false, it stops on the last slide.
      */
-    public SlideshowPresenter(File[] imageFiles, int duration, boolean loop, boolean manualMode) {
+    public SlideshowPresenter(File[] imageFiles, int duration, boolean loop) {
         this(); // Call the no-argument constructor to initialize GUI components, key bindings, and pausedLabel.
         this.imageFiles = imageFiles;
-        this.manualMode = manualMode;
         if (imageFiles != null && imageFiles.length > 0) {
             updateImage();
-            if (!manualMode) {
-                slideShowTimer = new Timer(duration, new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        index[0] = (index[0] + 1) % imageFiles.length;
-                        updateImage();
-                        if (!loop && index[0] == imageFiles.length - 1) {
-                            slideShowTimer.stop();
-                        }
+            slideShowTimer = new Timer(duration, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    index[0] = (index[0] + 1) % imageFiles.length;
+                    updateImage();
+                    if (!loop && index[0] == imageFiles.length - 1) {
+                        slideShowTimer.stop();
                     }
-                });
-                slideShowTimer.start();
-            }
+                }
+            });
+            slideShowTimer.start();
         }
     }
     
@@ -118,7 +114,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                 if (imageFiles != null && imageFiles.length > 0) {
                     index[0] = (index[0] + 1) % imageFiles.length;
                     updateImage();
-                    if (!manualMode && slideShowTimer != null) {
+                    if (slideShowTimer != null) {
                         slideShowTimer.restart();
                     }
                 }
@@ -133,7 +129,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                 if (imageFiles != null && imageFiles.length > 0) {
                     index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length;
                     updateImage();
-                    if (!manualMode && slideShowTimer != null) {
+                    if (slideShowTimer != null) {
                         slideShowTimer.restart();
                     }
                 }
@@ -230,7 +226,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     }
     
     // Loads the folder for created slideshows
-    public static class SlideShowFileManager {
+    public class SlideShowFileManager {
         private static final File savedSlidesFolder = new File(System.getProperty("user.dir"), "SavedSlideShows");
 
         public static File getSavedSlidesFolder() {
@@ -241,7 +237,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
             System.out.println("Accessing SlideShowImages folder: " + SlideShowFileManager.getSavedSlidesFolder().getAbsolutePath());
         }
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -305,7 +301,9 @@ public class SlideshowPresenter extends javax.swing.JFrame {
             File fileToLoad = fileChooser.getSelectedFile();
             loadSlideshow(fileToLoad);
         }
-    }                                                  
+    }    
+    
+    
 
     /**
      * @param args the command line arguments
