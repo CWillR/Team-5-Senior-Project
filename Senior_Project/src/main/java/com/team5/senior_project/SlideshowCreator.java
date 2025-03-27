@@ -402,6 +402,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
         transitionTest = new javax.swing.JButton();
         transitionBox = new javax.swing.JComboBox<>();
         musicHolder = new javax.swing.JPanel();
+        addAudioButton = new javax.swing.JButton();
+        playAudioButton = new javax.swing.JButton();
         settings = new javax.swing.JPanel();
         playbackModeLabel = new javax.swing.JLabel();
         playbackModeBox = new javax.swing.JComboBox<>();
@@ -426,9 +428,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
         ThemesButton = new javax.swing.JMenu();
         LightMode = new javax.swing.JMenuItem();
         DarkMode = new javax.swing.JMenuItem();
-        audioMenu = new javax.swing.JMenu();
-        addAudioFileMenuItem = new javax.swing.JMenuItem();
-        playAudioMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Slideshow Creator");
@@ -501,15 +500,39 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Transitions", transitionsHolder);
 
+        addAudioButton.setText("Add Audio File");
+        addAudioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addAudioButtonActionPerformed(evt);
+            }
+        });
+
+        playAudioButton.setText("Play Audio");
+        playAudioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                playAudioButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout musicHolderLayout = new javax.swing.GroupLayout(musicHolder);
         musicHolder.setLayout(musicHolderLayout);
         musicHolderLayout.setHorizontalGroup(
             musicHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 499, Short.MAX_VALUE)
+            .addGroup(musicHolderLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(musicHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(addAudioButton)
+                    .addComponent(playAudioButton))
+                .addContainerGap(385, Short.MAX_VALUE))
         );
         musicHolderLayout.setVerticalGroup(
             musicHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 470, Short.MAX_VALUE)
+            .addGroup(musicHolderLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(addAudioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(playAudioButton)
+                .addContainerGap(412, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Music", musicHolder);
@@ -730,26 +753,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         menuBar.add(ThemesButton);
 
-        audioMenu.setText("Audio");
-
-        addAudioFileMenuItem.setText("Add Audio File");
-        addAudioFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addAudioFileMenuItemActionPerformed(evt);
-            }
-        });
-        audioMenu.add(addAudioFileMenuItem);
-
-        playAudioMenuItem.setText("Play Audio");
-        playAudioMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                playAudioMenuItemActionPerformed(evt);
-            }
-        });
-        audioMenu.add(playAudioMenuItem);
-
-        menuBar.add(audioMenu);
-
         setJMenuBar(menuBar);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -761,7 +764,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSplitPane1)
                     .addComponent(spacerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(TimelinePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1027, Short.MAX_VALUE))
+                    .addComponent(TimelinePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1028, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -849,7 +852,15 @@ public class SlideshowCreator extends javax.swing.JFrame {
         System.exit(0);
     }//GEN-LAST:event_exitMenuItemActionPerformed
 
-    private void addAudioFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addAudioFileMenuItemActionPerformed
+    private void playbackModeBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playbackModeBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_playbackModeBoxActionPerformed
+
+    private void intervalTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intervalTextFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_intervalTextFieldActionPerformed
+
+    private void addAudioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addAudioButtonActionPerformed
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setMultiSelectionEnabled(true);
         fileChooser.setFileFilter(new FileNameExtensionFilter("WAV Audio Files", "wav"));
@@ -860,9 +871,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
             updateAudioTimeline();
         }
-    }//GEN-LAST:event_addAudioFileMenuItemActionPerformed
+    }//GEN-LAST:event_addAudioButtonActionPerformed
 
-    private void playAudioMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playAudioMenuItemActionPerformed
+    private void playAudioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playAudioButtonActionPerformed
         if (audioFiles != null && !audioFiles.isEmpty()) {
             Thread thread = new Thread(() -> {
                 for (File audioFile : audioFiles) {
@@ -895,15 +906,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         } else {
             System.out.println("No audio files available.");
         }
-    }//GEN-LAST:event_playAudioMenuItemActionPerformed
-
-    private void playbackModeBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playbackModeBoxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_playbackModeBoxActionPerformed
-
-    private void intervalTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intervalTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_intervalTextFieldActionPerformed
+    }//GEN-LAST:event_playAudioButtonActionPerformed
 
     public void addAudioFile(File audioFile) {
         if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
@@ -1162,8 +1165,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JMenuItem LightMode;
     private javax.swing.JMenu ThemesButton;
     private javax.swing.JPanel TimelinePanel;
-    private javax.swing.JMenuItem addAudioFileMenuItem;
-    private javax.swing.JMenu audioMenu;
+    private javax.swing.JButton addAudioButton;
     private javax.swing.JMenuItem createNewSlideMenuItem;
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JPanel fileExplorerHolder;
@@ -1181,7 +1183,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JLabel modeSelectionLabel;
     private javax.swing.JPanel musicHolder;
     private javax.swing.JMenuItem openPreviousSlideMenuItem;
-    private javax.swing.JMenuItem playAudioMenuItem;
+    private javax.swing.JButton playAudioButton;
     private javax.swing.JComboBox<String> playbackModeBox;
     private javax.swing.JLabel playbackModeLabel;
     private javax.swing.JButton presenterButton;

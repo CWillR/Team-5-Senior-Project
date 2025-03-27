@@ -97,6 +97,7 @@ public class TimelinePanel extends javax.swing.JPanel {
         placeholderLabel = new JLabel("Drop images here to start timeline", SwingConstants.CENTER);
         placeholderLabel.setOpaque(true);
         placeholderLabel.setBackground(Color.LIGHT_GRAY);
+        placeholderLabel.setForeground(Color.BLACK);
         add(placeholderLabel, CARD_PLACEHOLDER);
         // Initially show placeholder if no images are present.
         updateCard();
