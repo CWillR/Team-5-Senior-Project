@@ -37,6 +37,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     private final int[] index = {0}; // image list index
     private Timer slideShowTimer;
     private boolean manualMode = false;
+    // Fields for pause functionality
     private boolean paused = false;
     private javax.swing.JLabel pausedLabel;
      

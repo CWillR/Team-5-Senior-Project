@@ -49,7 +49,7 @@ import org.json.JSONArray;
  */
 public class TimelinePanel extends javax.swing.JPanel {
 
-    // Card names for switching views.
+    // Card names
     private final String CARD_LIST = "LIST";
     private final String CARD_PLACEHOLDER = "PLACEHOLDER";
 
@@ -84,7 +84,6 @@ public class TimelinePanel extends javax.swing.JPanel {
     public TimelinePanel() {
         // Use CardLayout to switch between list view and placeholder.
         setLayout(new CardLayout());
-
         // Create the list model and image list.
         listModel = new DefaultListModel<>();
         imageList = new JList<>(listModel);
@@ -94,11 +93,9 @@ public class TimelinePanel extends javax.swing.JPanel {
         imageList.setDragEnabled(true);
         imageList.setDropMode(DropMode.INSERT);
         imageList.setTransferHandler(new ListItemTransferHandler());
-
-        // Create a scroll pane for the image list and add it as the list card.
+        // Create a scroll pane for the image list.
         JScrollPane listScrollPane = new JScrollPane(imageList);
         add(listScrollPane, CARD_LIST);
-
         // Create a placeholder label for an empty timeline.
         placeholderLabel = new JLabel("Drop images here to start timeline", SwingConstants.CENTER);
         placeholderLabel.setOpaque(true);
@@ -106,8 +103,7 @@ public class TimelinePanel extends javax.swing.JPanel {
         add(placeholderLabel, CARD_PLACEHOLDER);
         // Initially show placeholder if no images are present.
         updateCard();
-
-        // Listen for changes in the model to update the visible card.
+        // Listen for changes in the model to update the card.
         listModel.addListDataListener(new ListDataListener() {
             @Override
             public void intervalAdded(ListDataEvent e) {
@@ -137,7 +133,9 @@ public class TimelinePanel extends javax.swing.JPanel {
     private void initializeContextMenu() {
         contextMenu = new JPopupMenu();
         removeMenuItem = new JMenuItem("Remove");
+
         removeMenuItem.addActionListener(e -> removeSelectedImage());
+
         contextMenu.add(removeMenuItem);
 
         imageList.addMouseListener(new MouseAdapter() {
@@ -147,6 +145,7 @@ public class TimelinePanel extends javax.swing.JPanel {
                     showContextMenu(e);
                 }
             }
+
             @Override
             public void mouseReleased(MouseEvent e) {
                 if (e.isPopupTrigger()) {
@@ -159,7 +158,7 @@ public class TimelinePanel extends javax.swing.JPanel {
     private void showContextMenu(MouseEvent e) {
         int index = imageList.locationToIndex(e.getPoint());
         if (index != -1) {
-            imageList.setSelectedIndex(index); // Select the item under right-click.
+            imageList.setSelectedIndex(index); // Select the item under right-click
             contextMenu.show(imageList, e.getX(), e.getY());
         }
     }
@@ -174,10 +173,12 @@ public class TimelinePanel extends javax.swing.JPanel {
 
     private void updateJsonFile() {
         if (jsonFile == null) return;
+
         JSONArray jsonArray = new JSONArray();
         for (int i = 0; i < listModel.size(); i++) {
             jsonArray.put(listModel.get(i).getAbsolutePath());
         }
+
         try (FileWriter writer = new FileWriter(jsonFile)) {
             writer.write(jsonArray.toString(4)); // Pretty-print JSON with indentation.
         } catch (IOException e) {
@@ -185,7 +186,8 @@ public class TimelinePanel extends javax.swing.JPanel {
         }
     }
     
-    // Loads image file paths from a JSON file.
+    
+    // Loads image file paths from a JSON file
     public void loadImagesFromJson(File jsonFile) {
         try (FileReader reader = new FileReader(jsonFile)) {
             StringBuilder content = new StringBuilder();
@@ -213,7 +215,7 @@ public class TimelinePanel extends javax.swing.JPanel {
             cl.show(this, CARD_LIST);
         }
     }
-    
+
     // Sets the timeline images.
     public void setImages(List<File> images) {
         listModel.clear();
@@ -224,7 +226,7 @@ public class TimelinePanel extends javax.swing.JPanel {
         }
         updateCard();
     }
-    
+
     // Retrieves the current ordering.
     public List<File> getImages() {
         List<File> images = new ArrayList<>();
@@ -233,7 +235,7 @@ public class TimelinePanel extends javax.swing.JPanel {
         }
         return images;
     }
-    
+
     public JList<File> getImageList() {
         return imageList;
     }
@@ -251,6 +253,7 @@ public class TimelinePanel extends javax.swing.JPanel {
             setHorizontalAlignment(SwingConstants.CENTER);
             setVerticalAlignment(SwingConstants.CENTER);
         }
+
         @Override
         public Component getListCellRendererComponent(JList<? extends File> list, File value,
                                                     int index, boolean isSelected, boolean cellHasFocus) {
@@ -293,77 +296,84 @@ public class TimelinePanel extends javax.swing.JPanel {
             return this;
         }
     }
-    
+
     // --- TransferHandler for Drag-and-Drop Reordering ---
     private static class ListItemTransferHandler extends TransferHandler {
         private int[] indices = null; // Stores the indices of the dragged items.
         private int addIndex = -1;    // Stores the index where items are dropped.
         private int addCount = 0;     // Stores the number of items added during the drop.
-        
+
         @Override
         protected Transferable createTransferable(JComponent c) {
             // Creates a Transferable object containing the selected items.
             JList<?> list = (JList<?>) c;
             indices = list.getSelectedIndices();
             List<?> values = list.getSelectedValuesList();
-            return new ListTransferable(values);
+            return new ListTransferable(values); // Returns a custom Transferable.
         }
-        
+
         @Override
         public int getSourceActions(JComponent c) {
-            // Allows both copying and moving items.
-            return COPY_OR_MOVE;
+            // Defines the allowed source actions for the drag operation.
+            return COPY_OR_MOVE; // Allows both copying and moving items.
         }
-        
+
         @Override
         public boolean canImport(TransferHandler.TransferSupport info) {
+            // Checks if the transfer data can be imported.
             return info.isDataFlavorSupported(ListTransferable.localFlavor)
-                    || info.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
+                    || info.isDataFlavorSupported(DataFlavor.javaFileListFlavor); // Checks for custom list flavor or file list flavor.
         }
-        
+
         @Override
         public boolean importData(TransferHandler.TransferSupport info) {
+            // Imports the transfer data into the target JList.
             if (!canImport(info)) {
                 return false;
             }
             JList<?> target = (JList<?>) info.getComponent();
             DefaultListModel model = (DefaultListModel) target.getModel();
             JList.DropLocation dl = (JList.DropLocation) info.getDropLocation();
-            int index = dl.getIndex();
+            int index = dl.getIndex(); // Gets the drop index.
             if (index < 0) {
-                index = model.getSize();
+                index = model.getSize(); // If no drop index, append to the end.
             }
             addIndex = index;
             try {
                 List<?> values;
                 if (info.isDataFlavorSupported(ListTransferable.localFlavor)) {
+                    // If the data flavor is the custom list flavor, get the list of objects.
                     @SuppressWarnings("unchecked")
                     List<Object> localValues = (List<Object>) info.getTransferable().getTransferData(ListTransferable.localFlavor);
                     values = localValues;
                 } else if (info.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                    // If the data flavor is the file list flavor, get the list of files.
                     @SuppressWarnings("unchecked")
                     List<Object> fileList = (List<Object>) info.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
                     values = fileList;
                 } else {
-                    return false;
+                    return false; // If no supported flavor, return false.
                 }
-                addCount = values.size();
+                addCount = values.size(); // Set the add count.
                 for (Object o : values) {
-                    model.add(index++, o);
+                    model.add(index++, o); // Add each object to the model.
                 }
-                return true;
+                return true; // Return true if import is successful.
             } catch (UnsupportedFlavorException | IOException ex) {
                 ex.printStackTrace();
             }
-            return false;
+            return false; // Return false if import fails.
         }
-        
+
         @Override
         protected void exportDone(JComponent c, Transferable data, int action) {
+            // Cleans up after the transfer is complete.
             if (action == MOVE && indices != null) {
+                // If the action was a move and indices are valid.
                 JList source = (JList) c;
                 DefaultListModel model = (DefaultListModel) source.getModel();
                 if (addCount > 0) {
+                    // Adjust indices if items were added before the original indices.
                     for (int i = indices.length - 1; i >= 0; i--) {
                         if (indices[i] >= addIndex) {
                             indices[i] += addCount;
@@ -371,54 +381,58 @@ public class TimelinePanel extends javax.swing.JPanel {
                     }
                 }
                 for (int i = indices.length - 1; i >= 0; i--) {
-                    model.remove(indices[i]);
+                    model.remove(indices[i]); // Remove the original items.
                 }
             }
-            indices = null;
-            addCount = 0;
-            addIndex = -1;
+            indices = null; // Reset indices.
+            addCount = 0;   // Reset add count.
+            addIndex = -1;  // Reset add index.
         }
     }
-    
+
     // --- Custom Transferable for a List of Objects ---
     private static class ListTransferable implements Transferable {
-        private final List<?> data;
-        public static final DataFlavor localFlavor;
-        
+        private final List<?> data; // The list of objects to transfer.
+        public static final DataFlavor localFlavor; // Custom data flavor for list transfer.
+
         static {
             DataFlavor flavor = null;
             try {
-                flavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=java.util.List");
+                flavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=java.util.List"); // Define the custom flavor.
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
             localFlavor = flavor;
         }
-        
+
         public ListTransferable(List<?> data) {
             this.data = data;
         }
-        
+
         @Override
         public DataFlavor[] getTransferDataFlavors() {
-            return new DataFlavor[]{localFlavor};
+            return new DataFlavor[]{localFlavor}; // Return the custom data flavor.
         }
-        
+
         @Override
         public boolean isDataFlavorSupported(DataFlavor flavor) {
-            return localFlavor.equals(flavor);
+            return localFlavor.equals(flavor); // Check if the flavor is supported.
         }
-        
+
         @Override
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
             if (isDataFlavorSupported(flavor)) {
-                return data;
+                return data; // Return the data if the flavor is supported.
             }
-            throw new UnsupportedFlavorException(flavor);
+            throw new UnsupportedFlavorException(flavor); // Throw exception if flavor is not supported.
         }
     }
     
-    // Auto-generated initComponents method.
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -434,6 +448,7 @@ public class TimelinePanel extends javax.swing.JPanel {
             .addGap(0, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
