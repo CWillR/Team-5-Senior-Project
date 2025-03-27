@@ -37,6 +37,10 @@ import java.awt.event.ActionListener;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ *
+ * @author Team 5
+ */
 public class SlideshowCreator extends javax.swing.JFrame {
 
     private List<File> imageFiles = new ArrayList<>(); // image list
@@ -97,7 +101,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         // Add selection listener for image changes
         timelinePanelObject.getImageList().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
+            if (!e.getValueIsAdjusting()) { // Ensure it's not firing multiple times unnecessarily
                 File selectedFile = timelinePanelObject.getImageList().getSelectedValue();
                 if (selectedFile != null) {
                     updateImage(selectedFile);
@@ -105,14 +109,14 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 }
             }
         });
-        intervalTextField.setVisible(false);
-        modeSelectionLabel.setVisible(false);
-        intervalText.setVisible(false);
-        secondsText.setVisible(false);
+        intervalTextField.setVisible(false); // Wait until called to make visible.
+        modeSelectionLabel.setVisible(false); // Wait until called to make visible.
+        intervalText.setVisible(false); // Wait until called to make visible.
+        secondsText.setVisible(false); // Wait until called to make visible.
         transitionComboBox.setVisible(false);
         transitionLabel.setVisible(false);
+               
         modeComboBox.setVisible(false);
-
         // Initialize modeComboBox
         modeComboBox.addActionListener(new ActionListener() {
             @Override
@@ -132,18 +136,23 @@ public class SlideshowCreator extends javax.swing.JFrame {
     // Calculate total slideshow duration (assuming each image is shown for 5 seconds)
     private int calculateTotalSlideshowDuration() {
         int numImages = timelinePanelObject.getImages().size();
-        int imageDuration = 5;
+        int imageDuration = 5; // Assume 5 seconds per image
+
         int estimatedDuration = numImages * imageDuration;
+
+        // Ensure a reasonable minimum duration (e.g., 15 seconds)
         return Math.max(estimatedDuration, 15);
     }
 
     // Update when images or audio change
     private void updateAudioTimeline() {
         if (audioTimelinePanel != null) {
-            TimelinePanel.remove(audioTimelinePanel);
+            TimelinePanel.remove(audioTimelinePanel); // Remove old panel
         }
+
         audioTimelinePanel = new AudioTimelinePanel(audioFiles, calculateTotalSlideshowDuration());
         TimelinePanel.add(audioTimelinePanel, BorderLayout.SOUTH);
+
         revalidate();
         repaint();
     }
@@ -187,7 +196,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         String displayText;
         switch (currentTransition) {
             case INSTANT:
-                displayText = "Instant";
+                displayText = "No Transition";
                 break;
             case CROSS_FADE:
                 displayText = "Cross Fade";
@@ -205,7 +214,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 displayText = "Wipe Left";
                 break;
             default:
-                displayText = "Instant";
+                displayText = "No Transition";
         }
         
         // Update the transitions tab combo box with the display text.
@@ -215,7 +224,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     // Apply saved theme
     private void applySavedTheme() {
         SwingUtilities.invokeLater(() -> {
-            String theme = prefs.get("theme", "light");
+            String theme = prefs.get("theme", "light"); // Default to light mode
             try {
                 if ("dark".equals(theme)) {
                     UIManager.setLookAndFeel(new FlatDarkLaf());
@@ -231,12 +240,14 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
     private void saveSlideshowSettings(File file) {
         String filePath = file.getAbsolutePath();
-        String slideshowName = file.getName().replaceFirst("[.][^.]+$", "");
+        String slideshowName = file.getName().replaceFirst("[.][^.]+$", ""); // Extract name without extension
         List<Slide> slides = getSlides();
         boolean loop = isLoop();
-        String selectedMode = (String) modeComboBox.getSelectedItem();
+        String selectedMode = (String) modeComboBox.getSelectedItem(); // Get the selected mode
         int interval = 0;
         String transition = (String) transitionComboBox.getSelectedItem();
+        
+        // Retrieve interval value only if mode is "Preset Duration"
         if ("Preset Duration".equals(selectedMode)) {
             try {
                 interval = Integer.parseInt(intervalTextField.getText().trim());
@@ -258,8 +269,12 @@ public class SlideshowCreator extends javax.swing.JFrame {
         modeSelectionLabel.setVisible(true);
         transitionComboBox.setVisible(true);
         transitionLabel.setVisible(true);
+        
+        
         try {
             currentSlideshowName = file.getParentFile().getName();
+            File slideshowDir = file.getParentFile();
+
             BufferedReader reader = new BufferedReader(new FileReader(file));
             StringBuilder jsonContent = new StringBuilder();
             String line;
@@ -267,10 +282,13 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 jsonContent.append(line);
             }
             reader.close();
+
             String jsonString = jsonContent.toString();
             System.out.println("JSON Content: " + jsonString);
+
             JSONObject json = new JSONObject(jsonString);
-            JSONArray slides = json.getJSONArray("slides");
+            JSONArray slides = json.getJSONArray("slides"); // Corrected line: Use "slides"
+            //List<File> imageFiles = new ArrayList<>();
             if (json.has("audio")) {
                 JSONArray audioArray = json.getJSONArray("audio");
                 for (int i = 0; i < audioArray.length(); i++) {
@@ -278,17 +296,24 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 }
                 updateAudioTimeline();
             }
+
             for (int i = 0; i < slides.length(); i++) {
                 JSONObject slideObject = slides.getJSONObject(i);
-                String imagePath = slideObject.getString("image");
+                String imagePath = slideObject.getString("image"); // Corrected line: Use "image"
                 File imageFile = new File(imagePath);
                 imageFiles.add(imageFile);
             }
             updateImageFiles(imageFiles);
+
+            // Load mode selection from JSON
             if (json.has("mode")) {
                 String savedMode = json.getString("mode");
-                modeComboBox.setSelectedItem(savedMode);
+                modeComboBox.setSelectedItem(savedMode); // Set modeComboBox to saved mode
+
+                // Ensure UI updates according to the mode
                 updateMode();
+
+                // If it's Preset Duration mode
                 if ("Preset Duration".equals(savedMode) && json.has("interval")) {
                     int savedInterval = json.getInt("interval");
                     intervalTextField.setText(String.valueOf(savedInterval));
@@ -296,11 +321,12 @@ public class SlideshowCreator extends javax.swing.JFrame {
                     intervalText.setVisible(true);
                     secondsText.setVisible(true);
                 } else {
-                    intervalTextField.setVisible(false);
+                intervalTextField.setVisible(false); // Hide if not preset interval mode
                     intervalText.setVisible(false);
                     secondsText.setVisible(false);
                 }
             }
+            
         } catch (IOException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error loading slideshow settings.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -309,6 +335,15 @@ public class SlideshowCreator extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Invalid JSON format in slideshow settings.", "Error", JOptionPane.ERROR_MESSAGE);
             System.out.println("Error parsing JSON: " + e.getMessage());
         }
+    }
+
+    // Method to get files from a slide list.
+    private List<File> getFilesFromSlideList(List<Slide> slides){
+        List<File> files = new ArrayList<>();
+        for(Slide slide: slides){
+            files.add(new File(slide.getImagePath()));
+        }
+        return files;
     }
 
     private List<Slide> getSlides() {
@@ -321,7 +356,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }
 
     private String getAudioPath() {
-        return null;
+        // Implement this method to get the audio path
+        return null; // Example
     }
 
     private boolean isLoop() {
@@ -330,30 +366,37 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
     public void updateImage() {
         if (!timelinePanelObject.getImages().isEmpty()) {
-            updateImage(timelinePanelObject.getImages().get(0));
+            updateImage(timelinePanelObject.getImages().get(0)); // Load first image initially
         }
     }
+
 
     private void updateImage(File selectedFile) {
         if (selectedFile == null || !selectedFile.exists()) {
             imageLabel.setIcon(null);
             return;
         }
+
         int labelWidth = imageLabel.getWidth();
         int labelHeight = imageLabel.getHeight();
         if (labelWidth <= 0 || labelHeight <= 0) {
             labelWidth = imageLabel.getPreferredSize().width;
             labelHeight = imageLabel.getPreferredSize().height;
         }
+
         ImageIcon originalIcon = new ImageIcon(selectedFile.getAbsolutePath());
         Image originalImage = originalIcon.getImage();
+
         double widthRatio = (double) labelWidth / originalImage.getWidth(null);
         double heightRatio = (double) labelHeight / originalImage.getHeight(null);
         double scaleRatio = Math.min(widthRatio, heightRatio);
+
         int newWidth = (int) (originalImage.getWidth(null) * scaleRatio);
         int newHeight = (int) (originalImage.getHeight(null) * scaleRatio);
+
         Image resizedImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
         ImageIcon resizedIcon = new ImageIcon(resizedImage);
+
         imageLabel.setIcon(resizedIcon);
         imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
         imageLabel.setVerticalAlignment(SwingConstants.CENTER);
@@ -361,25 +404,25 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
     private void updateMode() {
         String selectedMode = (String) modeComboBox.getSelectedItem();
+    
         if ("Manual Duration".equals(selectedMode)) {
             System.out.println("Manual Duration");
             autoMode = false;
             intervalText.setVisible(false);
             secondsText.setVisible(false);
-            intervalTextField.setVisible(false);
-            manualSlideChange();
+        intervalTextField.setVisible(false); // Hide interval box
+        manualSlideChange(); // Call manualSlideChange() for Manual Preset
         } else if ("Preset Duration".equals(selectedMode)) {
             System.out.println("Preset Duration");
             autoMode = true;
             intervalText.setVisible(true);
             secondsText.setVisible(true);
-            intervalTextField.setVisible(true);
+            intervalTextField.setVisible(true); // Show interval box for user input
             intervalText.getParent().revalidate();
             intervalText.getParent().repaint();
-            autoSlideChange();
+            autoSlideChange(); // Call autoSlideChange() for Duration Preset
         }
     }
-
     private void autoSlideChange() {
         System.out.println("Preset Duration");
         // Implement auto mode functionality here
@@ -390,6 +433,12 @@ public class SlideshowCreator extends javax.swing.JFrame {
         // Implement stopping auto mode functionality here
     }
 
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
@@ -470,7 +519,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
         });
 
-        transitionBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Instant", "Cross Fade", "Wipe Up", "Wipe Right", "Wipe Down", "Wipe Left" }));
+        transitionBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "No Transition", "Cross Fade", "Wipe Up", "Wipe Right", "Wipe Down", "Wipe Left" }));
         transitionBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 transitionBoxActionPerformed(evt);
@@ -563,7 +612,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         intervalText.setText("Slide interval");
 
         transitionComboBox.setModel(new DefaultComboBoxModel<>(new String[] { 
-            "Instant", "Crossfade", "Wipe up", "Wipe right", "Wipe down", "Wipe left" 
+            "No Transition", "Crossfade", "Wipe up", "Wipe right", "Wipe down", "Wipe left" 
         }));
 
         transitionLabel.setText("Select transition for your Slideshow");
@@ -782,6 +831,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    // Launches presenter application
     private void presenterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_presenterButtonActionPerformed
         if (imageFiles != null && !imageFiles.isEmpty()) {
             File[] imageArray = imageFiles.toArray(new File[0]);
@@ -791,40 +841,46 @@ public class SlideshowCreator extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_presenterButtonActionPerformed
 
+   
+    // Sets UI design to FlatLightLaf (light mode version of Flat Laf)
     private void LightModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LightModeActionPerformed
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(new FlatLightLaf());
                 SwingUtilities.updateComponentTreeUI(this);
-                prefs.put("theme", "light");
+                prefs.put("theme", "light"); // Save preference
             } catch (UnsupportedLookAndFeelException ex) {
                 Logger.getLogger(SlideshowCreator.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
     }//GEN-LAST:event_LightModeActionPerformed
 
+    // Sets UI design to FlatDarkLaf (dark mode version of Flat Laf)
     private void DarkModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DarkModeActionPerformed
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(new FlatDarkLaf());
                 SwingUtilities.updateComponentTreeUI(this);
-                prefs.put("theme", "dark");
+                prefs.put("theme", "dark"); // Save preference
             } catch (UnsupportedLookAndFeelException ex) {
                 Logger.getLogger(SlideshowCreator.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
     }//GEN-LAST:event_DarkModeActionPerformed
 
+    // Overwrites the currently working file as long as it exists in the folder already, allowing easy updates
     private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuItemActionPerformed
         if (currentSlideshowName == null) {
             JOptionPane.showMessageDialog(this, "Please add images to create a slideshow first.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName);
-        File file = new File(slideshowDir, currentSlideshowName + ".json");
+
+        File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName); // Get the main slideshow directory
+        File file = new File(slideshowDir, currentSlideshowName + ".json"); // Save the JSON file in the main directory
         saveSlideshowSettings(file);
     }//GEN-LAST:event_saveMenuItemActionPerformed
 
+    // Allows user to save currently created slideshow
     private void openPreviousSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openPreviousSlideMenuItemActionPerformed
         JFileChooser fileChooser = new JFileChooser();
         FileNameExtensionFilter filter = new FileNameExtensionFilter("JSON Files", "json");
@@ -837,9 +893,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_openPreviousSlideMenuItemActionPerformed
 
+    // Selects image to add to our image folder and adds it sequentially to the image index for display
     private void createNewSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createNewSlideMenuItemActionPerformed
         JFileChooser fileChooser = createFileChooser(JFileChooser.FILES_ONLY, true);
         int returnValue = fileChooser.showOpenDialog(this);
+
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             File[] selectedFiles = fileChooser.getSelectedFiles();
             processSelectedFiles(selectedFiles);
@@ -849,7 +907,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }//GEN-LAST:event_createNewSlideMenuItemActionPerformed
 
     private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
-        System.exit(0);
+        System.exit(0); // Terminate the application
     }//GEN-LAST:event_exitMenuItemActionPerformed
 
     private void playbackModeBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playbackModeBoxActionPerformed
@@ -864,6 +922,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setMultiSelectionEnabled(true);
         fileChooser.setFileFilter(new FileNameExtensionFilter("WAV Audio Files", "wav"));
+
         int returnValue = fileChooser.showOpenDialog(null);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             for (File file : fileChooser.getSelectedFiles()) {
@@ -882,6 +941,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                         AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
                         Clip clip = AudioSystem.getClip();
                         clip.open(audioStream);
+
                         final Object lock = new Object();
                         clip.addLineListener(event -> {
                             if (event.getType() == LineEvent.Type.STOP) {
@@ -890,10 +950,13 @@ public class SlideshowCreator extends javax.swing.JFrame {
                                 }
                             }
                         });
+
                         clip.start();
+
                         synchronized (lock) {
                             lock.wait();
                         }
+
                         clip.close();
                         audioStream.close();
                     } catch (Exception ex) {
@@ -912,7 +975,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
             audioFiles.add(audioFile);
             if (audioFiles.size() == 1) {
-                audioIndex = 0;
+                audioIndex = 0; // Set to first file if it's the first one added
             }
         } else {
             System.out.println("Invalid file format. Only .wav files are supported.");
@@ -926,14 +989,18 @@ public class SlideshowCreator extends javax.swing.JFrame {
         FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
                 "Image files (*.jpg, *.jpeg, *.png, *.gif)", "jpg", "jpeg", "png", "gif");
         fileChooser.setFileFilter(imageFilter);
-        fileChooser.setFileView(createFileView(fileChooser));
+        fileChooser.setFileView(createFileView(fileChooser)); // Pass the file chooser instance
         return fileChooser;
     }
 
+
     private FileView createFileView(final JFileChooser chooser) {
         return new FileView() {
+            // Cache thumbnails...
             private final Map<File, Icon> thumbnailCache = new HashMap<>();
-            private final Icon placeholderIcon = new ImageIcon(new BufferedImage(50, 50, BufferedImage.TYPE_INT_ARGB));
+            private final Icon placeholderIcon = new ImageIcon(
+                    new BufferedImage(50, 50, BufferedImage.TYPE_INT_ARGB));
+                    
             @Override
             public Icon getIcon(File f) {
                 if (f.isFile() && isImageFile(f)) {
@@ -957,15 +1024,19 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 }
                 return super.getIcon(f);
             }
+
             private Icon getThumbnailIcon(File file) {
                 try {
-                    BufferedImage thumbnail = Thumbnails.of(file).size(50, 50).asBufferedImage();
+                    BufferedImage thumbnail = Thumbnails.of(file)
+                        .size(50, 50) // Desired thumbnail size
+                        .asBufferedImage();
                     return new ImageIcon(thumbnail);
                 } catch (IOException e) {
                     e.printStackTrace();
-                    return null;
+                    return null; // Handle error, maybe return a default icon
                 }
             }
+
             private boolean isImageFile(File file) {
                 String fileName = file.getName().toLowerCase();
                 return fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") ||
@@ -975,7 +1046,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }
 
     private void updateImageFiles(List<File> imageList) {
-        imageFiles = imageList;
+        imageFiles = imageList;  // Direct assignment, no need to convert to an array
         updateImage();
         timelinePanelObject.setImages(imageList);
         if (!imageList.isEmpty()) {
@@ -993,20 +1064,24 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Slideshow name cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+             // Check if slideshow name already exists
             File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName);
             if (slideshowDir.exists() && slideshowDir.isDirectory() && slideshowDir.list().length > 0) {
                 int choice = JOptionPane.showConfirmDialog(this, "Slideshow '" + currentSlideshowName + "' already exists. Overwrite?", "Confirm Overwrite", JOptionPane.YES_NO_OPTION);
                 if (choice == JOptionPane.NO_OPTION) {
-                    currentSlideshowName = null;
-                    processSelectedFiles(selectedFiles);
-                    return;
+                    currentSlideshowName = null; // Reset name to prompt again
+                    processSelectedFiles(selectedFiles); // Recursive call to get a new name
+                    return; // Exit current execution
                 } else {
+                    // User chose yes, clear existing images
                     clearExistingImages();
                 }
             }
         }
+        
         List<File> newImages = new ArrayList<>();
         File targetFolder = SlideShowFileManager.getImagesFolder(currentSlideshowName);
+        
         new SwingWorker<Void, File>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -1014,12 +1089,14 @@ public class SlideshowCreator extends javax.swing.JFrame {
                     File targetFile = new File(targetFolder, selectedFile.getName());
                     targetFile = avoidDuplicateFileNames(targetFile, selectedFile, targetFolder);
                     copyImageFile(selectedFile, newImages, targetFile);
-                    publish(targetFile);
+                    publish(targetFile);  // Publish each processed file for incremental update
                 }
                 return null;
             }
+            
             @Override
             protected void process(List<File> chunks) {
+                // Update the timeline panel incrementally
                 timelinePanelObject.setImages(newImages);
                 if (!newImages.isEmpty()) {
                     timelinePanelObject.getImageList().setSelectedIndex(0);
@@ -1028,9 +1105,12 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 timelinePanelObject.revalidate();
                 timelinePanelObject.repaint();
             }
+            
             @Override
             protected void done() {
                 updateImageFiles(newImages);
+
+                // Sets the visibility of the settings panel
                 modeComboBox.setVisible(true);
                 modeSelectionLabel.setVisible(true);
                 transitionComboBox.setVisible(true);
@@ -1044,7 +1124,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }
     
     private void clearExistingImages() {
+        // Clear the imageFiles list
         imageFiles.clear();
+         // Clear the images from the images folder
         File imagesFolder = SlideShowFileManager.getImagesFolder(currentSlideshowName);
         if (imagesFolder.exists() && imagesFolder.isDirectory()) {
             File[] files = imagesFolder.listFiles();
@@ -1144,6 +1226,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }//GEN-LAST:event_transitionTestActionPerformed
 
     public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -1151,15 +1238,25 @@ public class SlideshowCreator extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (Exception ex) {
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(SlideshowCreator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(SlideshowCreator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(SlideshowCreator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(SlideshowCreator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        
+        /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new SlideshowCreator().setVisible(true);
             }
         });
     }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem DarkMode;
     private javax.swing.JMenuItem LightMode;

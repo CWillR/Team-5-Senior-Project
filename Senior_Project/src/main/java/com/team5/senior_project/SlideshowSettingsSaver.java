@@ -1,3 +1,7 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.team5.senior_project;
 
 import java.io.File;
@@ -6,6 +10,7 @@ import org.json.JSONObject;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+
 
 public class SlideshowSettingsSaver {
 
@@ -55,7 +60,7 @@ public class SlideshowSettingsSaver {
         slideshowJson.put("slides", slidesArray);
 
         try (FileWriter fileWriter = new FileWriter(filePath)) {
-            fileWriter.write(slideshowJson.toString(4)); // 4 for pretty printing indentation
+            fileWriter.write(slideshowJson.toString(4)); // 4 for nice indentation
         } catch (IOException e) {
             e.printStackTrace();
         }
