@@ -654,32 +654,26 @@ public class SlideshowCreator extends javax.swing.JFrame {
             return;
         }
     
-        // Get the slideshow directory and ensure it exists.
         File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName);
         if (!slideshowDir.exists()) {
             slideshowDir.mkdirs();
         }
     
-        // Create the JSON file.
         File file = new File(slideshowDir, currentSlideshowName + ".json");
     
-        // Retrieve settings from your SettingsPanel.
         boolean loop = settingsPanel.getPlaybackMode().equals("Loop Slideshow");
         String mode = settingsPanel.getSelectedMode();
         int interval;
         try {
-            // Parse the interval (in seconds) from the text field.
             interval = (int) Math.round(Double.parseDouble(settingsPanel.getIntervalText().trim()));
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Invalid interval value. Using default interval of 3 seconds.");
             interval = 3;
         }
     
-        // Get slides and transitions.
         List<Slide> slides = getSlides();
-        List<String> transitions = getTransitionsAsStringList();
+        List<String> transitions = getTransitionsAsStringList(); // Helper method converting imageTransitions to List<String>
     
-        // Call the utility method to save the JSON.
         SlideshowSettingsSaver.saveSettingsToJson(
                 file.getAbsolutePath(), 
                 currentSlideshowName, 
@@ -688,11 +682,12 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 loop, 
                 mode, 
                 interval, 
-                transitions);
+                transitions
+        );
     
         JOptionPane.showMessageDialog(this, "Slideshow settings saved successfully.");
-    }//GEN-LAST:event_saveMenuItemActionPerformed
-
+    }
+    
     // Allows user to save currently created slideshow
     private void openPreviousSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openPreviousSlideMenuItemActionPerformed
         JFileChooser fileChooser = new JFileChooser();
@@ -800,7 +795,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         }
         return transitions;
     }
-
+    
     private JFileChooser createFileChooser(int selectionMode, boolean multiSelection) {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(selectionMode);

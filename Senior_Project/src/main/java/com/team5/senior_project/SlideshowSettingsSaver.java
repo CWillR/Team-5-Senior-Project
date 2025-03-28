@@ -11,11 +11,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
-
 public class SlideshowSettingsSaver {
 
     /**
-     * Saves the slideshow settings including slide images, audio files, and transitions.
+     * Saves the slideshow settings including slide images, audio files, and per-slide transitions.
      *
      * @param filePath      The path of the file to save the settings.
      * @param slideshowName The name of the slideshow.
@@ -31,18 +30,10 @@ public class SlideshowSettingsSaver {
         JSONObject slideshowJson = new JSONObject();
         slideshowJson.put("name", slideshowName);
         slideshowJson.put("loop", loop);
-        slideshowJson.put("mode", mode); // Save the mode selection
+        slideshowJson.put("mode", mode);
         slideshowJson.put("interval", interval);
-        
-        // Save transitions as an array.
-        if (transitions != null && !transitions.isEmpty()) {
-            JSONArray transitionsArray = new JSONArray();
-            for (String t : transitions) {
-                transitionsArray.put(t);
-            }
-            slideshowJson.put("transitions", transitionsArray);
-        }
-        
+
+        // If there are audio files, add them as an array.
         if (audioFiles != null && !audioFiles.isEmpty()) {
             JSONArray audioArray = new JSONArray();
             for (File audioFile : audioFiles) {
@@ -51,16 +42,23 @@ public class SlideshowSettingsSaver {
             slideshowJson.put("audio", audioArray);
         }
 
+        // Build the slides array.
         JSONArray slidesArray = new JSONArray();
-        for (Slide slide : slides) {
+        for (int i = 0; i < slides.size(); i++) {
             JSONObject slideJson = new JSONObject();
-            slideJson.put("image", slide.getImagePath());
+            slideJson.put("image", slides.get(i).getImagePath());
+            // Attach the transition for this slide if available.
+            if (transitions != null && transitions.size() > i) {
+                slideJson.put("transition", transitions.get(i));
+            } else {
+                slideJson.put("transition", "No Transition");
+            }
             slidesArray.put(slideJson);
         }
         slideshowJson.put("slides", slidesArray);
 
         try (FileWriter fileWriter = new FileWriter(filePath)) {
-            fileWriter.write(slideshowJson.toString(4)); // 4 for nice indentation
+            fileWriter.write(slideshowJson.toString(4)); // 4 for pretty-print indentation
         } catch (IOException e) {
             e.printStackTrace();
         }
