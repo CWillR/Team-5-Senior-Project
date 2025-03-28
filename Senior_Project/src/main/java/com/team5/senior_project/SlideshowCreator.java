@@ -648,15 +648,49 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }//GEN-LAST:event_DarkModeActionPerformed
 
     // Overwrites the currently working file as long as it exists in the folder already, allowing easy updates
-    private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuItemActionPerformed
+    private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {
         if (currentSlideshowName == null) {
             JOptionPane.showMessageDialog(this, "Please add images to create a slideshow first.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-
-        File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName); // Get the main slideshow directory
-        File file = new File(slideshowDir, currentSlideshowName + ".json"); // Save the JSON file in the main directory
-        // saveSlideshowSettings(file);
+    
+        // Get the slideshow directory and ensure it exists.
+        File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName);
+        if (!slideshowDir.exists()) {
+            slideshowDir.mkdirs();
+        }
+    
+        // Create the JSON file.
+        File file = new File(slideshowDir, currentSlideshowName + ".json");
+    
+        // Retrieve settings from your SettingsPanel.
+        boolean loop = settingsPanel.getPlaybackMode().equals("Loop Slideshow");
+        String mode = settingsPanel.getSelectedMode();
+        int interval;
+        try {
+            // Parse the interval (in seconds) from the text field.
+            interval = (int) Math.round(Double.parseDouble(settingsPanel.getIntervalText().trim()));
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid interval value. Using default interval of 3 seconds.");
+            interval = 3;
+        }
+    
+        // Get slides and transitions.
+        List<Slide> slides = getSlides();
+        List<String> transitions = getTransitionsAsStringList();
+    
+        // Call the utility method to save the JSON.
+        SlideshowSettingsSaver.saveSettingsToJson(
+                file.getAbsolutePath(), 
+                currentSlideshowName, 
+                slides, 
+                audioFiles, 
+                loop, 
+                mode, 
+                interval, 
+                transitions);
+    
+        JOptionPane.showMessageDialog(this, "Slideshow settings saved successfully.");
     }//GEN-LAST:event_saveMenuItemActionPerformed
 
     // Allows user to save currently created slideshow
@@ -673,13 +707,18 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }//GEN-LAST:event_openPreviousSlideMenuItemActionPerformed
 
     // Selects image to add to our image folder and adds it sequentially to the image index for display
-    private void createNewSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createNewSlideMenuItemActionPerformed
+    private void createNewSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {
         JFileChooser fileChooser = createFileChooser(JFileChooser.FILES_ONLY, true);
         int returnValue = fileChooser.showOpenDialog(this);
-
+    
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             File[] selectedFiles = fileChooser.getSelectedFiles();
             processSelectedFiles(selectedFiles);
+            
+            // Optionally, after processing, automatically save the new slideshow.
+            if (currentSlideshowName != null) {
+                saveMenuItemActionPerformed(evt); // Or prompt the user to save
+            }
         } else {
             System.out.println("No image selected.");
         }
@@ -751,6 +790,15 @@ public class SlideshowCreator extends javax.swing.JFrame {
         } else {
             System.out.println("Invalid file format. Only .wav files are supported.");
         }
+    }
+
+    // Helper method to convert imageTransitions to a List of Strings.
+    private List<String> getTransitionsAsStringList() {
+        List<String> transitions = new ArrayList<>();
+        for (TransitionType t : imageTransitions) {
+            transitions.add(t.toString());
+        }
+        return transitions;
     }
 
     private JFileChooser createFileChooser(int selectionMode, boolean multiSelection) {
@@ -884,6 +932,35 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 while (imageTransitions.size() < newImages.size()) {
                     imageTransitions.add(TransitionType.INSTANT);
                 }
+                
+                // Now immediately update the JSON file so that the slide locations (and transitions) are saved.
+                File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName);
+                if (!slideshowDir.exists()) {
+                    slideshowDir.mkdirs();
+                }
+                File file = new File(slideshowDir, currentSlideshowName + ".json");
+                
+                // Retrieve settings from the settings panel.
+                boolean loop = settingsPanel.getPlaybackMode().equals("Loop Slideshow");
+                String mode = settingsPanel.getSelectedMode();
+                int interval;
+                try {
+                    interval = (int)Math.round(Double.parseDouble(settingsPanel.getIntervalText().trim()));
+                } catch (NumberFormatException ex) {
+                    interval = 3; // default interval (in seconds)
+                }
+                
+                // Use the helper method from SlideshowSettingsSaver
+                SlideshowSettingsSaver.saveSettingsToJson(
+                    file.getAbsolutePath(),
+                    currentSlideshowName,
+                    getSlides(),         // your list of Slide objects
+                    audioFiles,
+                    loop,
+                    mode,
+                    interval,
+                    getTransitionsAsStringList()  // helper method below
+                );
             }
         }.execute();
     }
