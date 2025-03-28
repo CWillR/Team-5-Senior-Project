@@ -1028,7 +1028,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         System.out.println("Transition for image " + currentIndex + " updated to: " + newTransition);
     }//GEN-LAST:event_transitionBoxActionPerformed
 
-    private void transitionTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_transitionTestActionPerformed
+    private void transitionTestActionPerformed(java.awt.event.ActionEvent evt) {
         if (imageTransitions == null || imageTransitions.isEmpty()) {
             System.out.println("Transition attempted before any have been initialized");
             return;
@@ -1038,15 +1038,20 @@ public class SlideshowCreator extends javax.swing.JFrame {
             System.out.println("No image available for transition.");
             return;
         }
+        
+        // Use the current image as the "next" image.
         BufferedImage nextImage = Transition.toBufferedImage(labelIcon.getImage());
         int currentIndex = timelinePanelObject.getImageList().getSelectedIndex();
         if (currentIndex < 0) {
             currentIndex = 0;
         }
+        
+        // Use the ordered image list from the timeline panel
+        List<File> currentImages = timelinePanelObject.getImages();
         BufferedImage prevImage = nextImage;
-        int wrapIndex = (currentIndex - 1 >= 0) ? currentIndex - 1 : imageFiles.size() - 1;
-        if (imageFiles.size() >= 2) {
-            ImageIcon prevIcon = new ImageIcon(imageFiles.get(wrapIndex).getAbsolutePath());
+        if (currentImages.size() >= 2) {
+            int wrapIndex = (currentIndex - 1 >= 0) ? currentIndex - 1 : currentImages.size() - 1;
+            ImageIcon prevIcon = new ImageIcon(currentImages.get(wrapIndex).getAbsolutePath());
             prevImage = Transition.toBufferedImage(prevIcon.getImage());
         } else {
             try {
@@ -1058,10 +1063,11 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 System.out.println("Error obtaining default image for transitions: " + e);
             }
         }
+        
         TransitionType type = imageTransitions.get(currentIndex);
         transitionManager.doTransition(prevImage, nextImage, imageLabel, type);
-    }//GEN-LAST:event_transitionTestActionPerformed
-
+    }
+    
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
