@@ -298,11 +298,11 @@ public class TimelinePanel extends javax.swing.JPanel {
         private int addIndex = -1;    // drop index
         private int addCount = 0;     // number of items added
         private final List<TransitionType> transitionsList; // reference to the transitions list
-    
+
         public ListItemTransferHandler(List<TransitionType> transitionsList) {
             this.transitionsList = transitionsList;
         }
-    
+
         @Override
         protected Transferable createTransferable(JComponent c) {
             JList<?> list = (JList<?>) c;
@@ -310,20 +310,23 @@ public class TimelinePanel extends javax.swing.JPanel {
             List<?> values = list.getSelectedValuesList();
             return new ListTransferable(values);
         }
-    
+
         @Override
         public int getSourceActions(JComponent c) {
             return MOVE; // allow move only
         }
-    
+
         @Override
         public boolean canImport(TransferHandler.TransferSupport info) {
             return info.isDataFlavorSupported(ListTransferable.localFlavor)
                     || info.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
         }
-    
+
         @Override
         public boolean importData(TransferHandler.TransferSupport info) {
+            if (!canImport(info)) {
+                return false;
+            }
             JList<?> target = (JList<?>) info.getComponent();
             DefaultListModel model = (DefaultListModel) target.getModel();
             JList.DropLocation dl = (JList.DropLocation) info.getDropLocation();
@@ -351,27 +354,54 @@ public class TimelinePanel extends javax.swing.JPanel {
             }
             return false;
         }
-    
+
         @Override
         protected void exportDone(JComponent c, Transferable data, int action) {
             if (action == MOVE && indices != null) {
                 JList source = (JList) c;
                 DefaultListModel model = (DefaultListModel) source.getModel();
-                // Assume single selection for simplicity.
-                if (indices.length == 1) {
-                    int oldIndex = indices[0];
-                    int newIndex = addIndex;
-                    // Adjust newIndex if necessary (since removal shifts indices)
-                    if (newIndex > oldIndex) {
-                        newIndex--;
+                // Clone and sort indices in ascending order.
+                int[] sortedIndices = indices.clone();
+                java.util.Arrays.sort(sortedIndices);
+                
+                // For the model and transitions, we need to adjust removal indices.
+                // When dragging to an index that comes before the original position,
+                // the inserted copy shifts indices upward.
+                List<Integer> removalIndices = new ArrayList<>();
+                for (int idx : sortedIndices) {
+                    // If the drop index is less than or equal to the original index,
+                    // the newly inserted items pushed the original item to a higher index.
+                    if (addIndex <= idx) {
+                        removalIndices.add(idx + addCount);
+                    } else {
+                        removalIndices.add(idx);
                     }
-                    // Update the transitions list in parallel.
-                    TransitionType moved = transitionsList.remove(oldIndex);
-                    transitionsList.add(newIndex, moved);
                 }
-                // Remove the dragged items from their old positions in the model.
-                for (int i = indices.length - 1; i >= 0; i--) {
-                    model.remove(indices[i]);
+                // Remove items from the model in descending order.
+                removalIndices.sort((a, b) -> b - a);
+                for (int remIdx : removalIndices) {
+                    model.remove(remIdx);
+                }
+                
+                // Now update the transitions list.
+                // Compute how many dragged items were originally before the drop index.
+                int countBefore = 0;
+                for (int idx : sortedIndices) {
+                    if (idx < addIndex) {
+                        countBefore++;
+                    }
+                }
+                // Adjust drop index for transitions.
+                int dropIndex = addIndex - countBefore;
+                List<TransitionType> movedTransitions = new ArrayList<>();
+                for (int i = sortedIndices.length - 1; i >= 0; i--) {
+                    int originalIdx = sortedIndices[i];
+                    int transRemovalIdx = (addIndex <= originalIdx) ? originalIdx + addCount : originalIdx;
+                    movedTransitions.add(0, transitionsList.remove(transRemovalIdx));
+                }
+                for (TransitionType t : movedTransitions) {
+                    transitionsList.add(dropIndex, t);
+                    dropIndex++;
                 }
             }
             indices = null;
