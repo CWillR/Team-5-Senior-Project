@@ -11,7 +11,7 @@ import javax.swing.JOptionPane;
 
 /**
  *
- * @author Jack
+ * @author Team 5
  */
 public class SettingsPanel extends javax.swing.JPanel {
 

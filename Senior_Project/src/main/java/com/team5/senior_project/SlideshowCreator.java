@@ -116,21 +116,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 }
             }
         });
-        // intervalTextField.setVisible(false); // Wait until called to make visible.
-        // modeSelectionLabel.setVisible(false); // Wait until called to make visible.
-        // intervalText.setVisible(false); // Wait until called to make visible.
-        // secondsText.setVisible(false); // Wait until called to make visible.
-        // transitionComboBox.setVisible(false);
-        // transitionLabel.setVisible(false);
-               
-        // modeComboBox.setVisible(false);
-        // Initialize modeComboBox
-        // modeComboBox.addActionListener(new ActionListener() {
-        //     @Override
-        //     public void actionPerformed(ActionEvent e) {
-        //         updateMode();
-        //     }
-        // });
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
@@ -165,7 +150,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }
 
     
-
+    // This all needs to be moved into its own class.
     // Called when an image is selected in the timeline.
     // This version updates the transitions tab (transitionBox) so that it shows the current image's transition.
     private void updateTransitionBox() {

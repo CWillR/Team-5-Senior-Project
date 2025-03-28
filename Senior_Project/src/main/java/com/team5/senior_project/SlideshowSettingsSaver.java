@@ -11,6 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
+
 public class SlideshowSettingsSaver {
 
     /**
@@ -30,7 +31,7 @@ public class SlideshowSettingsSaver {
         JSONObject slideshowJson = new JSONObject();
         slideshowJson.put("name", slideshowName);
         slideshowJson.put("loop", loop);
-        slideshowJson.put("mode", mode);
+        slideshowJson.put("mode", mode); // Save the mode selection
         slideshowJson.put("interval", interval);
 
         // If there are audio files, add them as an array.
@@ -58,7 +59,7 @@ public class SlideshowSettingsSaver {
         slideshowJson.put("slides", slidesArray);
 
         try (FileWriter fileWriter = new FileWriter(filePath)) {
-            fileWriter.write(slideshowJson.toString(4)); // 4 for pretty-print indentation
+            fileWriter.write(slideshowJson.toString(4)); // 4 for nice indentation
         } catch (IOException e) {
             e.printStackTrace();
         }
