@@ -31,8 +31,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-import static javax.swing.TransferHandler.COPY_OR_MOVE;
-import static javax.swing.TransferHandler.MOVE;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import net.coobird.thumbnailator.Thumbnails;
@@ -89,7 +87,6 @@ public class TimelinePanel extends javax.swing.JPanel {
         imageList.setVisibleRowCount(1);
         imageList.setDragEnabled(true);
         imageList.setDropMode(DropMode.INSERT);
-        imageList.setTransferHandler(new ListItemTransferHandler());
         // Create a scroll pane for the image list.
         JScrollPane listScrollPane = new JScrollPane(imageList);
         add(listScrollPane, CARD_LIST);
@@ -296,98 +293,93 @@ public class TimelinePanel extends javax.swing.JPanel {
     }
 
     // --- TransferHandler for Drag-and-Drop Reordering ---
-    private static class ListItemTransferHandler extends TransferHandler {
-        private int[] indices = null; // Stores the indices of the dragged items.
-        private int addIndex = -1;    // Stores the index where items are dropped.
-        private int addCount = 0;     // Stores the number of items added during the drop.
-
+    public static class ListItemTransferHandler extends TransferHandler {
+        private int[] indices = null; // indices of dragged items
+        private int addIndex = -1;    // drop index
+        private int addCount = 0;     // number of items added
+        private final List<TransitionType> transitionsList; // reference to the transitions list
+    
+        public ListItemTransferHandler(List<TransitionType> transitionsList) {
+            this.transitionsList = transitionsList;
+        }
+    
         @Override
         protected Transferable createTransferable(JComponent c) {
-            // Creates a Transferable object containing the selected items.
             JList<?> list = (JList<?>) c;
             indices = list.getSelectedIndices();
             List<?> values = list.getSelectedValuesList();
-            return new ListTransferable(values); // Returns a custom Transferable.
+            return new ListTransferable(values);
         }
-
+    
         @Override
         public int getSourceActions(JComponent c) {
-            // Defines the allowed source actions for the drag operation.
-            return COPY_OR_MOVE; // Allows both copying and moving items.
+            return MOVE; // allow move only
         }
-
+    
         @Override
         public boolean canImport(TransferHandler.TransferSupport info) {
-            // Checks if the transfer data can be imported.
             return info.isDataFlavorSupported(ListTransferable.localFlavor)
-                    || info.isDataFlavorSupported(DataFlavor.javaFileListFlavor); // Checks for custom list flavor or file list flavor.
+                    || info.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
         }
-
+    
         @Override
         public boolean importData(TransferHandler.TransferSupport info) {
-            // Imports the transfer data into the target JList.
-            if (!canImport(info)) {
-                return false;
-            }
             JList<?> target = (JList<?>) info.getComponent();
             DefaultListModel model = (DefaultListModel) target.getModel();
             JList.DropLocation dl = (JList.DropLocation) info.getDropLocation();
-            int index = dl.getIndex(); // Gets the drop index.
+            int index = dl.getIndex();
             if (index < 0) {
-                index = model.getSize(); // If no drop index, append to the end.
+                index = model.getSize();
             }
             addIndex = index;
             try {
                 List<?> values;
                 if (info.isDataFlavorSupported(ListTransferable.localFlavor)) {
-                    // If the data flavor is the custom list flavor, get the list of objects.
-                    @SuppressWarnings("unchecked")
-                    List<Object> localValues = (List<Object>) info.getTransferable().getTransferData(ListTransferable.localFlavor);
-                    values = localValues;
+                    values = (List<?>) info.getTransferable().getTransferData(ListTransferable.localFlavor);
                 } else if (info.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                    // If the data flavor is the file list flavor, get the list of files.
-                    @SuppressWarnings("unchecked")
-                    List<Object> fileList = (List<Object>) info.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
-                    values = fileList;
+                    values = (List<?>) info.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
                 } else {
-                    return false; // If no supported flavor, return false.
+                    return false;
                 }
-                addCount = values.size(); // Set the add count.
+                addCount = values.size();
                 for (Object o : values) {
-                    model.add(index++, o); // Add each object to the model.
+                    model.add(index++, o);
                 }
-                return true; // Return true if import is successful.
+                return true;
             } catch (UnsupportedFlavorException | IOException ex) {
                 ex.printStackTrace();
             }
-            return false; // Return false if import fails.
+            return false;
         }
-
+    
         @Override
         protected void exportDone(JComponent c, Transferable data, int action) {
-            // Cleans up after the transfer is complete.
             if (action == MOVE && indices != null) {
-                // If the action was a move and indices are valid.
                 JList source = (JList) c;
                 DefaultListModel model = (DefaultListModel) source.getModel();
-                if (addCount > 0) {
-                    // Adjust indices if items were added before the original indices.
-                    for (int i = indices.length - 1; i >= 0; i--) {
-                        if (indices[i] >= addIndex) {
-                            indices[i] += addCount;
-                        }
+                // Assume single selection for simplicity.
+                if (indices.length == 1) {
+                    int oldIndex = indices[0];
+                    int newIndex = addIndex;
+                    // Adjust newIndex if necessary (since removal shifts indices)
+                    if (newIndex > oldIndex) {
+                        newIndex--;
                     }
+                    // Update the transitions list in parallel.
+                    TransitionType moved = transitionsList.remove(oldIndex);
+                    transitionsList.add(newIndex, moved);
                 }
+                // Remove the dragged items from their old positions in the model.
                 for (int i = indices.length - 1; i >= 0; i--) {
-                    model.remove(indices[i]); // Remove the original items.
+                    model.remove(indices[i]);
                 }
             }
-            indices = null; // Reset indices.
-            addCount = 0;   // Reset add count.
-            addIndex = -1;  // Reset add index.
+            indices = null;
+            addCount = 0;
+            addIndex = -1;
         }
     }
-
+    
     // --- Custom Transferable for a List of Objects ---
     private static class ListTransferable implements Transferable {
         private final List<?> data; // The list of objects to transfer.

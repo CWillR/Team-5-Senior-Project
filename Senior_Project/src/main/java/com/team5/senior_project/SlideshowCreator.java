@@ -96,6 +96,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         // Initialize the timeline panel
         timelinePanelObject = new TimelinePanel(); // Initialize it
+        timelinePanelObject.getImageList().setTransferHandler(new TimelinePanel.ListItemTransferHandler(imageTransitions));
         TimelinePanel.setLayout(new BorderLayout()); // Ensure layout is set
         TimelinePanel.add(timelinePanelObject, BorderLayout.CENTER);
         TimelinePanel.revalidate();
@@ -790,6 +791,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     // Helper method to convert imageTransitions to a List of Strings.
     private List<String> getTransitionsAsStringList() {
         List<String> transitions = new ArrayList<>();
+        // Assumes that imageTransitions and timelinePanelObject.getImages() are in sync.
         for (TransitionType t : imageTransitions) {
             transitions.add(t.toString());
         }
