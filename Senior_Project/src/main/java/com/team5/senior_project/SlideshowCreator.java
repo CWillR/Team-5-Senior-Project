@@ -581,13 +581,14 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     // Launches presenter application
-    private void presenterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_presenterButtonActionPerformed
-        if (imageFiles != null && !imageFiles.isEmpty()) {
-            File[] imageArray = imageFiles.toArray(new File[0]);
+    private void presenterButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        // Retrieve images from the timeline panel instead of the separate imageFiles list.
+        List<File> images = timelinePanelObject.getImages();
+        if (images != null && !images.isEmpty()) {
+            File[] imageArray = images.toArray(new File[0]);
             // Retrieve the slideshow settings from the settings panel.
             SlideshowSettings settings = settingsPanel.getSlideshowSettings();
-        
-            // Create and launch the presenter using the settings.
+            // Launch the presenter using the images from the timeline.
             new SlideshowPresenter(imageArray, settings.duration, settings.loop, settings.autoMode)
                     .setVisible(true);
         } else {
