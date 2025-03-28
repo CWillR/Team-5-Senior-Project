@@ -47,7 +47,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private final Transition transitionManager = new Transition();
     private String currentSlideshowName = null; // Class-level variable
     private AudioTimelinePanel audioTimelinePanel;
-    private boolean autoMode = false;
     private final ExecutorService thumbnailExecutor = Executors.newFixedThreadPool(4);
     private List<TransitionType> imageTransitions = new ArrayList<>();
 
@@ -610,7 +609,12 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private void presenterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_presenterButtonActionPerformed
         if (imageFiles != null && !imageFiles.isEmpty()) {
             File[] imageArray = imageFiles.toArray(new File[0]);
-            new SlideshowPresenter(imageArray, 3000, true).setVisible(true);
+            // Retrieve the slideshow settings from the settings panel.
+            SlideshowSettings settings = settingsPanel.getSlideshowSettings();
+        
+            // Create and launch the presenter using the settings.
+            new SlideshowPresenter(imageArray, settings.duration, settings.loop, settings.autoMode)
+                    .setVisible(true);
         } else {
             JOptionPane.showMessageDialog(this, "No images to present.");
         }

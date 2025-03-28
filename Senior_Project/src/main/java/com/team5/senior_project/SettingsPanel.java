@@ -4,9 +4,10 @@
  */
 package com.team5.senior_project;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -22,7 +23,17 @@ public class SettingsPanel extends javax.swing.JPanel {
      */
     public SettingsPanel() {
         initComponents();
-        // Add additional initialization and listeners here
+        // Set default to "Preset Duration"
+        modeComboBox.setSelectedIndex(1); // index 1 corresponds to "Preset Duration"
+        // Set default interval to 3 seconds
+        intervalTextField.setText("3");
+        // Since we are in Preset Duration mode, update the autoMode flag
+        autoMode = true;
+        // Optionally, force layout update if needed
+        intervalText.getParent().revalidate();
+        intervalText.getParent().repaint();
+        
+        // Add listener for mode changes
         modeComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -77,10 +88,6 @@ public class SettingsPanel extends javax.swing.JPanel {
     public String getIntervalText() {
         return intervalTextField.getText();
     }
-
-    public String getSelectedTransition() {
-        return (String) transitionComboBox.getSelectedItem();
-    }
     
     public String getPlaybackMode() {
         return (String) playbackModeBox.getSelectedItem();
@@ -88,6 +95,25 @@ public class SettingsPanel extends javax.swing.JPanel {
     
     public boolean isAutoMode() {
         return autoMode;
+    }
+
+    public SlideshowSettings getSlideshowSettings() {
+        int duration = 3000; // default duration in milliseconds
+        try {
+            String intervalStr = getIntervalText().trim();
+            double seconds = Double.parseDouble(intervalStr);
+            // Enforce a minimum interval of 0.01 seconds.
+            if (seconds < 0.01) {
+                seconds = 0.01;
+            }
+            duration = (int) (seconds * 1000);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid interval value. Using default interval of 3 seconds.");
+        }
+        boolean loop = getPlaybackMode().equals("Loop Slideshow");
+        boolean autoMode = isAutoMode();
+        
+        return new SlideshowSettings(duration, loop, autoMode);
     }
     
     /**
@@ -104,8 +130,6 @@ public class SettingsPanel extends javax.swing.JPanel {
         secondsText = new javax.swing.JLabel();
         intervalTextField = new javax.swing.JTextField();
         intervalText = new javax.swing.JLabel();
-        transitionComboBox = new javax.swing.JComboBox<>();
-        transitionLabel = new javax.swing.JLabel();
         modeComboBox = new javax.swing.JComboBox<>();
         modeSelectionLabel = new javax.swing.JLabel();
 
@@ -128,10 +152,6 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         intervalText.setText("Slide interval");
 
-        transitionComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Wipe left", "Wipe right", "Wipe up", "Wipe down", "Crossfade" }));
-
-        transitionLabel.setText("Select transition for your Slideshow");
-
         modeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Manual Duration", "Preset Duration" }));
 
         modeSelectionLabel.setText("Select Automatic or Manual Slide Show");
@@ -151,9 +171,7 @@ public class SettingsPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(intervalTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(secondsText))
-                    .addComponent(transitionLabel)
-                    .addComponent(transitionComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(secondsText)))
                 .addContainerGap(286, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -170,9 +188,7 @@ public class SettingsPanel extends javax.swing.JPanel {
                     .addComponent(intervalTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(secondsText))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(transitionLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(transitionComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(playbackModeLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -198,7 +214,5 @@ public class SettingsPanel extends javax.swing.JPanel {
     private javax.swing.JComboBox<String> playbackModeBox;
     private javax.swing.JLabel playbackModeLabel;
     private javax.swing.JLabel secondsText;
-    private javax.swing.JComboBox<String> transitionComboBox;
-    private javax.swing.JLabel transitionLabel;
     // End of variables declaration//GEN-END:variables
 }
