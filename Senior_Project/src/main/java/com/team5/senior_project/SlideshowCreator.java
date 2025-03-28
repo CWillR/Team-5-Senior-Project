@@ -30,6 +30,8 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.json.JSONObject;
+import org.json.JSONArray;
 
 /**
  *
@@ -665,7 +667,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }
     
     // Allows user to save currently created slideshow
-    private void openPreviousSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openPreviousSlideMenuItemActionPerformed
+    private void openPreviousSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {
         JFileChooser fileChooser = new JFileChooser();
         FileNameExtensionFilter filter = new FileNameExtensionFilter("JSON Files", "json");
         fileChooser.setFileFilter(filter);
@@ -673,10 +675,57 @@ public class SlideshowCreator extends javax.swing.JFrame {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             currentSlideshowFile = file;
-            // loadSlideshowSettings(file);
+            loadSlideshowSettings(file);  // Add this call
         }
     }//GEN-LAST:event_openPreviousSlideMenuItemActionPerformed
 
+    private void loadSlideshowSettings(File file) {
+        try {
+            // Read file contents
+            String content = new String(Files.readAllBytes(file.toPath()));
+            JSONObject json = new JSONObject(content);
+    
+            // Load basic slideshow settings
+            currentSlideshowName = json.getString("name");
+            boolean loop = json.getBoolean("loop");
+            String mode = json.getString("mode");
+            int interval = json.getInt("interval");
+    
+            // Update the settings panel (ensure these methods exist in SettingsPanel)
+            settingsPanel.setPlaybackMode(loop ? "Loop Slideshow" : "Single Play");
+            settingsPanel.setSelectedMode(mode);
+            settingsPanel.setIntervalText(String.valueOf(interval));
+    
+            // Load audio files if available
+            audioFiles.clear();
+            if (json.has("audio")) {
+                JSONArray audioArray = json.getJSONArray("audio");
+                for (int i = 0; i < audioArray.length(); i++) {
+                    String audioPath = audioArray.getString(i);
+                    audioFiles.add(new File(audioPath));
+                }
+                updateAudioTimeline();
+            }
+    
+            // Load slides (each with its transition)
+            JSONArray slidesArray = json.getJSONArray("slides");
+            List<TimelineItem> timelineItems = new ArrayList<>();
+            for (int i = 0; i < slidesArray.length(); i++) {
+                JSONObject slideObj = slidesArray.getJSONObject(i);
+                String imagePath = slideObj.getString("image");
+                String transitionStr = slideObj.optString("transition", "INSTANT");
+                TransitionType transition = TransitionType.valueOf(transitionStr);
+                TimelineItem item = new TimelineItem(new File(imagePath), transition);
+                timelineItems.add(item);
+            }
+            // Update the timeline panel with the loaded timeline items.
+            timelinePanelObject.setTimelineItems(timelineItems);
+    
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading slideshow settings: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
     // Selects image to add to our image folder and adds it sequentially to the image index for display
     private void createNewSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {
         JFileChooser fileChooser = createFileChooser(JFileChooser.FILES_ONLY, true);
@@ -895,6 +944,37 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 }
                 timelinePanelObject.revalidate();
                 timelinePanelObject.repaint();
+            }
+
+            @Override
+            protected void done() {
+                updateImageFiles(newImages);
+                // Immediately save the slideshow settings after new images are processed.
+                File slideshowDir = SlideShowFileManager.getSlideshowDirectory(currentSlideshowName);
+                if (!slideshowDir.exists()) {
+                    slideshowDir.mkdirs();
+                }
+                File file = new File(slideshowDir, currentSlideshowName + ".json");
+                
+                boolean loop = settingsPanel.getPlaybackMode().equals("Loop Slideshow");
+                String mode = settingsPanel.getSelectedMode();
+                int interval;
+                try {
+                    interval = (int) Math.round(Double.parseDouble(settingsPanel.getIntervalText().trim()));
+                } catch (NumberFormatException ex) {
+                    interval = 3; // default interval (in seconds)
+                }
+                
+                SlideshowSettingsSaver.saveSettingsToJson(
+                    file.getAbsolutePath(),
+                    currentSlideshowName,
+                    getSlides(),         // Your list of Slide objects
+                    audioFiles,
+                    loop,
+                    mode,
+                    interval,
+                    getTransitionsAsStringList()  // Helper method that retrieves transitions from TimelineItems
+                );
             }
         }.execute();
     }

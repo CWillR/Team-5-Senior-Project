@@ -97,6 +97,25 @@ public class SettingsPanel extends javax.swing.JPanel {
         return autoMode;
     }
 
+    public void setPlaybackMode(String mode) {
+        playbackModeBox.setSelectedItem(mode);
+    }
+
+    public void setIntervalText(String text) {
+        intervalTextField.setText(text);
+    }
+
+    public void setAutoMode(boolean autoMode) {
+        this.autoMode = autoMode;
+        modeComboBox.setSelectedItem(autoMode ? "Preset Duration" : "Manual Duration");
+        updateMode(); // Update the UI based on the new mode
+    }
+
+    public void setSelectedMode(String mode) {
+        modeComboBox.setSelectedItem(mode);
+        updateMode(); // Update the UI based on the new mode
+    }
+
     public SlideshowSettings getSlideshowSettings() {
         int duration = 3000; // default duration in milliseconds
         try {

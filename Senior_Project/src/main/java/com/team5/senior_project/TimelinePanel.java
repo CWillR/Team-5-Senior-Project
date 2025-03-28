@@ -236,6 +236,16 @@ public class TimelinePanel extends javax.swing.JPanel {
         return imageList;
     }
     
+    public void setTimelineItems(List<TimelineItem> items) {
+        listModel.clear();
+        if (items != null) {
+            for (TimelineItem item : items) {
+                listModel.addElement(item);
+            }
+        }
+        updateCard();
+    }
+
     // --- Custom Cell Renderer for Thumbnails ---
     private static class ImageListCellRenderer extends JLabel implements ListCellRenderer<TimelineItem> {
         // Shared cache for thumbnails
