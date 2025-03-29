@@ -110,7 +110,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         // Add selection listener for image changes
         timelinePanelObject.getImageList().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) { // Ensure it's not firing multiple times unnecessarily
-                TimelineItem selectedItem = timelinePanelObject.getImageList().getSelectedValue();
+                Slide selectedItem = timelinePanelObject.getImageList().getSelectedValue();
                 if (selectedItem != null) {
                     updateImage(selectedItem.getImageFile());
                     updateTransitionBox();  // see next step for updating transitions
@@ -155,7 +155,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     // Called when an image is selected in the timeline.
     // This version updates the transitions tab (transitionBox) so that it shows the current image's transition.
     private void updateTransitionBox() {
-        TimelineItem selectedItem = timelinePanelObject.getImageList().getSelectedValue();
+        Slide selectedItem = timelinePanelObject.getImageList().getSelectedValue();
         if (selectedItem == null) return;
         TransitionType currentTransition = selectedItem.getTransition();
         String displayText;
@@ -214,7 +214,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         List<Slide> slides = new ArrayList<>();
         List<File> orderedImages = timelinePanelObject.getImages();
         for (File imageFile : orderedImages) {
-            slides.add(new Slide(imageFile.getAbsolutePath()));
+            slides.add(new Slide(imageFile.getAbsolutePath(), imageFile, TransitionType.INSTANT)); // Default transition
         }
         return slides;
     }
@@ -590,8 +590,16 @@ public class SlideshowCreator extends javax.swing.JFrame {
             File[] imageArray = images.toArray(new File[0]);
             // Retrieve the slideshow settings from the settings panel.
             SlideshowSettings settings = settingsPanel.getSlideshowSettings();
-            // Launch the presenter using the images from the timeline.
-            new SlideshowPresenter(imageArray, settings.duration, settings.loop, settings.autoMode)
+            
+            // Extract transitions from the timeline items:
+            List<Slide> SlidesList = timelinePanelObject.getSlideItems();
+            TransitionType[] slideTransitions = new TransitionType[SlidesList.size()];
+            for (int i = 0; i < SlidesList.size(); i++) {
+                slideTransitions[i] = SlidesList.get(i).getTransition();
+            }
+            
+            // Launch the presenter using the images and transitions from the timeline.
+            new SlideshowPresenter(imageArray, settings.duration, settings.loop, settings.autoMode, slideTransitions)
                     .setVisible(true);
         } else {
             JOptionPane.showMessageDialog(this, "No images to present.");
@@ -709,17 +717,17 @@ public class SlideshowCreator extends javax.swing.JFrame {
     
             // Load slides (each with its transition)
             JSONArray slidesArray = json.getJSONArray("slides");
-            List<TimelineItem> timelineItems = new ArrayList<>();
+            List<Slide> SlidesList = new ArrayList<>();
             for (int i = 0; i < slidesArray.length(); i++) {
                 JSONObject slideObj = slidesArray.getJSONObject(i);
                 String imagePath = slideObj.getString("image");
                 String transitionStr = slideObj.optString("transition", "INSTANT");
                 TransitionType transition = TransitionType.valueOf(transitionStr);
-                TimelineItem item = new TimelineItem(new File(imagePath), transition);
-                timelineItems.add(item);
+                Slide item = new Slide(imagePath, new File(imagePath), transition);
+                SlidesList.add(item);
             }
             // Update the timeline panel with the loaded timeline items.
-            timelinePanelObject.setTimelineItems(timelineItems);
+            timelinePanelObject.setTimelineSlides(SlidesList);
     
         } catch (Exception e) {
             e.printStackTrace();
@@ -816,7 +824,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private List<String> getTransitionsAsStringList() {
         List<String> transitions = new ArrayList<>();
         for (int i = 0; i < timelinePanelObject.getImageList().getModel().getSize(); i++) {
-            TimelineItem item = (TimelineItem) timelinePanelObject.getImageList().getModel().getElementAt(i);
+            Slide item = (Slide) timelinePanelObject.getImageList().getModel().getElementAt(i);
             transitions.add(item.getTransition().toString());
         }
         return transitions;
@@ -973,7 +981,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                     loop,
                     mode,
                     interval,
-                    getTransitionsAsStringList()  // Helper method that retrieves transitions from TimelineItems
+                    getTransitionsAsStringList()  // Helper method that retrieves transitions from Slide objects
                 );
             }
         }.execute();
@@ -1031,7 +1039,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     // Sets the transition type for the current image
     private void transitionBoxActionPerformed(java.awt.event.ActionEvent evt) {                                              
         int selectionIndex = transitionBox.getSelectedIndex();
-        TimelineItem selectedItem = timelinePanelObject.getImageList().getSelectedValue();
+        Slide selectedItem = timelinePanelObject.getImageList().getSelectedValue();
         if (selectedItem != null) {
             // Assuming the enum order of TransitionType matches the combo box order:
             TransitionType newTransition = TransitionType.values()[selectionIndex];
@@ -1041,10 +1049,10 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }//GEN-LAST:event_transitionBoxActionPerformed
 
     private void transitionTestActionPerformed(java.awt.event.ActionEvent evt) {
-        // Get the currently selected TimelineItem
-        TimelineItem selectedItem = timelinePanelObject.getImageList().getSelectedValue();
+        // Get the currently selected Slide from the timeline panel
+        Slide selectedItem = timelinePanelObject.getImageList().getSelectedValue();
         if (selectedItem == null) {
-            System.out.println("No TimelineItem selected for transition.");
+            System.out.println("No slide selected for transition.");
             return;
         }
         ImageIcon labelIcon = (ImageIcon) imageLabel.getIcon();
@@ -1078,7 +1086,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
         }
         
-        // Instead of using imageTransitions, get the transition from the TimelineItem.
+        // Instead of using imageTransitions, get the transition from the selected item
         TransitionType type = selectedItem.getTransition();
         transitionManager.doTransition(prevImage, nextImage, imageLabel, type);
     }
