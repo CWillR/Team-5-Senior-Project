@@ -48,8 +48,8 @@ public class TimelinePanel extends javax.swing.JPanel {
     private final String CARD_LIST = "LIST";
     private final String CARD_PLACEHOLDER = "PLACEHOLDER";
 
-    private DefaultListModel<TimelineItem> listModel;
-    private JList<TimelineItem> imageList;
+    private DefaultListModel<Slide> listModel;
+    private JList<Slide> imageList;
     private JLabel placeholderLabel;
     public static boolean SHOW_IMAGE_NAMES = false; // Toggle for showing image names in the timeline preview.
     private JPopupMenu contextMenu;
@@ -216,8 +216,8 @@ public class TimelinePanel extends javax.swing.JPanel {
         listModel.clear();
         if (images != null) {
             for (File file : images) {
-                // Wrap the file in a TimelineItem using a default transition (for example, INSTANT)
-                listModel.addElement(new TimelineItem(file, TransitionType.INSTANT));
+                // Wrap the file in a Slide using a default transition (for example, INSTANT)
+                listModel.addElement(new Slide(file.getAbsolutePath(), file, TransitionType.INSTANT));
             }
         }
         updateCard();
@@ -232,14 +232,14 @@ public class TimelinePanel extends javax.swing.JPanel {
         return images;
     }
 
-    public JList<TimelineItem> getImageList() {
+    public JList<Slide> getImageList() {
         return imageList;
     }
     
-    public void setTimelineItems(List<TimelineItem> items) {
+    public void setTimelineSlides(List<Slide> items) {
         listModel.clear();
         if (items != null) {
-            for (TimelineItem item : items) {
+            for (Slide item : items) {
                 listModel.addElement(item);
             }
         }
@@ -247,7 +247,7 @@ public class TimelinePanel extends javax.swing.JPanel {
     }
 
     // --- Custom Cell Renderer for Thumbnails ---
-    private static class ImageListCellRenderer extends JLabel implements ListCellRenderer<TimelineItem> {
+    private static class ImageListCellRenderer extends JLabel implements ListCellRenderer<Slide> {
         // Shared cache for thumbnails
         private static final Map<File, ImageIcon> thumbnailCache = new HashMap<>();
         // Placeholder icon while loading
@@ -261,10 +261,10 @@ public class TimelinePanel extends javax.swing.JPanel {
         }
 
         @Override
-        public Component getListCellRendererComponent(JList<? extends TimelineItem> list, 
-                TimelineItem value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<? extends Slide> list, 
+                Slide value, int index, boolean isSelected, boolean cellHasFocus) {
             
-            // Get the file from the TimelineItem
+            // Get the file from the Slides object.
             File file = value.getImageFile();
             
             // Now proceed as before using 'file' to get the thumbnail.
@@ -321,8 +321,8 @@ public class TimelinePanel extends javax.swing.JPanel {
         protected Transferable createTransferable(JComponent c) {
             JList<?> list = (JList<?>) c;
             indices = list.getSelectedIndices();
-            // Since the list holds TimelineItem objects:
-            List<TimelineItem> values = (List<TimelineItem>) list.getSelectedValuesList();
+            // Since the list holds Slides objects:
+            List<Slide> values = (List<Slide>) list.getSelectedValuesList();
             return new ListTransferable(values);
         }
     
@@ -352,19 +352,19 @@ public class TimelinePanel extends javax.swing.JPanel {
             addIndex = index;
             try {
                 List<?> values;
-                // Check if we are receiving our local TimelineItem objects.
+                // Check if we are receiving our local Slide objects.
                 if (info.isDataFlavorSupported(ListTransferable.localFlavor)) {
                     values = (List<?>) info.getTransferable().getTransferData(ListTransferable.localFlavor);
                 } 
                 // Otherwise, check if we received a list of Files from an external source.
                 else if (info.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                     values = (List<?>) info.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
-                    // Wrap each File in a TimelineItem with default transition.
-                    List<TimelineItem> timelineItems = new ArrayList<>();
+                    // Wrap each File in a Slide with default transition.
+                    List<Slide> timelineItems = new ArrayList<>();
                     for (Object obj : values) {
                         if (obj instanceof File) {
                             File file = (File) obj;
-                            timelineItems.add(new TimelineItem(file, TransitionType.INSTANT));
+                            timelineItems.add(new Slide(file.getAbsolutePath(), file, TransitionType.INSTANT));
                         }
                     }
                     values = timelineItems;
@@ -456,8 +456,8 @@ public class TimelinePanel extends javax.swing.JPanel {
         }
     }
     
-    public List<TimelineItem> getTimelineItems() {
-        List<TimelineItem> items = new ArrayList<>();
+    public List<Slide> getSlideItems() {
+        List<Slide> items = new ArrayList<>();
         for (int i = 0; i < listModel.getSize(); i++) {
             items.add(listModel.get(i));
         }
