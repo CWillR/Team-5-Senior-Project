@@ -129,12 +129,12 @@ public class SlideshowCreator extends javax.swing.JFrame {
     // Calculate total slideshow duration (assuming each image is shown for 5 seconds)
     private int calculateTotalSlideshowDuration() {
         int numImages = timelinePanelObject.getImages().size();
-        int imageDuration = 5; // Assume 5 seconds per image
+        SlideshowSettings settings = settingsPanel.getSlideshowSettings();
 
-        int estimatedDuration = numImages * imageDuration;
+        int estimatedDuration = numImages * settings.duration;
 
         // Ensure a reasonable minimum duration (e.g., 15 seconds)
-        return Math.max(estimatedDuration, 15);
+        return estimatedDuration / 1000;
     }
 
     // Update when images or audio change
@@ -142,8 +142,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
         if (audioTimelinePanel != null) {
             TimelinePanel.remove(audioTimelinePanel); // Remove old panel
         }
-
-        audioTimelinePanel = new AudioTimelinePanel(audioFiles, calculateTotalSlideshowDuration());
+        
+        SlideshowSettings settings = settingsPanel.getSlideshowSettings();
+        audioTimelinePanel = new AudioTimelinePanel(audioFiles, calculateTotalSlideshowDuration(), settings.autoMode);
         TimelinePanel.add(audioTimelinePanel, BorderLayout.SOUTH);
 
         revalidate();
@@ -265,7 +266,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
         imageLabel.setVerticalAlignment(SwingConstants.CENTER);
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -604,9 +605,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
         } else {
             JOptionPane.showMessageDialog(this, "No images to present.");
         }
-    }//GEN-LAST:event_presenterButtonActionPerformed
+    }
+    
 
-   
     // Sets UI design to FlatLightLaf (light mode version of Flat Laf)
     private void LightModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LightModeActionPerformed
         SwingUtilities.invokeLater(() -> {
@@ -670,7 +671,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 interval, 
                 transitions
         );
-    
+        updateAudioTimeline();
         JOptionPane.showMessageDialog(this, "Slideshow settings saved successfully.");
     }
     
@@ -685,7 +686,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             currentSlideshowFile = file;
             loadSlideshowSettings(file);  // Add this call
         }
-    }//GEN-LAST:event_openPreviousSlideMenuItemActionPerformed
+    }                                                         
 
     private void loadSlideshowSettings(File file) {
         try {
@@ -750,7 +751,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         } else {
             System.out.println("No image selected.");
         }
-    }//GEN-LAST:event_createNewSlideMenuItemActionPerformed
+    }                                                      
 
     private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
         System.exit(0); // Terminate the application
@@ -1046,7 +1047,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             selectedItem.setTransition(newTransition);
             System.out.println("Transition updated to: " + newTransition);
         }
-    }//GEN-LAST:event_transitionBoxActionPerformed
+    }                                             
 
     private void transitionTestActionPerformed(java.awt.event.ActionEvent evt) {
         // Get the currently selected Slide from the timeline panel
