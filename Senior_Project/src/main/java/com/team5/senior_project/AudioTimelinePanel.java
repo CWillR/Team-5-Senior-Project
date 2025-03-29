@@ -46,9 +46,6 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
         int panelWidth = getWidth();
         int panelHeight = getHeight();
         int x = 0;
-        //SlideshowSettings settings = settingsPanel.getSlideshowSettings();
-        //System.out.println(settings.autoMode);
-        //boolean autoMode = slideshowCreator.mode();
 
         // Debugging total duration
         System.out.println("Total Slideshow Duration: " + totalSlideshowDuration);
@@ -61,16 +58,13 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
             System.out.println("Audio File: " + audioFile.getName() + " | Duration: " + audioDuration + " sec");
 
             // Ensure proportional width based on total duration
-            //int width = (int) ((audioDuration / (double) totalSlideshowDuration) * panelWidth);
             int width;
-            // Adjust very small durations to be visible
-            //if (width < 5 && audioDuration > 0) { 
-                //width = Math.max(5, (int) (panelWidth * 0.02)); // At least 2% of the total width
-            //}
+
             if (autoMode) {
                 System.out.println("test1");
                 width = (int) ((audioDuration / (double) totalSlideshowDuration) * panelWidth);
                 if (width < 5 && audioDuration > 0) {
+                    // Adjust very small durations to be visible
                     width = Math.max(5, (int) (panelWidth * 0.02)); // At least 2% of the total width
                 }
             } else {

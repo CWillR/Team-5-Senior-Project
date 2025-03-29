@@ -26,6 +26,11 @@ import javax.swing.JFileChooser;
 import javax.swing.KeyStroke;
 import javax.swing.Timer;
 import java.awt.image.BufferedImage;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 /**
  *
@@ -34,7 +39,12 @@ import java.awt.image.BufferedImage;
 public class SlideshowPresenter extends javax.swing.JFrame {
 
     private File[] imageFiles; // image list
+    private List<File> audioFiles; // audio list
+    private Clip audioClip;
+    private long audioPausedPosition = 0;
+    private int duration;
     private final int[] index = {0}; // image list index
+    private int currentAudioIndex = 0;
     private Timer slideShowTimer;
     private boolean autoMode;
     private boolean canLoop;
@@ -78,23 +88,26 @@ public class SlideshowPresenter extends javax.swing.JFrame {
      * a loop flag, and an autoMode flag. 
      *
      * @param imageFiles Array of image files to display.
+     * @param audioFiles List of audio files to play.
      * @param duration   Slide duration in milliseconds.
      * @param loop       If true, the slideshow will loop; if false, it stops on the last slide.
      * @param autoMode   If true, slides advance automatically; if false, user must manually change slides.
      * @param slideTransitions Array of TransitionType enums for each slide.
      */
-    public SlideshowPresenter(File[] imageFiles, int duration, boolean loop, boolean autoMode, TransitionType[] slideTransitions) {
+    public SlideshowPresenter(File[] imageFiles, List<File> audioFiles, int duration, boolean loop, boolean autoMode, TransitionType[] slideTransitions) {
         this(); // Call no-argument constructor for initialization.
         this.imageFiles = imageFiles;
+        this.audioFiles = audioFiles;
         this.autoMode = autoMode; // Store the auto mode setting.
         this.canLoop = loop;      // Store the loop (can loop) setting.
         this.slideTransitions = slideTransitions; // Save transitions for use in updateImage()
         if (imageFiles != null && imageFiles.length > 0) {
+            playAudio(canLoop);
             updateImage();
             if (autoMode) { // Only start the timer if auto mode is enabled.
                 slideShowTimer = new Timer(duration, new ActionListener() {
                     @Override
-                    public void actionPerformed(ActionEvent e) {
+                    public void actionPerformed(ActionEvent e) {                        
                         index[0] = (index[0] + 1) % imageFiles.length;
                         updateImage();
                         // If looping is disabled and we are at the last image, stop the timer.
@@ -104,10 +117,36 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                     }
                 });
                 slideShowTimer.start();
-            }
+            }            
         }
     }
     
+    private void playAudio(boolean canLoop) {
+        if (audioFiles.isEmpty()) return;
+        new Thread(() -> {
+            while (currentAudioIndex < audioFiles.size()) {
+                try {
+                    File audioFile = audioFiles.get(currentAudioIndex);
+                    AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+                    audioClip = AudioSystem.getClip();
+                    audioClip.open(audioStream);
+                    if (audioPausedPosition > 0) {
+                        audioClip.setMicrosecondPosition(audioPausedPosition);
+                        audioPausedPosition = 0;
+                    }
+                    audioClip.start();
+                    audioClip.drain();
+                    audioClip.close();
+                    currentAudioIndex++;
+                    if (canLoop && currentAudioIndex >= audioFiles.size()) {
+                        currentAudioIndex = 0;
+                    }
+                } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
     
     /**
      * Initializes key bindings for the left, right arrow keys and the space bar.
@@ -184,11 +223,27 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                 slideShowTimer.start();
                 pausedLabel.setVisible(false);
                 paused = false;
+                pauseAudio();
             } else {
                 slideShowTimer.stop();
                 pausedLabel.setVisible(true);
                 paused = true;
+                resumeAudio();
             }
+        }
+    }
+    
+    private void pauseAudio() {
+        if (audioClip != null && audioClip.isRunning()) {
+            audioPausedPosition = audioClip.getMicrosecondPosition();
+            audioClip.stop();
+        }
+    }
+    
+    private void resumeAudio() {
+        if (audioClip != null) {
+            audioClip.setMicrosecondPosition(audioPausedPosition);
+            audioClip.start();
         }
     }
     
