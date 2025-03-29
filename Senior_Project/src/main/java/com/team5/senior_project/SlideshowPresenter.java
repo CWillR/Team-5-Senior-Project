@@ -35,8 +35,8 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     private File[] imageFiles; // image list
     private final int[] index = {0}; // image list index
     private Timer slideShowTimer;
-    
-    // Fields for pause functionality
+    private boolean autoMode;
+    private boolean canLoop;
     private boolean paused = false;
     private javax.swing.JLabel pausedLabel;
      
@@ -71,31 +71,37 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     
     /**
      * Overloaded constructor that accepts an array of image files, a slide duration (in milliseconds),
-     * and a loop flag. This constructor is useful if you want to start the presenter with a preset
-     * slideshow.
-     * 
+     * a loop flag, and an autoMode flag. 
+     *
      * @param imageFiles Array of image files to display.
      * @param duration   Slide duration in milliseconds.
      * @param loop       If true, the slideshow will loop; if false, it stops on the last slide.
+     * @param autoMode   If true, slides advance automatically; if false, user must manually change slides.
      */
-    public SlideshowPresenter(File[] imageFiles, int duration, boolean loop) {
-        this(); // Call the no-argument constructor to initialize GUI components, key bindings, and pausedLabel.
+    public SlideshowPresenter(File[] imageFiles, int duration, boolean loop, boolean autoMode) {
+        this(); // Call no-argument constructor for initialization.
         this.imageFiles = imageFiles;
+        this.autoMode = autoMode; // Store the auto mode setting.
+        this.canLoop = loop;      // Store the loop (can loop) setting.
         if (imageFiles != null && imageFiles.length > 0) {
             updateImage();
-            slideShowTimer = new Timer(duration, new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    index[0] = (index[0] + 1) % imageFiles.length;
-                    updateImage();
-                    if (!loop && index[0] == imageFiles.length - 1) {
-                        slideShowTimer.stop();
+            if (autoMode) { // Only start the timer if auto mode is enabled.
+                slideShowTimer = new Timer(duration, new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        index[0] = (index[0] + 1) % imageFiles.length;
+                        updateImage();
+                        // If looping is disabled and we are at the last image, stop the timer.
+                        if (!canLoop && index[0] == imageFiles.length - 1) {
+                            slideShowTimer.stop();
+                        }
                     }
-                }
-            });
-            slideShowTimer.start();
+                });
+                slideShowTimer.start();
+            }
         }
     }
+    
     
     /**
      * Initializes key bindings for the left, right arrow keys and the space bar.
@@ -112,24 +118,40 @@ public class SlideshowPresenter extends javax.swing.JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (imageFiles != null && imageFiles.length > 0) {
-                    index[0] = (index[0] + 1) % imageFiles.length;
+                    if (canLoop) {
+                        // Wrap around if looping is enabled.
+                        index[0] = (index[0] + 1) % imageFiles.length;
+                    } else {
+                        // Only advance if not at the last image.
+                        if (index[0] < imageFiles.length - 1) {
+                            index[0]++;
+                        }
+                    }
                     updateImage();
-                    if (slideShowTimer != null) {
+                    if (autoMode && slideShowTimer != null) {
                         slideShowTimer.restart();
                     }
                 }
             }
         });
-        
+
         // Left arrow binding: previous image.
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "previousImage");
         am.put("previousImage", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (imageFiles != null && imageFiles.length > 0) {
-                    index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length;
+                    if (canLoop) {
+                        // Wrap around if looping is enabled.
+                        index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length;
+                    } else {
+                        // Only go back if not at the first image.
+                        if (index[0] > 0) {
+                            index[0]--;
+                        }
+                    }
                     updateImage();
-                    if (slideShowTimer != null) {
+                    if (autoMode && slideShowTimer != null) {
                         slideShowTimer.restart();
                     }
                 }
@@ -151,7 +173,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
      * when resumed, the timer restarts and the overlay is hidden.
      */
     private void togglePause() {
-        if (slideShowTimer != null) {
+        if (autoMode && slideShowTimer != null) {
             if (paused) {
                 slideShowTimer.start();
                 pausedLabel.setVisible(false);
