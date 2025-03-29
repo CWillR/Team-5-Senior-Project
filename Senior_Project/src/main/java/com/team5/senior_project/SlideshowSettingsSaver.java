@@ -14,15 +14,27 @@ import java.util.List;
 
 public class SlideshowSettingsSaver {
 
+    /**
+     * Saves the slideshow settings including slide images, audio files, and per-slide transitions.
+     *
+     * @param filePath      The path of the file to save the settings.
+     * @param slideshowName The name of the slideshow.
+     * @param slides        List of slides.
+     * @param audioFiles    List of audio files.
+     * @param loop          Whether the slideshow should loop.
+     * @param mode          The playback mode.
+     * @param interval      The slide interval (if applicable).
+     * @param transitions   List of transition names (one per slide) as Strings.
+     */
     public static void saveSettingsToJson(String filePath, String slideshowName, List<Slide> slides, List<File> audioFiles, 
-                                          boolean loop, String mode, int interval, String transition) {
+                                          boolean loop, String mode, int interval, List<String> transitions) {
         JSONObject slideshowJson = new JSONObject();
         slideshowJson.put("name", slideshowName);
         slideshowJson.put("loop", loop);
         slideshowJson.put("mode", mode); // Save the mode selection
         slideshowJson.put("interval", interval);
-        slideshowJson.put("transition", transition);
-        
+
+        // If there are audio files, add them as an array.
         if (audioFiles != null && !audioFiles.isEmpty()) {
             JSONArray audioArray = new JSONArray();
             for (File audioFile : audioFiles) {
@@ -31,10 +43,17 @@ public class SlideshowSettingsSaver {
             slideshowJson.put("audio", audioArray);
         }
 
+        // Build the slides array.
         JSONArray slidesArray = new JSONArray();
-        for (Slide slide : slides) {
+        for (int i = 0; i < slides.size(); i++) {
             JSONObject slideJson = new JSONObject();
-            slideJson.put("image", slide.getImagePath());
+            slideJson.put("image", slides.get(i).getImagePath());
+            // Attach the transition for this slide if available.
+            if (transitions != null && transitions.size() > i) {
+                slideJson.put("transition", transitions.get(i));
+            } else {
+                slideJson.put("transition", "No Transition");
+            }
             slidesArray.put(slideJson);
         }
         slideshowJson.put("slides", slidesArray);
