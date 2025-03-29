@@ -590,8 +590,16 @@ public class SlideshowCreator extends javax.swing.JFrame {
             File[] imageArray = images.toArray(new File[0]);
             // Retrieve the slideshow settings from the settings panel.
             SlideshowSettings settings = settingsPanel.getSlideshowSettings();
-            // Launch the presenter using the images from the timeline.
-            new SlideshowPresenter(imageArray, settings.duration, settings.loop, settings.autoMode)
+            
+            // Extract transitions from the timeline items:
+            List<TimelineItem> timelineItems = timelinePanelObject.getTimelineItems();
+            TransitionType[] slideTransitions = new TransitionType[timelineItems.size()];
+            for (int i = 0; i < timelineItems.size(); i++) {
+                slideTransitions[i] = timelineItems.get(i).getTransition();
+            }
+            
+            // Launch the presenter using the images and transitions from the timeline.
+            new SlideshowPresenter(imageArray, settings.duration, settings.loop, settings.autoMode, slideTransitions)
                     .setVisible(true);
         } else {
             JOptionPane.showMessageDialog(this, "No images to present.");

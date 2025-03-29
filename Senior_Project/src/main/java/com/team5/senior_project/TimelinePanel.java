@@ -456,6 +456,14 @@ public class TimelinePanel extends javax.swing.JPanel {
         }
     }
     
+    public List<TimelineItem> getTimelineItems() {
+        List<TimelineItem> items = new ArrayList<>();
+        for (int i = 0; i < listModel.getSize(); i++) {
+            items.add(listModel.get(i));
+        }
+        return items;
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

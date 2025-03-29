@@ -25,6 +25,7 @@ import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.KeyStroke;
 import javax.swing.Timer;
+import java.awt.image.BufferedImage;
 
 /**
  *
@@ -37,8 +38,11 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     private Timer slideShowTimer;
     private boolean autoMode;
     private boolean canLoop;
+    private TransitionType[] slideTransitions;
     private boolean paused = false;
     private javax.swing.JLabel pausedLabel;
+    private final Transition transitionManager = new Transition();
+
      
     /**
      * Creates new form SlideshowPresenter
@@ -77,12 +81,14 @@ public class SlideshowPresenter extends javax.swing.JFrame {
      * @param duration   Slide duration in milliseconds.
      * @param loop       If true, the slideshow will loop; if false, it stops on the last slide.
      * @param autoMode   If true, slides advance automatically; if false, user must manually change slides.
+     * @param slideTransitions Array of TransitionType enums for each slide.
      */
-    public SlideshowPresenter(File[] imageFiles, int duration, boolean loop, boolean autoMode) {
+    public SlideshowPresenter(File[] imageFiles, int duration, boolean loop, boolean autoMode, TransitionType[] slideTransitions) {
         this(); // Call no-argument constructor for initialization.
         this.imageFiles = imageFiles;
         this.autoMode = autoMode; // Store the auto mode setting.
         this.canLoop = loop;      // Store the loop (can loop) setting.
+        this.slideTransitions = slideTransitions; // Save transitions for use in updateImage()
         if (imageFiles != null && imageFiles.length > 0) {
             updateImage();
             if (autoMode) { // Only start the timer if auto mode is enabled.
@@ -233,17 +239,30 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     // Updates the image in the SlideShowPresenter
     private void updateImage() {
         if (imageFiles != null && imageFiles.length > 0) {
-            ImageIcon originalIcon = new ImageIcon(imageFiles[index[0]].getAbsolutePath());
-            Image originalImage = originalIcon.getImage();
-            int labelWidth = imageLabel.getWidth();
-            int labelHeight = imageLabel.getHeight();
-            double widthRatio = (double) labelWidth / originalImage.getWidth(null);
-            double heightRatio = (double) labelHeight / originalImage.getHeight(null);
-            double scaleRatio = Math.min(widthRatio, heightRatio);
-            int newWidth = (int) (originalImage.getWidth(null) * scaleRatio);
-            int newHeight = (int) (originalImage.getHeight(null) * scaleRatio);
-            Image resizedImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-            imageLabel.setIcon(new ImageIcon(resizedImage));
+            // Retrieve the "next" image (the one corresponding to the current index).
+            ImageIcon nextIcon = new ImageIcon(imageFiles[index[0]].getAbsolutePath());
+            Image nextImage = nextIcon.getImage();
+    
+            // Determine the previous image.
+            Image prevImage;
+            if (index[0] == 0) {
+                prevImage = new ImageIcon(imageFiles[imageFiles.length - 1].getAbsolutePath()).getImage();
+            } else {
+                prevImage = new ImageIcon(imageFiles[index[0] - 1].getAbsolutePath()).getImage();
+            }
+    
+            // Get the transition type for the current slide.
+            TransitionType currentTransition = TransitionType.INSTANT;
+            if (slideTransitions != null && slideTransitions.length > index[0]) {
+                currentTransition = slideTransitions[index[0]];
+            }
+    
+            // Convert images to BufferedImage.
+            BufferedImage prevBuffered = Transition.toBufferedImage(prevImage);
+            BufferedImage nextBuffered = Transition.toBufferedImage(nextImage);
+    
+            // Play the animated transition.
+            transitionManager.doTransition(prevBuffered, nextBuffered, imageLabel, currentTransition);
         }
     }
     
