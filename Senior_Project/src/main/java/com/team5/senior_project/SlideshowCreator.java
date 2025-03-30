@@ -40,13 +40,13 @@ import org.json.JSONArray;
 public class SlideshowCreator extends javax.swing.JFrame {
 
     private SettingsPanel settingsPanel;
+    private TransitionPanel transitionPanel;
     private List<File> imageFiles = new ArrayList<>(); // image list
     private final List<File> audioFiles = new ArrayList<>(); // audio list
     private int audioIndex = 0; // tracks current audio track
     private final Preferences prefs = Preferences.userNodeForPackage(SlideshowCreator.class);
     private File currentSlideshowFile = null;
     private TimelinePanel timelinePanelObject; // Declare it
-    private final Transition transitionManager = new Transition();
     private String currentSlideshowName = null; // Class-level variable
     private AudioTimelinePanel audioTimelinePanel;
     private final ExecutorService thumbnailExecutor = Executors.newFixedThreadPool(4);
@@ -107,13 +107,28 @@ public class SlideshowCreator extends javax.swing.JFrame {
             updateImage();
         });
 
+        
+        // Set up the transition panel
+        transitionPanel = new TransitionPanel(timelinePanelObject, imageLabel);
+        transitionsHolder.removeAll();
+
+        // Remove the existing Transition tab if it exists:
+        int transitionTabIndex = jTabbedPane1.indexOfComponent(transitionsHolder);
+        if (transitionTabIndex != -1) {
+            jTabbedPane1.removeTabAt(transitionTabIndex);
+        }
+
+        // Add the transitionPanel as a new tab:
+        jTabbedPane1.addTab("Transitions", transitionPanel);
+
+
         // Add selection listener for image changes
         timelinePanelObject.getImageList().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) { // Ensure it's not firing multiple times unnecessarily
                 Slide selectedItem = timelinePanelObject.getImageList().getSelectedValue();
                 if (selectedItem != null) {
                     updateImage(selectedItem.getImageFile());
-                    updateTransitionBox();  // see next step for updating transitions
+                    transitionPanel.updateTransitionBox(timelinePanelObject); // Update transition box with selected image's transition
                 }
             }
         });
@@ -151,40 +166,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
         repaint();
     }
 
-    
-    // This all needs to be moved into its own class.
-    // Called when an image is selected in the timeline.
-    // This version updates the transitions tab (transitionBox) so that it shows the current image's transition.
-    private void updateTransitionBox() {
-        Slide selectedItem = timelinePanelObject.getImageList().getSelectedValue();
-        if (selectedItem == null) return;
-        TransitionType currentTransition = selectedItem.getTransition();
-        String displayText;
-        switch (currentTransition) {
-            case INSTANT:
-                displayText = "No Transition";
-                break;
-            case CROSS_FADE:
-                displayText = "Cross Fade";
-                break;
-            case WIPE_UP:
-                displayText = "Wipe Up";
-                break;
-            case WIPE_RIGHT:
-                displayText = "Wipe Right";
-                break;
-            case WIPE_DOWN:
-                displayText = "Wipe Down";
-                break;
-            case WIPE_LEFT:
-                displayText = "Wipe Left";
-                break;
-            default:
-                displayText = "No Transition";
-        }
-        transitionBox.setSelectedItem(displayText);
-    }
-
     // Apply saved theme
     private void applySavedTheme() {
         SwingUtilities.invokeLater(() -> {
@@ -202,15 +183,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
         });
     }
 
-    // Method to get files from a slide list.
-    private List<File> getFilesFromSlideList(List<Slide> slides){
-        List<File> files = new ArrayList<>();
-        for(Slide slide: slides){
-            files.add(new File(slide.getImagePath()));
-        }
-        return files;
-    }
-
     private List<Slide> getSlides() {
         List<Slide> slides = new ArrayList<>();
         List<File> orderedImages = timelinePanelObject.getImages();
@@ -218,15 +190,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
             slides.add(new Slide(imageFile.getAbsolutePath(), imageFile, TransitionType.INSTANT)); // Default transition
         }
         return slides;
-    }
-
-    private String getAudioPath() {
-        // Implement this method to get the audio path
-        return null; // Example
-    }
-
-    private boolean isLoop() {
-        return true;
     }
 
     public void updateImage() {
@@ -282,8 +245,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
         fileExplorerHolder = new javax.swing.JPanel();
         largeFileViewHolder = new javax.swing.JPanel();
         transitionsHolder = new javax.swing.JPanel();
-        transitionTest = new javax.swing.JButton();
-        transitionBox = new javax.swing.JComboBox<>();
         musicHolder = new javax.swing.JPanel();
         addAudioButton = new javax.swing.JButton();
         playAudioButton = new javax.swing.JButton();
@@ -337,39 +298,15 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Files", jSplitPane2);
 
-        transitionTest.setText("Preview Transition");
-        transitionTest.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                transitionTestActionPerformed(evt);
-            }
-        });
-
-        transitionBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "No Transition", "Cross Fade", "Wipe Up", "Wipe Right", "Wipe Down", "Wipe Left" }));
-        transitionBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                transitionBoxActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout transitionsHolderLayout = new javax.swing.GroupLayout(transitionsHolder);
         transitionsHolder.setLayout(transitionsHolderLayout);
         transitionsHolderLayout.setHorizontalGroup(
             transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(transitionsHolderLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(transitionTest)
-                    .addComponent(transitionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(367, Short.MAX_VALUE))
+            .addGap(0, 499, Short.MAX_VALUE)
         );
         transitionsHolderLayout.setVerticalGroup(
             transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(transitionsHolderLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(transitionTest)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(transitionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(413, Short.MAX_VALUE))
+            .addGap(0, 470, Short.MAX_VALUE)
         );
 
         jTabbedPane1.addTab("Transitions", transitionsHolder);
@@ -1025,72 +962,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error copying image: " + file.getName(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    private boolean isImageFile(File file) {
-        String fileName = file.getName().toLowerCase();
-        return fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") ||
-                fileName.endsWith(".png") || fileName.endsWith(".gif");
-    }
-
-    private String promptForSlideshowName() {
-        return JOptionPane.showInputDialog(this, "Enter Slideshow Name:", "Save Slideshow", JOptionPane.PLAIN_MESSAGE);
-    }
-
-    // Sets the transition type for the current image
-    private void transitionBoxActionPerformed(java.awt.event.ActionEvent evt) {                                              
-        int selectionIndex = transitionBox.getSelectedIndex();
-        Slide selectedItem = timelinePanelObject.getImageList().getSelectedValue();
-        if (selectedItem != null) {
-            // Assuming the enum order of TransitionType matches the combo box order:
-            TransitionType newTransition = TransitionType.values()[selectionIndex];
-            selectedItem.setTransition(newTransition);
-            System.out.println("Transition updated to: " + newTransition);
-        }
-    }                                             
-
-    private void transitionTestActionPerformed(java.awt.event.ActionEvent evt) {
-        // Get the currently selected Slide from the timeline panel
-        Slide selectedItem = timelinePanelObject.getImageList().getSelectedValue();
-        if (selectedItem == null) {
-            System.out.println("No slide selected for transition.");
-            return;
-        }
-        ImageIcon labelIcon = (ImageIcon) imageLabel.getIcon();
-        if (labelIcon == null) {
-            System.out.println("No image available for transition.");
-            return;
-        }
-        
-        // Use the current image as the "next" image.
-        BufferedImage nextImage = Transition.toBufferedImage(labelIcon.getImage());
-        int currentIndex = timelinePanelObject.getImageList().getSelectedIndex();
-        if (currentIndex < 0) {
-            currentIndex = 0;
-        }
-        
-        // Use the ordered image list from the timeline panel
-        List<File> currentImages = timelinePanelObject.getImages();
-        BufferedImage prevImage = nextImage;
-        if (currentImages.size() >= 2) {
-            int wrapIndex = (currentIndex - 1 >= 0) ? currentIndex - 1 : currentImages.size() - 1;
-            ImageIcon prevIcon = new ImageIcon(currentImages.get(wrapIndex).getAbsolutePath());
-            prevImage = Transition.toBufferedImage(prevIcon.getImage());
-        } else {
-            try {
-                Image placeholder = new ImageIcon("Placeholder.png").getImage();
-                if (placeholder != null) {
-                    prevImage = Transition.toBufferedImage(placeholder);
-                }
-            } catch (Exception e) {
-                System.out.println("Error obtaining default image for transitions: " + e);
-            }
-        }
-        
-        // Instead of using imageTransitions, get the transition from the selected item
-        TransitionType type = selectedItem.getTransition();
-        transitionManager.doTransition(prevImage, nextImage, imageLabel, type);
-    }
+    }                               
     
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
@@ -1148,8 +1020,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JMenuItem saveMenuItem;
     private javax.swing.JPanel settingsHolder;
     private javax.swing.JPanel spacerPanel;
-    private javax.swing.JComboBox<String> transitionBox;
-    private javax.swing.JButton transitionTest;
     private javax.swing.JPanel transitionsHolder;
     // End of variables declaration//GEN-END:variables
 }
