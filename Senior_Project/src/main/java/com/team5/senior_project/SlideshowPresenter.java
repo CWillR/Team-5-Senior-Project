@@ -83,12 +83,14 @@ public class SlideshowPresenter extends javax.swing.JFrame {
      * @param autoMode   If true, slides advance automatically; if false, user must manually change slides.
      * @param slideTransitions Array of TransitionType enums for each slide.
      */
-    public SlideshowPresenter(File[] imageFiles, int duration, boolean loop, boolean autoMode, TransitionType[] slideTransitions) {
+    public SlideshowPresenter(File[] imageFiles, int duration, boolean loop, 
+                              boolean autoMode, TransitionType[] slideTransitions, boolean showBottomButtons) {
         this(); // Call no-argument constructor for initialization.
         this.imageFiles = imageFiles;
         this.autoMode = autoMode; // Store the auto mode setting.
         this.canLoop = loop;      // Store the loop (can loop) setting.
         this.slideTransitions = slideTransitions; // Save transitions for use in updateImage()
+        buttonContainer.setVisible(showBottomButtons);
         if (imageFiles != null && imageFiles.length > 0) {
             updateImage();
             if (autoMode) { // Only start the timer if auto mode is enabled.
@@ -289,12 +291,40 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     private void initComponents() {
 
         imageLabel = new javax.swing.JLabel();
+        buttonContainer = new javax.swing.JPanel();
+        nextButton = new javax.swing.JButton();
+        previousButton = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         openSlideMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Slideshow Presenter");
+
+        nextButton.setText("next");
+
+        previousButton.setText("previous");
+
+        javax.swing.GroupLayout buttonContainerLayout = new javax.swing.GroupLayout(buttonContainer);
+        buttonContainer.setLayout(buttonContainerLayout);
+        buttonContainerLayout.setHorizontalGroup(
+            buttonContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, buttonContainerLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(previousButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(nextButton)
+                .addContainerGap())
+        );
+        buttonContainerLayout.setVerticalGroup(
+            buttonContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, buttonContainerLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(buttonContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(nextButton)
+                    .addComponent(previousButton))
+                .addContainerGap())
+        );
 
         jMenu1.setText("File");
 
@@ -304,6 +334,27 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                 openSlideMenuItemActionPerformed(evt);
             }
         });
+
+        nextButton.addActionListener(e -> {
+            if (imageFiles != null && imageFiles.length > 0) {
+                index[0] = (index[0] + 1) % imageFiles.length;
+                updateImage();
+                if (autoMode && slideShowTimer != null) {
+                    slideShowTimer.restart();
+                }
+            }
+        });
+        
+        previousButton.addActionListener(e -> {
+            if (imageFiles != null && imageFiles.length > 0) {
+                index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length;
+                updateImage();
+                if (autoMode && slideShowTimer != null) {
+                    slideShowTimer.restart();
+                }
+            }
+        });
+
         jMenu1.add(openSlideMenuItem);
 
         jMenuBar1.add(jMenu1);
@@ -316,14 +367,18 @@ public class SlideshowPresenter extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 688, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 688, Short.MAX_VALUE)
+                    .addComponent(buttonContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(35, Short.MAX_VALUE)
-                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 421, Short.MAX_VALUE)
+                .addContainerGap()
+                .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(buttonContainer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -378,9 +433,12 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel buttonContainer;
     private javax.swing.JLabel imageLabel;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JButton nextButton;
     private javax.swing.JMenuItem openSlideMenuItem;
+    private javax.swing.JButton previousButton;
     // End of variables declaration//GEN-END:variables
 }

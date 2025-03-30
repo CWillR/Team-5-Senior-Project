@@ -599,7 +599,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
             
             // Launch the presenter using the images and transitions from the timeline.
-            new SlideshowPresenter(imageArray, settings.duration, settings.loop, settings.autoMode, slideTransitions)
+            new SlideshowPresenter(imageArray, settings.duration, settings.loop, settings.autoMode, slideTransitions, settings.isNavigationButtonsVisible)
                     .setVisible(true);
         } else {
             JOptionPane.showMessageDialog(this, "No images to present.");

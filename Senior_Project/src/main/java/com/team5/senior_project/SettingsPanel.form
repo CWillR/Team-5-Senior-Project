@@ -16,7 +16,7 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
+          <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="modeSelectionLabel" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -29,6 +29,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="secondsText" min="-2" max="-2" attributes="0"/>
                   </Group>
+                  <Component id="showNavButtonsToggle" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace pref="286" max="32767" attributes="0"/>
           </Group>
@@ -52,7 +53,9 @@
               <Component id="playbackModeLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="playbackModeBox" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="320" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="showNavButtonsToggle" min="-2" max="-2" attributes="0"/>
+              <EmptySpace pref="293" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -110,6 +113,11 @@
     <Component class="javax.swing.JLabel" name="modeSelectionLabel">
       <Properties>
         <Property name="text" type="java.lang.String" value="Select Automatic or Manual Slide Show"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JRadioButton" name="showNavButtonsToggle">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Show Navigation Buttons"/>
       </Properties>
     </Component>
   </SubComponents>

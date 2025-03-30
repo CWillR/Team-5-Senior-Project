@@ -131,10 +131,11 @@ public class SettingsPanel extends javax.swing.JPanel {
         }
         boolean loop = getPlaybackMode().equals("Loop Slideshow");
         boolean autoMode = isAutoMode();
+        boolean isNavigationButtonsVisible = showNavButtonsToggle.isSelected();
         
-        return new SlideshowSettings(duration, loop, autoMode);
+        return new SlideshowSettings(duration, loop, autoMode, isNavigationButtonsVisible);
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -151,6 +152,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         intervalText = new javax.swing.JLabel();
         modeComboBox = new javax.swing.JComboBox<>();
         modeSelectionLabel = new javax.swing.JLabel();
+        showNavButtonsToggle = new javax.swing.JRadioButton();
 
         playbackModeLabel.setText("Playback Mode:");
 
@@ -175,6 +177,8 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         modeSelectionLabel.setText("Select Automatic or Manual Slide Show");
 
+        showNavButtonsToggle.setText("Show Navigation Buttons");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -190,7 +194,8 @@ public class SettingsPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(intervalTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(secondsText)))
+                        .addComponent(secondsText))
+                    .addComponent(showNavButtonsToggle))
                 .addContainerGap(286, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -207,12 +212,12 @@ public class SettingsPanel extends javax.swing.JPanel {
                     .addComponent(intervalTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(secondsText))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(playbackModeLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(playbackModeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(270, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(showNavButtonsToggle)
+                .addContainerGap(293, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -233,5 +238,6 @@ public class SettingsPanel extends javax.swing.JPanel {
     private javax.swing.JComboBox<String> playbackModeBox;
     private javax.swing.JLabel playbackModeLabel;
     private javax.swing.JLabel secondsText;
+    private javax.swing.JRadioButton showNavButtonsToggle;
     // End of variables declaration//GEN-END:variables
 }
