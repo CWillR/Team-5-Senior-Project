@@ -22,10 +22,13 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 public class AudioTimelinePanel extends javax.swing.JPanel {
     private List<File> audioFiles;
     private int totalSlideshowDuration; // in seconds
+    private boolean autoMode;
 
-    public AudioTimelinePanel(List<File> audioFiles, int totalSlideshowDuration) {
+
+    public AudioTimelinePanel(List<File> audioFiles, int totalSlideshowDuration, boolean autoMode) {
         this.audioFiles = audioFiles;
         this.totalSlideshowDuration = totalSlideshowDuration;
+        this.autoMode = autoMode;
         setPreferredSize(new Dimension(800, 50)); // Force height
         setBackground(Color.LIGHT_GRAY); // Debugging: Make it visible
     }
@@ -43,6 +46,9 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
         int panelWidth = getWidth();
         int panelHeight = getHeight();
         int x = 0;
+        //SlideshowSettings settings = settingsPanel.getSlideshowSettings();
+        //System.out.println(settings.autoMode);
+        //boolean autoMode = slideshowCreator.mode();
 
         // Debugging total duration
         System.out.println("Total Slideshow Duration: " + totalSlideshowDuration);
@@ -55,13 +61,23 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
             System.out.println("Audio File: " + audioFile.getName() + " | Duration: " + audioDuration + " sec");
 
             // Ensure proportional width based on total duration
-            int width = (int) ((audioDuration / (double) totalSlideshowDuration) * panelWidth);
-
+            //int width = (int) ((audioDuration / (double) totalSlideshowDuration) * panelWidth);
+            int width;
             // Adjust very small durations to be visible
-            if (width < 5 && audioDuration > 0) { 
-                width = Math.max(5, (int) (panelWidth * 0.02)); // At least 2% of the total width
+            //if (width < 5 && audioDuration > 0) { 
+                //width = Math.max(5, (int) (panelWidth * 0.02)); // At least 2% of the total width
+            //}
+            if (autoMode) {
+                System.out.println("test1");
+                width = (int) ((audioDuration / (double) totalSlideshowDuration) * panelWidth);
+                if (width < 5 && audioDuration > 0) {
+                    width = Math.max(5, (int) (panelWidth * 0.02)); // At least 2% of the total width
+                }
+            } else {
+                System.out.println("test1");
+                width = panelWidth / audioFiles.size();
             }
-
+            
             // Draw audio segment
             g.setColor(Color.BLUE);
             g.fillRect(x, 10, width, panelHeight - 20);
@@ -90,6 +106,8 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
             return 0;
         }
     }
+    
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
