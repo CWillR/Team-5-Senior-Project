@@ -291,7 +291,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
         addAudioButton = new javax.swing.JButton();
         playAudioButton = new javax.swing.JButton();
         skipAudioButton = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
         settingsHolder = new javax.swing.JPanel();
         imageContainer = new javax.swing.JPanel();
         presenterButton = new javax.swing.JButton();
@@ -390,13 +389,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
         });
 
-        jButton1.setText("Stop Audio");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout musicHolderLayout = new javax.swing.GroupLayout(musicHolder);
         musicHolder.setLayout(musicHolderLayout);
         musicHolderLayout.setHorizontalGroup(
@@ -408,10 +400,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
                     .addGroup(musicHolderLayout.createSequentialGroup()
                         .addComponent(playAudioButton)
                         .addGap(18, 18, 18)
-                        .addComponent(skipAudioButton)
-                        .addGap(18, 18, 18)
-                        .addComponent(jButton1)))
-                .addContainerGap(151, Short.MAX_VALUE))
+                        .addComponent(skipAudioButton)))
+                .addContainerGap(258, Short.MAX_VALUE))
         );
         musicHolderLayout.setVerticalGroup(
             musicHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -421,8 +411,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(musicHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(playAudioButton)
-                    .addComponent(skipAudioButton)
-                    .addComponent(jButton1))
+                    .addComponent(skipAudioButton))
                 .addContainerGap(412, Short.MAX_VALUE))
         );
 
@@ -860,14 +849,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_skipAudioButtonActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        if (audioClip != null && audioClip.isRunning()) {
-            while (audioClip != null && audioClip.isRunning()) {
-                audioClip.stop();
-            }
-        }
-    }//GEN-LAST:event_jButton1ActionPerformed
-
     public void addAudioFile(File audioFile) {
         if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
             audioFiles.add(audioFile);
@@ -1193,7 +1174,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JPanel fileExplorerHolder;
     private javax.swing.JPanel imageContainer;
     private javax.swing.JLabel imageLabel;
-    private javax.swing.JButton jButton1;
     private javax.swing.JMenu jMenu;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JSplitPane jSplitPane2;
