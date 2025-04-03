@@ -13,7 +13,7 @@ import java.util.List;
 
 
 public class SlideshowSettingsSaver {
-
+    
     /**
      * Saves the slideshow settings including slide images, audio files, and per-slide transitions.
      *

@@ -95,7 +95,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
      * @param slideTransitions Array of TransitionType enums for each slide.
      */
     public SlideshowPresenter(File[] imageFiles, List<File> audioFiles, int duration, boolean loop, boolean autoMode, TransitionType[] slideTransitions) {
-        this(); // Call no-argument constructor for initialization.
+        this(); // Call no-argument constructor for initialization.        
         this.imageFiles = imageFiles;
         this.audioFiles = audioFiles;
         this.autoMode = autoMode; // Store the auto mode setting.

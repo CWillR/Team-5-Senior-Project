@@ -50,6 +50,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private String currentSlideshowName = null; // Class-level variable
     private AudioTimelinePanel audioTimelinePanel;
     private final ExecutorService thumbnailExecutor = Executors.newFixedThreadPool(4);
+    private Clip audioClip; // audio playing is stored here
+    private boolean isPlaying = false; // flag for tracking audio
+    private boolean stopRequested = false; // flag to track for audio stop
 
     /**
      * Creates new form SlideshowCreator
@@ -287,6 +290,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
         musicHolder = new javax.swing.JPanel();
         addAudioButton = new javax.swing.JButton();
         playAudioButton = new javax.swing.JButton();
+        skipAudioButton = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
         settingsHolder = new javax.swing.JPanel();
         imageContainer = new javax.swing.JPanel();
         presenterButton = new javax.swing.JButton();
@@ -338,18 +343,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
         jTabbedPane1.addTab("Files", jSplitPane2);
 
         transitionTest.setText("Preview Transition");
-        transitionTest.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                transitionTestActionPerformed(evt);
-            }
-        });
 
         transitionBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "No Transition", "Cross Fade", "Wipe Up", "Wipe Right", "Wipe Down", "Wipe Left" }));
-        transitionBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                transitionBoxActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout transitionsHolderLayout = new javax.swing.GroupLayout(transitionsHolder);
         transitionsHolder.setLayout(transitionsHolderLayout);
@@ -388,6 +383,20 @@ public class SlideshowCreator extends javax.swing.JFrame {
             }
         });
 
+        skipAudioButton.setText("Skip Current Audio");
+        skipAudioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                skipAudioButtonActionPerformed(evt);
+            }
+        });
+
+        jButton1.setText("Stop Audio");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout musicHolderLayout = new javax.swing.GroupLayout(musicHolder);
         musicHolder.setLayout(musicHolderLayout);
         musicHolderLayout.setHorizontalGroup(
@@ -396,8 +405,13 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(musicHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(addAudioButton)
-                    .addComponent(playAudioButton))
-                .addContainerGap(385, Short.MAX_VALUE))
+                    .addGroup(musicHolderLayout.createSequentialGroup()
+                        .addComponent(playAudioButton)
+                        .addGap(18, 18, 18)
+                        .addComponent(skipAudioButton)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButton1)))
+                .addContainerGap(151, Short.MAX_VALUE))
         );
         musicHolderLayout.setVerticalGroup(
             musicHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -405,7 +419,10 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(addAudioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(playAudioButton)
+                .addGroup(musicHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(playAudioButton)
+                    .addComponent(skipAudioButton)
+                    .addComponent(jButton1))
                 .addContainerGap(412, Short.MAX_VALUE))
         );
 
@@ -685,6 +702,9 @@ public class SlideshowCreator extends javax.swing.JFrame {
             File file = fileChooser.getSelectedFile();
             currentSlideshowFile = file;
             loadSlideshowSettings(file);  // Add this call
+            if (audioFiles != null && !audioFiles.isEmpty()) {
+                updateAudioTimeline();
+            }
         }
     }                                                         
 
@@ -772,43 +792,81 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }//GEN-LAST:event_addAudioButtonActionPerformed
 
     private void playAudioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playAudioButtonActionPerformed
+        if (isPlaying) {
+            return;
+        }
+        
         if (audioFiles != null && !audioFiles.isEmpty()) {
-            Thread thread = new Thread(() -> {
+        isPlaying = true; 
+        stopRequested = false; // Reset stop request when starting
+
+        Thread thread = new Thread(() -> {
+            try {
                 for (File audioFile : audioFiles) {
-                    try {
-                        System.out.println("Playing file: " + audioFile.getAbsolutePath());
-                        AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
-                        Clip clip = AudioSystem.getClip();
-                        clip.open(audioStream);
+                    if (stopRequested) {
+                        break; // Stop immediately if stop button was pressed
+                    }
 
-                        final Object lock = new Object();
-                        clip.addLineListener(event -> {
-                            if (event.getType() == LineEvent.Type.STOP) {
-                                synchronized (lock) {
-                                    lock.notify();
-                                }
+                    System.out.println("Playing file: " + audioFile.getAbsolutePath());
+                    AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+                    audioClip = AudioSystem.getClip();
+                    audioClip.open(audioStream);
+
+                    final Object lock = new Object();
+                    audioClip.addLineListener(event -> {
+                        if (event.getType() == LineEvent.Type.STOP) {
+                            synchronized (lock) {
+                                lock.notify();
                             }
-                        });
-
-                        clip.start();
-
-                        synchronized (lock) {
-                            lock.wait();
                         }
+                    });
 
-                        clip.close();
-                        audioStream.close();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        System.out.println("Error playing file: " + audioFile.getAbsolutePath());
+                    audioClip.start();
+
+                    synchronized (lock) {
+                        while (audioClip.isRunning() && !stopRequested) {
+                            lock.wait(); // Wait until audio stops or stop is requested
+                        }
+                    }
+
+                    audioClip.close();
+                    audioStream.close();
+
+                    if (stopRequested) {
+                        break; // Exit loop if stop was requested
                     }
                 }
-            });
-            thread.start();
-        } else {
-            System.out.println("No audio files available.");
-        }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                System.out.println("Error playing audio.");
+            } finally {
+                isPlaying = false; // Reset flag when done
+                stopRequested = false; // Reset stop request
+            }
+        });
+
+        thread.start();
+    } else {
+        System.out.println("No audio files available.");
+    }
     }//GEN-LAST:event_playAudioButtonActionPerformed
+
+    private void skipAudioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipAudioButtonActionPerformed
+        if (audioClip != null && audioClip.isRunning()) {
+            audioClip.stop();
+        }
+        if (audioClip == null) {
+            isPlaying = false;
+        }
+    }//GEN-LAST:event_skipAudioButtonActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        if (audioClip != null && audioClip.isRunning()) {
+            while (audioClip != null && audioClip.isRunning()) {
+                audioClip.stop();
+            }
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     public void addAudioFile(File audioFile) {
         if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
@@ -1135,6 +1193,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JPanel fileExplorerHolder;
     private javax.swing.JPanel imageContainer;
     private javax.swing.JLabel imageLabel;
+    private javax.swing.JButton jButton1;
     private javax.swing.JMenu jMenu;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JSplitPane jSplitPane2;
@@ -1147,6 +1206,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JButton presenterButton;
     private javax.swing.JMenuItem saveMenuItem;
     private javax.swing.JPanel settingsHolder;
+    private javax.swing.JButton skipAudioButton;
     private javax.swing.JPanel spacerPanel;
     private javax.swing.JComboBox<String> transitionBox;
     private javax.swing.JButton transitionTest;
