@@ -61,14 +61,12 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
             int width;
 
             if (autoMode) {
-                System.out.println("test1");
                 width = (int) ((audioDuration / (double) totalSlideshowDuration) * panelWidth);
                 if (width < 5 && audioDuration > 0) {
                     // Adjust very small durations to be visible
                     width = Math.max(5, (int) (panelWidth * 0.02)); // At least 2% of the total width
                 }
             } else {
-                System.out.println("test1");
                 width = panelWidth / audioFiles.size();
             }
             
