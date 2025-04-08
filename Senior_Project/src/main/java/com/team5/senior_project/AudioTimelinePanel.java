@@ -16,6 +16,8 @@ import java.util.List;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 
 /**
  *
@@ -26,6 +28,8 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
     private int totalSlideshowDuration; // in seconds
     private boolean autoMode;
     private List<SegmentBounds> segmentBoundsList = new ArrayList<>();
+    private JPopupMenu popupMenu;
+    private int clickedSegmentIndex = -1;
 
 
     public AudioTimelinePanel(List<File> audioFiles, int totalSlideshowDuration, boolean autoMode) {
@@ -35,39 +39,65 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
         setPreferredSize(new Dimension(800, 50)); // Force height
         setBackground(Color.LIGHT_GRAY); // Debugging: Make it visible
         
+        // Setup context menu
+        popupMenu = new JPopupMenu();
+        JMenuItem removeItem = new JMenuItem("Remove Audio");
+        popupMenu.add(removeItem);
+        
+        removeItem.addActionListener(e -> {
+           if (clickedSegmentIndex >= 0 && clickedSegmentIndex < audioFiles.size()) {
+               audioFiles.remove(clickedSegmentIndex);
+               repaint();
+               revalidate();
+           } 
+        });
+        
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                if (e.isPopupTrigger()) {
-                    handleRightClick(e.getX());
-                }
+                maybeShowPopup(e);
             }
             
             @Override
             public void mouseReleased(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+            
+            private void maybeShowPopup(MouseEvent e) {
                 if (e.isPopupTrigger()) {
-                    handleRightClick(e.getX());
+                    int xClick = e.getX();
+                    for (int i = 0; i < segmentBoundsList.size(); i++) {
+                        SegmentBounds bounds = segmentBoundsList.get(i);
+                        if (xClick >= bounds.startX && xClick <= bounds.endX) {
+                            clickedSegmentIndex = i;
+                            popupMenu.show(AudioTimelinePanel.this, e.getX(), e.getY());
+                            break;
+                        }
+                    }
                 }
             }
         });
     }
-    
-    private void handleRightClick(int xClick) {
-        for (int i = 0; i < segmentBoundsList.size(); i++) {
-            SegmentBounds bounds = segmentBoundsList.get(i);
-            if (xClick >= bounds.startX && xClick <= bounds.endX) {
-                System.out.println("Right-clicked on: " + audioFiles.get(i).getName());
-                audioFiles.remove(i);
-                repaint();
-                revalidate();
-                break;
-            }
-        }
-    }
+        
+//    private void handleRightClick(int xClick) {
+//        for (int i = 0; i < segmentBoundsList.size(); i++) {
+//            SegmentBounds bounds = segmentBoundsList.get(i);
+//            if (xClick >= bounds.startX && xClick <= bounds.endX) {
+//                System.out.println("Right-clicked on: " + audioFiles.get(i).getName());
+//                audioFiles.remove(i);
+//                repaint();
+//                revalidate();
+//                break;
+//            }
+//        }
+//    }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        
+        segmentBoundsList.clear();
+
         System.out.println("Painting AudioTimelinePanel...");
 
         if (audioFiles == null || audioFiles.isEmpty()) {
