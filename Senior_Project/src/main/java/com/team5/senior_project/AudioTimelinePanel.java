@@ -8,13 +8,14 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.UnsupportedAudioFileException;
 
 /**
  *
@@ -24,6 +25,7 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
     private List<File> audioFiles;
     private int totalSlideshowDuration; // in seconds
     private boolean autoMode;
+    private List<SegmentBounds> segmentBoundsList = new ArrayList<>();
 
 
     public AudioTimelinePanel(List<File> audioFiles, int totalSlideshowDuration, boolean autoMode) {
@@ -32,6 +34,35 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
         this.autoMode = autoMode;
         setPreferredSize(new Dimension(800, 50)); // Force height
         setBackground(Color.LIGHT_GRAY); // Debugging: Make it visible
+        
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    handleRightClick(e.getX());
+                }
+            }
+            
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    handleRightClick(e.getX());
+                }
+            }
+        });
+    }
+    
+    private void handleRightClick(int xClick) {
+        for (int i = 0; i < segmentBoundsList.size(); i++) {
+            SegmentBounds bounds = segmentBoundsList.get(i);
+            if (xClick >= bounds.startX && xClick <= bounds.endX) {
+                System.out.println("Right-clicked on: " + audioFiles.get(i).getName());
+                audioFiles.remove(i);
+                repaint();
+                revalidate();
+                break;
+            }
+        }
     }
 
     @Override
@@ -102,6 +133,7 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
                 g.fillRect(x + width - 1, 10, 2, panelHeight - 20);
             }
 
+            segmentBoundsList.add(new SegmentBounds(x, x + width));
             x += width;
         }
     }
@@ -119,6 +151,15 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
         }
     }
     
+    private static class SegmentBounds {
+        int startX;
+        int endX;
+        
+        SegmentBounds(int startX, int endX) {
+            this.startX = startX;
+            this.endX = endX;
+        }
+    }
     
 
     /**
