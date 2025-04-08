@@ -29,8 +29,7 @@ import java.awt.image.BufferedImage;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.sound.sampled.LineEvent;
 
 /**
  *
@@ -40,9 +39,6 @@ public class SlideshowPresenter extends javax.swing.JFrame {
 
     private File[] imageFiles; // image list
     private List<File> audioFiles; // audio list
-    private Clip audioClip;
-    private long audioPausedPosition = 0;
-    private int duration;
     private final int[] index = {0}; // image list index
     private int currentAudioIndex = 0;
     private Timer slideShowTimer;
@@ -52,6 +48,12 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     private boolean paused = false;
     private javax.swing.JLabel pausedLabel;
     private final Transition transitionManager = new Transition();
+    private Thread audioThread;
+    private boolean audioPaused = false;
+    private final Object audioLock = new Object();
+    private Clip currentClip;
+    private boolean slideshowStopped = false;
+    
 
      
     /**
@@ -102,7 +104,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         this.canLoop = loop;      // Store the loop (can loop) setting.
         this.slideTransitions = slideTransitions; // Save transitions for use in updateImage()
         if (imageFiles != null && imageFiles.length > 0) {
-            playAudio(canLoop);
+            playAudioFilesSequentially();
             updateImage();
             if (autoMode) { // Only start the timer if auto mode is enabled.
                 slideShowTimer = new Timer(duration, new ActionListener() {
@@ -121,33 +123,63 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         }
     }
     
-    private void playAudio(boolean canLoop) {
-        if (audioFiles.isEmpty()) return;
-        new Thread(() -> {
-            while (currentAudioIndex < audioFiles.size()) {
-                try {
-                    File audioFile = audioFiles.get(currentAudioIndex);
-                    AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
-                    audioClip = AudioSystem.getClip();
-                    audioClip.open(audioStream);
-                    if (audioPausedPosition > 0) {
-                        audioClip.setMicrosecondPosition(audioPausedPosition);
-                        audioPausedPosition = 0;
+    private void playAudioFilesSequentially() {
+        audioThread = new Thread(() -> {
+            while (currentAudioIndex < audioFiles.size() && !slideshowStopped) {
+                File audioFile = audioFiles.get(currentAudioIndex);
+                try (AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile)) {
+                    synchronized (audioLock) {
+                        if (currentClip != null && currentClip.isOpen()) {
+                            currentClip.close();
+                        }
+                        currentClip = AudioSystem.getClip();
+                        currentClip.open(audioStream);
                     }
-                    audioClip.start();
-                    audioClip.drain();
-                    audioClip.close();
+
+                    final Object clipLock = new Object();
+                    final boolean[] playing = {true};
+
+                    currentClip.addLineListener(event -> {
+                        if (event.getType() == LineEvent.Type.STOP && !audioPaused) {
+                            synchronized (clipLock) {
+                                playing[0] = false;
+                                clipLock.notifyAll();
+                            }
+                        }
+                    });
+
+                    synchronized (audioLock) {
+                        currentClip.start();
+                    }
+
+                    while (true) {
+                        synchronized (audioLock) {
+                            if (audioPaused) {
+                                currentClip.stop();
+                                audioLock.wait(); // wait for resume
+                                currentClip.start();
+                            }
+                        }
+
+                        synchronized (clipLock) {
+                            if (!playing[0]) break;
+                        }
+
+                        Thread.sleep(100);
+                    }
+
+                    currentClip.close();
                     currentAudioIndex++;
-                    if (canLoop && currentAudioIndex >= audioFiles.size()) {
-                        currentAudioIndex = 0;
-                    }
-                } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+
+                } catch (Exception e) {
                     e.printStackTrace();
+                    currentAudioIndex++; // skip bad file
                 }
             }
-        }).start();
+        });
+        audioThread.start();
     }
-    
+        
     /**
      * Initializes key bindings for the left, right arrow keys and the space bar.
      * Right arrow advances to the next slide; left arrow goes to the previous slide.
@@ -223,27 +255,41 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                 slideShowTimer.start();
                 pausedLabel.setVisible(false);
                 paused = false;
-                pauseAudio();
+                resumeAudio();
             } else {
                 slideShowTimer.stop();
                 pausedLabel.setVisible(true);
                 paused = true;
-                resumeAudio();
+                
+                pauseAudio();
             }
         }
     }
     
     private void pauseAudio() {
-        if (audioClip != null && audioClip.isRunning()) {
-            audioPausedPosition = audioClip.getMicrosecondPosition();
-            audioClip.stop();
+        synchronized (audioLock) {
+            audioPaused = true;
         }
     }
     
     private void resumeAudio() {
-        if (audioClip != null) {
-            audioClip.setMicrosecondPosition(audioPausedPosition);
-            audioClip.start();
+        synchronized (audioLock) {
+            audioPaused = false;
+            audioLock.notifyAll();
+        }
+    }
+    
+    private void stopAudio() {
+        synchronized (audioLock) {
+            slideshowStopped = true;
+            audioPaused = false;
+            audioLock.notifyAll();
+            
+            if (currentClip != null && currentClip.isOpen()) {
+                currentClip.stop();
+                currentClip.close();
+            }
+            currentAudioIndex = 0;
         }
     }
     
@@ -350,6 +396,11 @@ public class SlideshowPresenter extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Slideshow Presenter");
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
 
         jMenu1.setText("File");
 
@@ -377,13 +428,17 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(35, Short.MAX_VALUE)
+                .addContainerGap()
                 .addComponent(imageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 421, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        stopAudio();
+    }//GEN-LAST:event_formWindowClosing
 
     // Opens FileChooser for user to select a saved slideshow to load
     private void openSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {                                                  

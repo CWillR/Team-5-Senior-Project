@@ -79,18 +79,6 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
         });
     }
         
-//    private void handleRightClick(int xClick) {
-//        for (int i = 0; i < segmentBoundsList.size(); i++) {
-//            SegmentBounds bounds = segmentBoundsList.get(i);
-//            if (xClick >= bounds.startX && xClick <= bounds.endX) {
-//                System.out.println("Right-clicked on: " + audioFiles.get(i).getName());
-//                audioFiles.remove(i);
-//                repaint();
-//                revalidate();
-//                break;
-//            }
-//        }
-//    }
 
     @Override
     protected void paintComponent(Graphics g) {
