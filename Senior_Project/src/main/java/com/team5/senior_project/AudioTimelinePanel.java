@@ -6,6 +6,7 @@ package com.team5.senior_project;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.io.File;
 import java.io.IOException;
@@ -75,6 +76,25 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
             g.fillRect(x, 10, width, panelHeight - 20);
             g.setColor(Color.BLACK);
             g.drawRect(x, 10, width, panelHeight - 20);
+            
+            // Draw filename inside the segment
+            String filename = audioFile.getName();
+            FontMetrics metrics = g.getFontMetrics();
+            int stringWidth = metrics.stringWidth(filename);
+            int stringHeight = metrics.getHeight();
+            int textX = x + Math.max((width - stringWidth) / 2, 2); // Ensure padding
+            int textY = 10 + ((panelHeight - 20 + stringHeight) / 2) - 4;
+            
+            // Clip text if too long
+            if (stringWidth > width - 4) {
+                while (filename.length() > 3 && metrics.stringWidth(filename + "...") > width - 4) {
+                    filename = filename.substring(0, filename.length() - 1);
+                }
+                filename += "...";
+            }
+            
+            g.setColor(Color.WHITE);
+            g.drawString(filename, textX, textY);
 
             // Draw a white separator if not the last segment
             if (i < audioFiles.size() - 1) {
