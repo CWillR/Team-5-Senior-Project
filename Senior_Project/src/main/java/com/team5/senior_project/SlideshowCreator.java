@@ -342,8 +342,18 @@ public class SlideshowCreator extends javax.swing.JFrame {
         jTabbedPane1.addTab("Files", jSplitPane2);
 
         transitionTest.setText("Preview Transition");
+        transitionTest.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                transitionTestActionPerformed(evt);
+            }
+        });
 
         transitionBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "No Transition", "Cross Fade", "Wipe Up", "Wipe Right", "Wipe Down", "Wipe Left" }));
+        transitionBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                transitionBoxActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout transitionsHolderLayout = new javax.swing.GroupLayout(transitionsHolder);
         transitionsHolder.setLayout(transitionsHolderLayout);
