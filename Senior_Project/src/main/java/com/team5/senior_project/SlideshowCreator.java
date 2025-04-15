@@ -30,6 +30,8 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
@@ -779,7 +781,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private void addAudioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addAudioButtonActionPerformed
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setMultiSelectionEnabled(true);
-        fileChooser.setFileFilter(new FileNameExtensionFilter("WAV Audio Files", "wav"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (.wav, .aiff)", "wav", "aiff"));
 
         int returnValue = fileChooser.showOpenDialog(null);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -791,63 +793,57 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }//GEN-LAST:event_addAudioButtonActionPerformed
 
     private void playAudioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playAudioButtonActionPerformed
-        if (isPlaying) {
-            return;
-        }
-        
+        if (isPlaying) return;
+
         if (audioFiles != null && !audioFiles.isEmpty()) {
-        isPlaying = true; 
-        stopRequested = false; // Reset stop request when starting
+            isPlaying = true;
 
-        Thread thread = new Thread(() -> {
-            try {
-                for (File audioFile : audioFiles) {
-                    if (stopRequested) {
-                        break; // Stop immediately if stop button was pressed
-                    }
+            new Thread(() -> {
+                try {
+                    for (File audioFile : audioFiles) {
+                        System.out.println("Playing: " + audioFile.getAbsolutePath());
 
-                    System.out.println("Playing file: " + audioFile.getAbsolutePath());
-                    AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
-                    audioClip = AudioSystem.getClip();
-                    audioClip.open(audioStream);
+                        try (AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile)) {
+                            audioClip = AudioSystem.getClip();
+                            audioClip.open(audioStream);
 
-                    final Object lock = new Object();
-                    audioClip.addLineListener(event -> {
-                        if (event.getType() == LineEvent.Type.STOP) {
+                            final Object lock = new Object();
+                            boolean[] playbackCompleted = {false};
+
+                            audioClip.addLineListener(event -> {
+                                if (event.getType() == LineEvent.Type.STOP) {
+                                    synchronized (lock) {
+                                        playbackCompleted[0] = true;
+                                        lock.notify();
+                                    }
+                                }
+                            });
+
+                            audioClip.start();
+
                             synchronized (lock) {
-                                lock.notify();
+                                while (!playbackCompleted[0]) {
+                                    lock.wait();
+                                }
                             }
-                        }
-                    });
 
-                    audioClip.start();
-
-                    synchronized (lock) {
-                        while (audioClip.isRunning() && !stopRequested) {
-                            lock.wait(); // Wait until audio stops or stop is requested
+                            audioClip.close();
+                        } catch (UnsupportedAudioFileException e) {
+                            System.err.println("Unsupported format: " + audioFile.getName());
+                        } catch (LineUnavailableException | IOException e) {
+                            System.err.println("Error playing file: " + audioFile.getName());
+                            e.printStackTrace();
                         }
                     }
-
-                    audioClip.close();
-                    audioStream.close();
-
-                    if (stopRequested) {
-                        break; // Exit loop if stop was requested
-                    }
+                } catch (InterruptedException e) {
+                    System.out.println("Playback thread interrupted.");
+                } finally {
+                    isPlaying = false;
                 }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                System.out.println("Error playing audio.");
-            } finally {
-                isPlaying = false; // Reset flag when done
-                stopRequested = false; // Reset stop request
-            }
-        });
-
-        thread.start();
-    } else {
-        System.out.println("No audio files available.");
-    }
+            }).start();
+        } else {
+            System.out.println("No audio files available.");
+        }
     }//GEN-LAST:event_playAudioButtonActionPerformed
 
     private void skipAudioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipAudioButtonActionPerformed
@@ -860,13 +856,16 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }//GEN-LAST:event_skipAudioButtonActionPerformed
 
     public void addAudioFile(File audioFile) {
-        if (audioFile != null && audioFile.getName().toLowerCase().endsWith(".wav")) {
-            audioFiles.add(audioFile);
-            if (audioFiles.size() == 1) {
-                audioIndex = 0; // Set to first file if it's the first one added
+        if (audioFile != null) {
+            String fileName = audioFile.getName().toLowerCase();
+            if (fileName.endsWith(".wav") || fileName.endsWith(".aiff")) {
+                audioFiles.add(audioFile);
+                if (audioFiles.size() == 1) {
+                    audioIndex = 0; // Set to first file if it's the first one added
+                }
+            } else {
+                System.out.println("Invalid file format. Only .wav and .aiff files are supported.");
             }
-        } else {
-            System.out.println("Invalid file format. Only .wav files are supported.");
         }
     }
 
