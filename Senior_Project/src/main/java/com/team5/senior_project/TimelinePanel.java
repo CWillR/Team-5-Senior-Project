@@ -128,7 +128,10 @@ public class TimelinePanel extends javax.swing.JPanel {
     private void initializeContextMenu() {
         contextMenu = new JPopupMenu();
         removeMenuItem = new JMenuItem("Remove");
-
+        //Sets the background color white to remove images
+        removeMenuItem.setBackground(Color.white); //<-- Add this line
+        removeMenuItem.setOpaque(true); //<-- Add this line
+     
         removeMenuItem.addActionListener(e -> removeSelectedImage());
 
         contextMenu.add(removeMenuItem);
