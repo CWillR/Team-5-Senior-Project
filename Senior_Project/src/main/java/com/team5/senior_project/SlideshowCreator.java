@@ -163,6 +163,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private void updateTransitionBox() {
         Slide selectedItem = timelinePanelObject.getImageList().getSelectedValue();
         if (selectedItem == null) return;
+    
+        // Update the transition type in the combo box.
         TransitionType currentTransition = selectedItem.getTransition();
         String displayText;
         switch (currentTransition) {
@@ -188,8 +190,13 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 displayText = "No Transition";
         }
         transitionBox.setSelectedItem(displayText);
+        
+        // Update the duration text field with the slide's transition duration.
+        // Assuming you want to display the duration in seconds:
+        int durationInSeconds = selectedItem.getTransitionDuration() / 1000;
+        durationTextField.setText(String.valueOf(durationInSeconds));
     }
-
+    
     // Apply saved theme
     private void applySavedTheme() {
         SwingUtilities.invokeLater(() -> {
@@ -289,6 +296,10 @@ public class SlideshowCreator extends javax.swing.JFrame {
         transitionsHolder = new javax.swing.JPanel();
         transitionTest = new javax.swing.JButton();
         transitionBox = new javax.swing.JComboBox<>();
+        durationText = new javax.swing.JLabel();
+        durationTextField = new javax.swing.JTextField();
+        secondsText = new javax.swing.JLabel();
+        applyTransDuration = new javax.swing.JButton();
         musicHolder = new javax.swing.JPanel();
         addAudioButton = new javax.swing.JButton();
         playAudioButton = new javax.swing.JButton();
@@ -351,6 +362,19 @@ public class SlideshowCreator extends javax.swing.JFrame {
         });
 
         transitionBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "No Transition", "Cross Fade", "Wipe Up", "Wipe Right", "Wipe Down", "Wipe Left" }));
+
+        durationText.setText("Transition Duration");
+        durationText.setToolTipText("");
+
+        secondsText.setText("Seconds");
+
+        applyTransDuration.setText("Apply");
+        applyTransDuration.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                applyTransDurationActionPerformed(evt);
+            }
+        });
+        
         transitionBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 transitionBoxActionPerformed(evt);
@@ -365,8 +389,15 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(transitionTest)
-                    .addComponent(transitionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(367, Short.MAX_VALUE))
+                    .addComponent(transitionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(durationText)
+                    .addGroup(transitionsHolderLayout.createSequentialGroup()
+                        .addComponent(durationTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(secondsText)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(applyTransDuration)))
+                .addContainerGap(301, Short.MAX_VALUE))
         );
         transitionsHolderLayout.setVerticalGroup(
             transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -375,7 +406,14 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 .addComponent(transitionTest)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(transitionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(413, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(durationText)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(transitionsHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(durationTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(secondsText)
+                    .addComponent(applyTransDuration))
+                .addContainerGap(362, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Transitions", transitionsHolder);
@@ -855,6 +893,28 @@ public class SlideshowCreator extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_skipAudioButtonActionPerformed
 
+    private void applyTransDurationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_applyTransDurationActionPerformed
+        // Get the currently selected slide from the timeline.
+        Slide selectedSlide = timelinePanelObject.getImageList().getSelectedValue();
+        if (selectedSlide == null) {
+            JOptionPane.showMessageDialog(null, "No slide selected.");
+            return;
+        }
+        // Get the text from the duration text field.
+        String durationText = durationTextField.getText().trim();
+        try {
+            // Parse the duration from seconds and convert to milliseconds.
+            int durationSeconds = Integer.parseInt(durationText);
+            int durationMilliseconds = durationSeconds * 1000;
+            // Set the slide's transition duration.
+            selectedSlide.setTransitionDuration(durationMilliseconds);
+            // Optionally show a confirmation
+            JOptionPane.showMessageDialog(null, "Transition duration set to " + durationSeconds + " seconds.");
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(null, "Please enter a valid number for the duration.");
+        }
+    }//GEN-LAST:event_applyTransDurationActionPerformed
+
     public void addAudioFile(File audioFile) {
         if (audioFile != null) {
             String fileName = audioFile.getName().toLowerCase();
@@ -1137,7 +1197,8 @@ public class SlideshowCreator extends javax.swing.JFrame {
         
         // Instead of using imageTransitions, get the transition from the selected item
         TransitionType type = selectedItem.getTransition();
-        transitionManager.doTransition(prevImage, nextImage, imageLabel, type);
+        int transitionDuration = selectedItem.getTransitionDuration();
+        transitionManager.doTransition(prevImage, nextImage, imageLabel, type, transitionDuration);
     }
     
     public static void main(String args[]) {
@@ -1178,7 +1239,10 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JMenu ThemesButton;
     private javax.swing.JPanel TimelinePanel;
     private javax.swing.JButton addAudioButton;
+    private javax.swing.JButton applyTransDuration;
     private javax.swing.JMenuItem createNewSlideMenuItem;
+    private javax.swing.JLabel durationText;
+    private javax.swing.JTextField durationTextField;
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JPanel fileExplorerHolder;
     private javax.swing.JPanel imageContainer;
@@ -1194,6 +1258,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private javax.swing.JButton playAudioButton;
     private javax.swing.JButton presenterButton;
     private javax.swing.JMenuItem saveMenuItem;
+    private javax.swing.JLabel secondsText;
     private javax.swing.JPanel settingsHolder;
     private javax.swing.JButton skipAudioButton;
     private javax.swing.JPanel spacerPanel;

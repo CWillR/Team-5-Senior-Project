@@ -11,7 +11,7 @@ import javax.swing.*;
 
 public class Transition {
     private Timer timer;
-    private final int DURATION = 2500;
+    private int DURATION = 2500;
     private final int UPDATE = 40;  
     
     public enum Direction {
@@ -21,13 +21,20 @@ public class Transition {
         LEFT
     }
     
-    public void doTransition(BufferedImage prevImage, BufferedImage nextImage, JLabel panel, TransitionType type) {
+    public void doTransition(BufferedImage prevImage, BufferedImage nextImage, JLabel panel, TransitionType type, int duration) {
         // First, create scaled versions that fit the label’s container with a black background.
         int containerWidth = panel.getWidth();
         int containerHeight = panel.getHeight();
         BufferedImage scaledPrev = getScaledImage(prevImage, containerWidth, containerHeight);
         BufferedImage scaledNext = getScaledImage(nextImage, containerWidth, containerHeight);
         
+        // Set the duration for the transition.
+        if (duration > 0) {
+            DURATION = duration;
+        } else {
+            DURATION = 2500; // Default duration
+        }
+
         switch(type) {
             case INSTANT:
                 panel.setIcon(new ImageIcon(scaledNext));

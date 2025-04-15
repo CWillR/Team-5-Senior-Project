@@ -91,7 +91,7 @@ public class TimelinePanel extends javax.swing.JPanel {
         JScrollPane listScrollPane = new JScrollPane(imageList);
         add(listScrollPane, CARD_LIST);
         // Create a placeholder label for an empty timeline.
-        placeholderLabel = new JLabel("Drop images here to start timeline", SwingConstants.CENTER);
+        placeholderLabel = new JLabel("Create slideshow to get started", SwingConstants.CENTER);
         placeholderLabel.setOpaque(true);
         placeholderLabel.setBackground(Color.LIGHT_GRAY);
         placeholderLabel.setForeground(Color.BLACK);

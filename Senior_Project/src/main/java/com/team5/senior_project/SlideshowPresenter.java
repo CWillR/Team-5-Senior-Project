@@ -363,7 +363,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
             BufferedImage nextBuffered = Transition.toBufferedImage(nextImage);
     
             // Play the animated transition.
-            transitionManager.doTransition(prevBuffered, nextBuffered, imageLabel, currentTransition);
+            transitionManager.doTransition(prevBuffered, nextBuffered, imageLabel, currentTransition, 1000);
         }
     }
     

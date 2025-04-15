@@ -218,8 +218,16 @@
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="transitionTest" min="-2" max="-2" attributes="0"/>
                               <Component id="transitionBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="durationText" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="durationTextField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="secondsText" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="applyTransDuration" min="-2" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
-                          <EmptySpace pref="367" max="32767" attributes="0"/>
+                          <EmptySpace pref="301" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -230,7 +238,15 @@
                           <Component id="transitionTest" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="transitionBox" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="413" max="32767" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="durationText" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="durationTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="secondsText" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="applyTransDuration" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace pref="362" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -257,6 +273,30 @@
                   <AuxValues>
                     <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
                   </AuxValues>
+                </Component>
+                <Component class="javax.swing.JLabel" name="durationText">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Transition Duration"/>
+                    <Property name="toolTipText" type="java.lang.String" value=""/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JTextField" name="durationTextField">
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="durationTextFieldActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JLabel" name="secondsText">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Seconds"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JButton" name="applyTransDuration">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Apply"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="applyTransDurationActionPerformed"/>
+                  </Events>
                 </Component>
               </SubComponents>
             </Container>
