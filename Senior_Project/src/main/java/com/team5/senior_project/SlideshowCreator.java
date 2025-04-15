@@ -793,30 +793,27 @@ public class SlideshowCreator extends javax.swing.JFrame {
     }//GEN-LAST:event_addAudioButtonActionPerformed
 
     private void playAudioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playAudioButtonActionPerformed
-        if (isPlaying) {
-            return;
-        }
+        if (isPlaying) return;
 
         if (audioFiles != null && !audioFiles.isEmpty()) {
             isPlaying = true;
-            stopRequested = false;
 
-            Thread thread = new Thread(() -> {
+            new Thread(() -> {
                 try {
                     for (File audioFile : audioFiles) {
-                        if (stopRequested) break;
+                        System.out.println("Playing: " + audioFile.getAbsolutePath());
 
-                        try {
-                            System.out.println("Attempting to play: " + audioFile.getAbsolutePath());
-
-                            AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+                        try (AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile)) {
                             audioClip = AudioSystem.getClip();
                             audioClip.open(audioStream);
 
                             final Object lock = new Object();
+                            boolean[] playbackCompleted = {false};
+
                             audioClip.addLineListener(event -> {
                                 if (event.getType() == LineEvent.Type.STOP) {
                                     synchronized (lock) {
+                                        playbackCompleted[0] = true;
                                         lock.notify();
                                     }
                                 }
@@ -825,29 +822,25 @@ public class SlideshowCreator extends javax.swing.JFrame {
                             audioClip.start();
 
                             synchronized (lock) {
-                                while (audioClip.isRunning() && !stopRequested) {
+                                while (!playbackCompleted[0]) {
                                     lock.wait();
                                 }
                             }
 
                             audioClip.close();
-                            audioStream.close();
                         } catch (UnsupportedAudioFileException e) {
-                            System.err.println("Unsupported file format: " + audioFile.getName());
-                        } catch (IOException | LineUnavailableException e) {
-                            System.err.println("Playback failed for: " + audioFile.getName());
+                            System.err.println("Unsupported format: " + audioFile.getName());
+                        } catch (LineUnavailableException | IOException e) {
+                            System.err.println("Error playing file: " + audioFile.getName());
                             e.printStackTrace();
                         }
                     }
                 } catch (InterruptedException e) {
-                    System.out.println("Playback interrupted.");
+                    System.out.println("Playback thread interrupted.");
                 } finally {
                     isPlaying = false;
-                    stopRequested = false;
                 }
-            });
-
-            thread.start();
+            }).start();
         } else {
             System.out.println("No audio files available.");
         }
