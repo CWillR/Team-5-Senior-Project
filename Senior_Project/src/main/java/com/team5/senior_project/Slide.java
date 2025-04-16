@@ -11,6 +11,7 @@ import java.io.File;
 public class Slide {
     private File imageFile;
     private TransitionType transition;
+    private int transitionDuration; // Duration of the transition in milliseconds
     private String imagePath; // Path to the image file for this slide
     
 
@@ -18,7 +19,8 @@ public class Slide {
     public Slide(String imagePath, File imageFile, TransitionType transition) {
         this.imagePath = imagePath; // Initialize the image path      
         this.imageFile = imageFile;
-        this.transition = transition; 
+        this.transition = transition;
+        transitionDuration = 2000; // Default duration
     }
     
     public String getImagePath() {
@@ -39,6 +41,14 @@ public class Slide {
     
     public void setTransition(TransitionType transition) {
         this.transition = transition;
+    }
+
+    public int getTransitionDuration() {
+        return transitionDuration;
+    }
+
+    public void setTransitionDuration(int transitionDuration) {
+        this.transitionDuration = transitionDuration;
     }
     
     @Override
