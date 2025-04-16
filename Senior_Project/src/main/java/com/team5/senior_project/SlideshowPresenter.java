@@ -135,6 +135,10 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     // --------------------
     
     private void startAutoSlideCycle() {
+        if (slideshowStopped) {
+            return;
+        }
+        
         showSlide();
         Timer displayTimer = new Timer(fixedDuration, new ActionListener() {
             @Override
@@ -145,7 +149,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         displayTimer.setRepeats(false);
         displayTimer.start();
     }
-    
+        
     private void showSlide() {
         int labelWidth = imageLabel.getWidth();
         int labelHeight = imageLabel.getHeight();
@@ -163,6 +167,10 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     }
     
     private void transitionToNextSlide() {
+        if (slideshowStopped) {
+            return;
+        }
+        
         final int nextIndex = (index[0] + 1) % imageFiles.length;
         // Get the transition type for the incoming slide.
         TransitionType nextTransition = TransitionType.INSTANT;

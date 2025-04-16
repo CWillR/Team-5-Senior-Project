@@ -21,6 +21,7 @@ public class Transition {
     // DURATION will be updated from the passed duration value.
     private int DURATION = 2500; 
     private final int UPDATE = 40; // update every 40ms
+    private boolean running = false;
 
     public enum Direction {
         UP,
@@ -35,6 +36,12 @@ public class Transition {
      * If the transition is INSTANT, the image is set immediately and the callback is called.
      */
     public void doTransition(BufferedImage prevImage, BufferedImage nextImage, JLabel panel, TransitionType type, int duration, Runnable onTransitionEnd) {
+        // Bad things happen if we try to do multiple transitions at the same time
+        if (running) {
+            return;
+        }
+        running = true;
+
         // Pre-scale the images once based on the panel’s current dimensions.
         int containerWidth = panel.getWidth();
         int containerHeight = panel.getHeight();
@@ -73,6 +80,7 @@ public class Transition {
                 doWipeTrans(scaledPrev, scaledNext, panel, Direction.LEFT, onTransitionEnd);
                 break;
             default:
+                running = false;
                 panel.setIcon(new ImageIcon(scaledNext));
                 panel.setHorizontalAlignment(SwingConstants.CENTER);
                 panel.setVerticalAlignment(SwingConstants.CENTER);
@@ -138,6 +146,7 @@ public class Transition {
                 
                 if (alpha >= 1.0f) {
                     timer.stop();
+                    running = false;
                     // Use the pre-scaled next image to maintain the same appearance.
                     imageLabel.setIcon(new ImageIcon(nextImage));
                     imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -194,6 +203,7 @@ public class Transition {
                 
                 if (progress >= 1.0f) {
                     timer.stop();
+                    running = false;
                     // Set the final image to the pre-scaled next image.
                     imageLabel.setIcon(new ImageIcon(nextImage));
                     imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
