@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import javax.swing.filechooser.FileView;
 import net.coobird.thumbnailator.Thumbnails;
 import java.awt.image.BufferedImage;
+import java.util.Collections;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -133,10 +134,16 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
     // Calculate total slideshow duration (assuming each image is shown for 5 seconds)
     private int calculateTotalSlideshowDuration() {
+        List<Slide> slides = timelinePanelObject.getSlideItems();
+        
         int numImages = timelinePanelObject.getImages().size();
         SlideshowSettings settings = settingsPanel.getSlideshowSettings();
 
         int estimatedDuration = numImages * settings.duration;
+        
+        for (Slide slide : slides) {
+            estimatedDuration += slide.getTransitionDuration();
+        }
 
         // Ensure a reasonable minimum duration (e.g., 15 seconds)
         return estimatedDuration / 1000;
@@ -920,6 +927,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(null, "Please enter a valid number for the duration.");
         }
+        updateAudioTimeline();
     }//GEN-LAST:event_applyTransDurationActionPerformed
 
     public void addAudioFile(File audioFile) {
