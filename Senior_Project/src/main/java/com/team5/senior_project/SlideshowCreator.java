@@ -655,8 +655,14 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 slideTransitions[i] = SlidesList.get(i).getTransition();
             }
             
+            // create a list of the transitions times that we can pass to the presenter
+            List<Integer> transitionTimes = new ArrayList<>();
+            for (Slide slide : SlidesList) {
+                transitionTimes.add(slide.getTransitionDuration());
+            }
+
             // Launch the presenter using the images and transitions from the timeline.
-            new SlideshowPresenter(imageArray, audioFiles, settings.duration, settings.loop, settings.autoMode, slideTransitions)
+            new SlideshowPresenter(imageArray, audioFiles, settings.duration, settings.loop, settings.autoMode, slideTransitions, transitionTimes)
                     .setVisible(true);
         } else {
             JOptionPane.showMessageDialog(this, "No images to present.");
