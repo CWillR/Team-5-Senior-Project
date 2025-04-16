@@ -714,18 +714,17 @@ public class SlideshowCreator extends javax.swing.JFrame {
             interval = 3;
         }
     
-        List<Slide> slides = getSlides();
-        List<String> transitions = getTransitionsAsStringList(); // Helper method converting imageTransitions to List<String>
-    
+        List<Slide> slides = timelinePanelObject.getSlideItems(); // Use the updated Slide objects.
+        List<String> transitions = getTransitionsAsStringList();
         SlideshowSettingsSaver.saveSettingsToJson(
-                file.getAbsolutePath(), 
-                currentSlideshowName, 
-                slides, 
-                audioFiles, 
-                loop, 
-                mode, 
-                interval, 
-                transitions
+            file.getAbsolutePath(), 
+            currentSlideshowName, 
+            slides, 
+            audioFiles, 
+            loop, 
+            mode, 
+            interval, 
+            transitions
         );
         updateAudioTimeline();
         JOptionPane.showMessageDialog(this, "Slideshow settings saved successfully.");
@@ -782,8 +781,12 @@ public class SlideshowCreator extends javax.swing.JFrame {
                 JSONObject slideObj = slidesArray.getJSONObject(i);
                 String imagePath = slideObj.getString("image");
                 String transitionStr = slideObj.optString("transition", "INSTANT");
+                // Load the transition duration; default to 2500 ms if the key is missing
+                int transitionDuration = slideObj.optInt("transitionDuration", 2500);
                 TransitionType transition = TransitionType.valueOf(transitionStr);
                 Slide item = new Slide(imagePath, new File(imagePath), transition);
+                // Set the slide’s transition duration
+                item.setTransitionDuration(transitionDuration);
                 SlidesList.add(item);
             }
             // Update the timeline panel with the loaded timeline items.

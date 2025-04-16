@@ -54,6 +54,8 @@ public class SlideshowSettingsSaver {
             } else {
                 slideJson.put("transition", "No Transition");
             }
+            // Save the transition duration (in milliseconds)
+            slideJson.put("transitionDuration", slides.get(i).getTransitionDuration());
             slidesArray.put(slideJson);
         }
         slideshowJson.put("slides", slidesArray);
