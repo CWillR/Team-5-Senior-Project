@@ -163,8 +163,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
     private void updateTransitionBox() {
         Slide selectedItem = timelinePanelObject.getImageList().getSelectedValue();
         if (selectedItem == null) return;
-    
-        // Update the transition type in the combo box.
         TransitionType currentTransition = selectedItem.getTransition();
         String displayText;
         switch (currentTransition) {
@@ -994,12 +992,13 @@ public class SlideshowCreator extends javax.swing.JFrame {
             private Icon getThumbnailIcon(File file) {
                 try {
                     BufferedImage thumbnail = Thumbnails.of(file)
-                        .size(50, 50) // Desired thumbnail size
+                        .size(50, 50) // set desired thumbnail size
                         .asBufferedImage();
                     return new ImageIcon(thumbnail);
                 } catch (IOException e) {
-                    e.printStackTrace();
-                    return null; // Handle error, maybe return a default icon
+                    System.err.println("Error generating thumbnail for file: " + file.getAbsolutePath());
+                    // Log the error if necessary.
+                    return placeholderIcon;  // Return a default icon to avoid null pointer exceptions.
                 }
             }
 

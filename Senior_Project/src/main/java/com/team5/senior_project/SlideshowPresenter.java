@@ -19,11 +19,15 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent;
 
+/**
+ *
+ * @author Team 5
+ */
 public class SlideshowPresenter extends javax.swing.JFrame {
 
-    private File[] imageFiles;           // Image list
-    private List<File> audioFiles;         // Audio list
-    private final int[] index = {0};       // Current image index (using a one-element array)
+    private File[] imageFiles; // image list
+    private List<File> audioFiles; // audio list
+    private final int[] index = {0}; // image list index
     private int currentAudioIndex = 0;
     private Timer slideShowTimer;
     private boolean autoMode;
@@ -53,8 +57,9 @@ public class SlideshowPresenter extends javax.swing.JFrame {
      */
     public SlideshowPresenter() {
         initComponents();
+        // Set up key bindings
         initKeyBindings();
-        // Set up imageLabel.
+        // Override the layout so that imageLabel fills the frame
         imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
         imageLabel.setVerticalAlignment(SwingConstants.CENTER);
         getContentPane().setLayout(new BorderLayout());
@@ -67,6 +72,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         pausedLabel.setVisible(false);
         this.getLayeredPane().add(pausedLabel, new Integer(200));
         pausedLabel.setBounds(0, 0, getWidth(), getHeight());
+        // Update pausedLabel bounds when the frame is resized.
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -77,13 +83,13 @@ public class SlideshowPresenter extends javax.swing.JFrame {
 
     /**
      * Overloaded constructor.
-     * @param imageFiles         Array of image files.
-     * @param audioFiles         List of audio files.
-     * @param duration           Fixed display duration (in ms) per slide.
-     * @param loop               If true, slides loop.
-     * @param autoMode           If true, slides auto-advance.
-     * @param slideTransitions   Array of TransitionType enums.
-     * @param transitionTimes    List of transition times (in ms) for each slide.
+     * @param imageFiles        Array of image files to display.
+     * @param audioFiles        List of audio files to play.
+     * @param duration          Slide duration in milliseconds.
+     * @param loop              If true, the slideshow will loop; if false, it stops on the last slide.
+     * @param autoMode          If true, slides advance automatically; if false, user must manually change slides.
+     * @param slideTransitions  Array of TransitionType enums for each slide.
+     * @param transitionTimes   List of transition times (in ms) for each slide.
      */
     public SlideshowPresenter(File[] imageFiles, List<File> audioFiles, int duration, boolean loop, boolean autoMode, TransitionType[] slideTransitions, List<Integer> transitionTimes) {
         this();
@@ -217,8 +223,10 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                         currentClip = AudioSystem.getClip();
                         currentClip.open(audioStream);
                     }
+
                     final Object clipLock = new Object();
                     final boolean[] playing = {true};
+
                     currentClip.addLineListener(event -> {
                         if (event.getType() == LineEvent.Type.STOP && !audioPaused) {
                             synchronized (clipLock) {
@@ -227,46 +235,56 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                             }
                         }
                     });
+
                     synchronized (audioLock) {
                         currentClip.start();
                     }
+
                     while (true) {
                         synchronized (audioLock) {
                             if (audioPaused) {
                                 currentClip.stop();
-                                audioLock.wait();
+                                audioLock.wait(); // wait for resume
                                 currentClip.start();
                             }
                         }
+
                         synchronized (clipLock) {
                             if (!playing[0]) break;
                         }
+
                         Thread.sleep(100);
                     }
+
                     currentClip.close();
                     currentAudioIndex++;
+
                 } catch (Exception e) {
                     e.printStackTrace();
-                    currentAudioIndex++; // Skip bad file.
+                    currentAudioIndex++; // skip bad file
                 }
             }
         });
         audioThread.start();
     }
     
-    // --------------------
-    // Key Bindings
-    // --------------------
-    
+    /**
+     * Initializes key bindings for the left, right arrow keys and the space bar.
+     * Right arrow advances to the next slide; left arrow goes to the previous slide.
+     * Space bar toggles pause/resume. In all cases, the timer is restarted.
+     */
     private void initKeyBindings() {
         InputMap im = this.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap am = this.getRootPane().getActionMap();
+        
+        // Right arrow binding: next image.
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "nextImage");
         am.put("nextImage", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (imageFiles != null && imageFiles.length > 0) {
                     if (canLoop) {
+                        // Wrap around if looping is enabled.
                         index[0] = (index[0] + 1) % imageFiles.length;
                     } else if (index[0] < imageFiles.length - 1) {
                         index[0]++;
@@ -275,12 +293,15 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                 }
             }
         });
+
+        // Left arrow binding: previous image.
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "previousImage");
         am.put("previousImage", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (imageFiles != null && imageFiles.length > 0) {
                     if (canLoop) {
+                        // Wrap around if looping is enabled.
                         index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length;
                     } else if (index[0] > 0) {
                         index[0]--;
@@ -289,6 +310,8 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                 }
             }
         });
+        
+        // Space bar binding: toggle pause/resume.
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "togglePause");
         am.put("togglePause", new AbstractAction() {
             @Override
@@ -298,6 +321,10 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         });
     }
     
+    /**
+     * Toggles pause/resume state. When paused, the timer stops and the "Paused" overlay is shown;
+     * when resumed, the timer restarts and the overlay is hidden.
+     */
     private void togglePause() {
         if (autoMode) {
             if (paused) {
@@ -311,6 +338,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                 }
                 pausedLabel.setVisible(true);
                 paused = true;
+                
                 pauseAudio();
             }
         }
@@ -334,6 +362,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
             slideshowStopped = true;
             audioPaused = false;
             audioLock.notifyAll();
+            
             if (currentClip != null && currentClip.isOpen()) {
                 currentClip.stop();
                 currentClip.close();
@@ -342,12 +371,10 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         }
     }
     
-    // --------------------
-    // File Loader
-    // --------------------
-    
+    // Loads built slideshow into the SlideShowPresenter JLabel
     private void loadSlideshow(File loadFile) {
         List<File> loadedImages = new ArrayList<>();
+
         try (BufferedReader reader = new BufferedReader(new FileReader(loadFile))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -358,9 +385,10 @@ public class SlideshowPresenter extends javax.swing.JFrame {
                     System.err.println("Warning: File not found: " + line);
                 }
             }
+
             if (!loadedImages.isEmpty()) {
                 imageFiles = loadedImages.toArray(new File[0]);
-                index[0] = 0;
+                index[0] = 0; // Reset index to start
                 updateImage();
                 System.out.println("Slideshow loaded successfully.");
                 if (autoMode) {
@@ -369,6 +397,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
             } else {
                 System.err.println("No valid images found in the slideshow file.");
             }
+
         } catch (IOException e) {
             System.err.println("Error loading slideshow: " + e.getMessage());
             e.printStackTrace();
@@ -430,15 +459,17 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void formWindowClosing(java.awt.event.WindowEvent evt) {
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         stopAudio();
-    }
+    }//GEN-LAST:event_formWindowClosing
 
+    // Opens FileChooser for user to select a saved slideshow to load
     private void openSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Load Slideshow");
         fileChooser.setCurrentDirectory(SlideShowFileManager.getSavedSlidesFolder());
         fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Slideshow Files (*.ssx)", "ssx"));
+
         int userSelection = fileChooser.showOpenDialog(null);
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             File fileToLoad = fileChooser.getSelectedFile();
@@ -446,7 +477,14 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         }
     }
 
+    
+
+    /**
+     * @param args the command line arguments
+     */
     public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -457,6 +495,8 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         } catch (Exception ex) {
             java.util.logging.Logger.getLogger(SlideshowPresenter.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new SlideshowPresenter().setVisible(true);
@@ -464,12 +504,9 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         });
     }
     
-    // --------------------
-    // NetBeans Variable Declaration (only the ones used here)
-    // --------------------
-    // Variables declaration - do not modify
+    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuItem openSlideMenuItem;
-    // End of variables declaration
+    // End of variables declaration//GEN-END:variables
 }
