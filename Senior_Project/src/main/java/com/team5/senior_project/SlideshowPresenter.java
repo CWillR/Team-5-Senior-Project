@@ -41,7 +41,8 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     private final Object audioLock = new Object();
     private Clip currentClip;
     private boolean slideshowStopped = false;
-    
+    private boolean transitionInProgress = false;
+
     // Transition times for each slide (in ms; transition into slide N).
     private List<Integer> transitionTimes = new ArrayList<>();
     
@@ -267,6 +268,38 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         });
         audioThread.start();
     }
+
+    // Performs a transition animation from the current slide to the given target slide index.
+    private void manualTransitionToSlide(final int targetIndex) {
+        // Set the flag to prevent re‑entry.
+        transitionInProgress = true;
+        
+        // Determine the transition type for the target slide.
+        TransitionType targetTransition = TransitionType.INSTANT;
+        if (slideTransitions != null && slideTransitions.length > targetIndex) {
+            targetTransition = slideTransitions[targetIndex];
+        }
+        // Determine the transition time.
+        final int transTime = (targetTransition == TransitionType.INSTANT)
+                ? 0 : ((transitionTimes != null && transitionTimes.size() > targetIndex)
+                        ? transitionTimes.get(targetIndex) : 1000);
+    
+        // Load current and target images.
+        BufferedImage currentImage = Transition.toBufferedImage(new ImageIcon(imageFiles[index[0]].getAbsolutePath()).getImage());
+        BufferedImage targetImage = Transition.toBufferedImage(new ImageIcon(imageFiles[targetIndex].getAbsolutePath()).getImage());
+    
+        transitionManager.doTransition(currentImage, targetImage, imageLabel, targetTransition, transTime, new Runnable() {
+            @Override
+            public void run() {
+                // When transition is complete, update the index and reset the flag.
+                index[0] = targetIndex;
+                System.out.println("Manual transition complete. Now showing slide index: " + index[0] +
+                        " | Transition time: " + transTime + " ms");
+                transitionInProgress = false;
+            }
+        });
+    }
+    
     
     /**
      * Initializes key bindings for the left, right arrow keys and the space bar.
@@ -282,14 +315,21 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         am.put("nextImage", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // Prevent new transition if one is already active.
+                if (transitionInProgress) {
+                    System.out.println("Transition in progress: ignoring next image key press.");
+                    return;
+                }
                 if (imageFiles != null && imageFiles.length > 0) {
+                    int newIndex;
                     if (canLoop) {
-                        // Wrap around if looping is enabled.
-                        index[0] = (index[0] + 1) % imageFiles.length;
+                        newIndex = (index[0] + 1) % imageFiles.length;
                     } else if (index[0] < imageFiles.length - 1) {
-                        index[0]++;
+                        newIndex = index[0] + 1;
+                    } else {
+                        newIndex = index[0];
                     }
-                    updateImage();
+                    manualTransitionToSlide(newIndex);
                 }
             }
         });
@@ -299,18 +339,24 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         am.put("previousImage", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (transitionInProgress) {
+                    System.out.println("Transition in progress: ignoring previous image key press.");
+                    return;
+                }
                 if (imageFiles != null && imageFiles.length > 0) {
+                    int newIndex;
                     if (canLoop) {
-                        // Wrap around if looping is enabled.
-                        index[0] = (index[0] - 1 + imageFiles.length) % imageFiles.length;
+                        newIndex = (index[0] - 1 + imageFiles.length) % imageFiles.length;
                     } else if (index[0] > 0) {
-                        index[0]--;
+                        newIndex = index[0] - 1;
+                    } else {
+                        newIndex = index[0];
                     }
-                    updateImage();
+                    manualTransitionToSlide(newIndex);
                 }
             }
         });
-        
+
         // Space bar binding: toggle pause/resume.
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "togglePause");
         am.put("togglePause", new AbstractAction() {
