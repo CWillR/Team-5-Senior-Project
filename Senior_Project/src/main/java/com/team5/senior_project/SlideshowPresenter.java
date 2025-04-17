@@ -34,7 +34,6 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     private boolean canLoop;
     private TransitionType[] slideTransitions;
     private boolean paused = false;
-    private JLabel pausedLabel;
     private final Transition transitionManager = new Transition();
     private Thread audioThread;
     private boolean audioPaused = false;
@@ -65,21 +64,6 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         imageLabel.setVerticalAlignment(SwingConstants.CENTER);
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(imageLabel, BorderLayout.CENTER);
-        // Setup paused overlay.
-        pausedLabel = new JLabel("Paused", SwingConstants.CENTER);
-        pausedLabel.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 48));
-        pausedLabel.setForeground(Color.WHITE);
-        pausedLabel.setOpaque(false);
-        pausedLabel.setVisible(false);
-        this.getLayeredPane().add(pausedLabel, new Integer(200));
-        pausedLabel.setBounds(0, 0, getWidth(), getHeight());
-        // Update pausedLabel bounds when the frame is resized.
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                pausedLabel.setBounds(0, 0, getWidth(), getHeight());
-            }
-        });
     }
 
     /**
@@ -392,7 +376,6 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     
         if (paused) {            // ------- RESUME -------
             paused = false;
-            pausedLabel.setVisible(false);
     
             transitionManager.resume();           // Continue any running animation
             resumeAudio();
@@ -410,7 +393,6 @@ public class SlideshowPresenter extends javax.swing.JFrame {
             pauseAudio();
     
             paused = true;
-            pausedLabel.setVisible(true);
         }
     }
     
