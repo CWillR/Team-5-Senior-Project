@@ -770,7 +770,7 @@ public class SlideshowCreator extends javax.swing.JFrame {
             int interval = json.getInt("interval");
 
             // Update the settings panel (ensure these methods exist in SettingsPanel)
-            settingsPanel.setPlaybackMode(loop ? "Loop Slideshow" : "Single Play");
+            settingsPanel.setPlaybackMode(loop ? "Loop Slideshow" : "Play Once and End");
             settingsPanel.setSelectedMode(mode);
             settingsPanel.setIntervalText(String.valueOf(interval));
 

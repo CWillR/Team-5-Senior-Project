@@ -164,6 +164,16 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     }
     
     private void transitionToNextSlide() {
+
+        if (!canLoop && index[0] >= imageFiles.length - 1) {
+            // We’re on the final slide and looping is disabled – halt the show.
+            if (slideShowTimer != null) {
+                slideShowTimer.stop();
+            }
+            System.out.println("Reached final slide – auto‑mode halted.");
+            return;
+        }
+
         if (slideshowStopped) {
             return;
         }
@@ -182,14 +192,14 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         BufferedImage prevBuffered = Transition.toBufferedImage(new ImageIcon(imageFiles[index[0]].getAbsolutePath()).getImage());
         BufferedImage nextBuffered = Transition.toBufferedImage(new ImageIcon(imageFiles[nextIndex].getAbsolutePath()).getImage());
         transitionManager.doTransition(prevBuffered, nextBuffered, imageLabel,
-        nextTransition, transTime, () -> {
+                nextTransition, transTime, () -> {
             index[0] = nextIndex;
             int totalTime = fixedDuration + transTime;
             System.out.println("Transition complete. Now showing slide index: "
-            + index[0] + " | Total time: " + totalTime + " ms");
+                    + index[0] + " | Total time: " + totalTime + " ms");
 
-            if (!paused) {        // Don’t restart cycle while paused
-            startAutoSlideCycle();
+            if (!paused && (canLoop || index[0] < imageFiles.length - 1)) {
+                startAutoSlideCycle();
             }
         });
     }
