@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -758,59 +759,61 @@ public class SlideshowCreator extends javax.swing.JFrame {
 
     private void loadSlideshowSettings(File file) {
         try {
-            // Folder that contains the .json → root for resolving paths
-            Path rootDir = file.getParentFile().toPath().toAbsolutePath();
-    
-            // Read JSON
+            // Read file contents
             String content = new String(Files.readAllBytes(file.toPath()));
             JSONObject json = new JSONObject(content);
-    
-            // Basic slideshow settings
+
+            // Load basic slideshow settings
             currentSlideshowName = json.getString("name");
-            boolean loop  = json.getBoolean("loop");
-            String  mode  = json.getString("mode");
-            int     interval = json.getInt("interval");
-    
+            boolean loop = json.getBoolean("loop");
+            String mode = json.getString("mode");
+            int interval = json.getInt("interval");
+
+            // Update the settings panel (ensure these methods exist in SettingsPanel)
             settingsPanel.setPlaybackMode(loop ? "Loop Slideshow" : "Single Play");
             settingsPanel.setSelectedMode(mode);
             settingsPanel.setIntervalText(String.valueOf(interval));
-    
-            /* ---------- audio ---------- */
+
+            Path rootDir = file.getParentFile().toPath().toAbsolutePath();   // ← base for relative paths
+
+            // Load audio files if available
             audioFiles.clear();
             if (json.has("audio")) {
-                JSONArray audioArr = json.getJSONArray("audio");
-                for (int i = 0; i < audioArr.length(); i++) {
-                    String relAudio = audioArr.getString(i);
-                    File   audio    = rootDir.resolve(relAudio).toFile();
-                    audioFiles.add(audio);
+                JSONArray audioArray = json.getJSONArray("audio");
+                for (int i = 0; i < audioArray.length(); i++) {
+                    String audioPath = audioArray.getString(i);
+                    Path p = Paths.get(audioPath);
+                    if (!p.isAbsolute()) p = rootDir.resolve(p);
+                    audioFiles.add(p.toFile());
                 }
                 updateAudioTimeline();
             }
-    
-            /* ---------- slides ---------- */
-            JSONArray slidesArr = json.getJSONArray("slides");
-            List<Slide> slides = new ArrayList<>();
-            for (int i = 0; i < slidesArr.length(); i++) {
-                JSONObject sObj   = slidesArr.getJSONObject(i);
-                String relImg     = sObj.getString("image");
-                File   imgFile    = rootDir.resolve(relImg).toFile();
-    
-                String transStr   = sObj.optString("transition", "INSTANT");
-                int    transDur   = sObj.optInt("transitionDuration", 2500);
-    
-                TransitionType t  = TransitionType.valueOf(transStr);
-                Slide slide       = new Slide(imgFile.getPath(), imgFile, t);
-                slide.setTransitionDuration(transDur);
-                slides.add(slide);
+
+            // Load slides (each with its transition)
+            JSONArray slidesArray = json.getJSONArray("slides");
+            List<Slide> SlidesList = new ArrayList<>();
+            for (int i = 0; i < slidesArray.length(); i++) {
+                JSONObject slideObj = slidesArray.getJSONObject(i);
+                String imagePath = slideObj.getString("image");
+                Path ip = Paths.get(imagePath);
+                if (!ip.isAbsolute()) ip = rootDir.resolve(ip);
+
+                String transitionStr = slideObj.optString("transition", "INSTANT");
+                int transitionDuration = slideObj.optInt("transitionDuration", 2500);
+                TransitionType transition = TransitionType.valueOf(transitionStr);
+
+                Slide item = new Slide(ip.toString(), ip.toFile(), transition);
+                item.setTransitionDuration(transitionDuration);
+                SlidesList.add(item);
             }
-            timelinePanelObject.setTimelineSlides(slides);
-    
+            // Update the timeline panel with the loaded timeline items.
+            timelinePanelObject.setTimelineSlides(SlidesList);
+
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this,
-                "Error loading slideshow settings: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error loading slideshow settings: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
