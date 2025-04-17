@@ -8,9 +8,9 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.image.BufferedImage;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
@@ -19,15 +19,39 @@ import javax.swing.Timer;
 public class Transition {
     private Timer timer;
     // DURATION will be updated from the passed duration value.
-    private int DURATION = 2500; 
-    private final int UPDATE = 40; // update every 40ms
+    private int DURATION = 2500;
+    private final int UPDATE = 40; // update every 40 ms
     private boolean running = false;
+
+    private boolean paused = false;
+    private long    pauseStart = 0;
+    private long    startTime  = 0;   // shared by both animation methods
 
     public enum Direction {
         UP,
         RIGHT,
         DOWN,
         LEFT
+    }
+
+    /** Freeze the current transition frame. */
+    public void pause() {
+        if (!paused && timer != null && timer.isRunning()) {
+            pauseStart = System.currentTimeMillis();
+            timer.stop();
+            paused = true;
+        }
+    }
+
+    /** Continue from the exact frame where pause() was called. */
+    public void resume() {
+        if (paused && timer != null && !timer.isRunning()) {
+            long pausedDuration = System.currentTimeMillis() - pauseStart;
+            startTime += pausedDuration;      // shift timeline forward
+            timer.setInitialDelay(0);         // tick immediately
+            timer.start();
+            paused = false;
+        }
     }
 
     /**
@@ -47,10 +71,13 @@ public class Transition {
         int containerHeight = panel.getHeight();
         final BufferedImage scaledPrev = getScaledImage(prevImage, containerWidth, containerHeight);
         final BufferedImage scaledNext = getScaledImage(nextImage, containerWidth, containerHeight);
-        
+
         // Set the duration: if valid use it; otherwise, default.
         DURATION = (duration > 0) ? duration : 2500;
-        
+
+        // store start time for pause logic 
+        startTime = System.currentTimeMillis();
+
         // For INSTANT transitions, update immediately and call callback.
         if (type == TransitionType.INSTANT) {
             panel.setIcon(new ImageIcon(scaledNext));
@@ -59,9 +86,10 @@ public class Transition {
             if (onTransitionEnd != null) {
                 onTransitionEnd.run();
             }
+            running = false;
             return;
         }
-        
+
         // Choose the animation method depending on the type.
         switch (type) {
             case CROSS_FADE:
@@ -97,7 +125,7 @@ public class Transition {
     public void doTransition(BufferedImage prevImage, BufferedImage nextImage, JLabel panel, TransitionType type, int duration) {
         doTransition(prevImage, nextImage, panel, type, duration, null);
     }
-    
+
     // Helper method: scale an image to the container size while preserving aspect ratio and center it on a black background.
     private BufferedImage getScaledImage(BufferedImage src, int containerWidth, int containerHeight) {
         int imgWidth = src.getWidth();
@@ -105,7 +133,7 @@ public class Transition {
         double scale = Math.min((double) containerWidth / imgWidth, (double) containerHeight / imgHeight);
         int newWidth = (int) (imgWidth * scale);
         int newHeight = (int) (imgHeight * scale);
-        
+
         BufferedImage scaled = new BufferedImage(containerWidth, containerHeight, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = scaled.createGraphics();
         // Fill the background with black.
@@ -118,20 +146,19 @@ public class Transition {
         g2d.dispose();
         return scaled;
     }
-    
+
     // Crossfade transition using the fixed scaled images.
     private void doCrossFadeTrans(BufferedImage prevImage, BufferedImage nextImage, JLabel imageLabel, Runnable onTransitionEnd) {
         System.out.println("CrossFade transition triggered");
-        final long startTime = System.currentTimeMillis();
         final int width = imageLabel.getWidth();
         final int height = imageLabel.getHeight();
-        
+
         timer = new Timer(UPDATE, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                float elapsed = System.currentTimeMillis() - startTime;
+                float elapsed = System.currentTimeMillis() - startTime;          // ← uses field
                 float alpha = Math.min(elapsed / (float) DURATION, 1.0f);
-                
+
                 BufferedImage currentImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D g2d = currentImage.createGraphics();
                 // Draw the previous image with inverse alpha.
@@ -141,18 +168,15 @@ public class Transition {
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
                 g2d.drawImage(nextImage, 0, 0, width, height, null);
                 g2d.dispose();
-                
+
                 imageLabel.setIcon(new ImageIcon(currentImage));
-                
+
                 if (alpha >= 1.0f) {
                     timer.stop();
                     running = false;
-                    // Use the pre-scaled next image to maintain the same appearance.
                     imageLabel.setIcon(new ImageIcon(nextImage));
                     imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
                     imageLabel.setVerticalAlignment(SwingConstants.CENTER);
-                    long endTime = System.currentTimeMillis();
-                    System.out.println("CrossFade transition finished. Actual duration: " + (endTime - startTime) + " ms");
                     if (onTransitionEnd != null) {
                         onTransitionEnd.run();
                     }
@@ -161,55 +185,51 @@ public class Transition {
         });
         timer.start();
     }
-    
+
     // Wipe transition using the fixed scaled images.
     private void doWipeTrans(BufferedImage prevImage, BufferedImage nextImage, JLabel imageLabel, Direction dir, Runnable onTransitionEnd) {
         System.out.println("Wipe transition triggered in the " + dir + " direction");
-        final long startTime = System.currentTimeMillis();
         final int width = imageLabel.getWidth();
         final int height = imageLabel.getHeight();
-        
+
         timer = new Timer(UPDATE, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                float elapsed = System.currentTimeMillis() - startTime;
+                float elapsed = System.currentTimeMillis() - startTime;          // ← uses field
                 float progress = Math.min(elapsed / (float) DURATION, 1.0f);
-                
+
                 BufferedImage currentImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D g2d = currentImage.createGraphics();
                 // Draw the previous image using fixed dimensions.
                 g2d.drawImage(prevImage, 0, 0, width, height, null);
-                
+
                 int offsetX = 0, offsetY = 0;
                 switch (dir) {
                     case LEFT:
-                        offsetX = width - (int)(width * progress);
+                        offsetX = width - (int) (width * progress);
                         break;
                     case RIGHT:
-                        offsetX = -width + (int)(width * progress);
+                        offsetX = -width + (int) (width * progress);
                         break;
                     case UP:
-                        offsetY = height - (int)(height * progress);
+                        offsetY = height - (int) (height * progress);
                         break;
                     case DOWN:
-                        offsetY = -height + (int)(height * progress);
+                        offsetY = -height + (int) (height * progress);
                         break;
                 }
                 // Draw the next image at the calculated offset on the fixed canvas.
                 g2d.drawImage(nextImage, offsetX, offsetY, width, height, null);
                 g2d.dispose();
-                
+
                 imageLabel.setIcon(new ImageIcon(currentImage));
-                
+
                 if (progress >= 1.0f) {
                     timer.stop();
                     running = false;
-                    // Set the final image to the pre-scaled next image.
                     imageLabel.setIcon(new ImageIcon(nextImage));
                     imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
                     imageLabel.setVerticalAlignment(SwingConstants.CENTER);
-                    long endTime = System.currentTimeMillis();
-                    System.out.println("Wipe transition finished. Actual duration: " + (endTime - startTime) + " ms");
                     if (onTransitionEnd != null) {
                         onTransitionEnd.run();
                     }
@@ -218,7 +238,7 @@ public class Transition {
         });
         timer.start();
     }
-    
+
     // Helper method: converts an Image to a BufferedImage.
     public static BufferedImage toBufferedImage(Image img) {
         if (img instanceof BufferedImage) {

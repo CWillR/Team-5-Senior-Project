@@ -135,19 +135,16 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     // --------------------
     
     private void startAutoSlideCycle() {
-        if (slideshowStopped) {
-            return;
-        }
-        
+        if (slideshowStopped || paused) return;
+
         showSlide();
-        Timer displayTimer = new Timer(fixedDuration, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                transitionToNextSlide();
-            }
-        });
-        displayTimer.setRepeats(false);
-        displayTimer.start();
+
+        if (slideShowTimer != null) {
+            slideShowTimer.stop();
+        }
+        slideShowTimer = new Timer(fixedDuration, e -> transitionToNextSlide());
+        slideShowTimer.setRepeats(false);
+        slideShowTimer.start();
     }
         
     private void showSlide() {
@@ -184,14 +181,15 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         // Prepare images (we use original unscaled images for Transition to do its own scaling).
         BufferedImage prevBuffered = Transition.toBufferedImage(new ImageIcon(imageFiles[index[0]].getAbsolutePath()).getImage());
         BufferedImage nextBuffered = Transition.toBufferedImage(new ImageIcon(imageFiles[nextIndex].getAbsolutePath()).getImage());
-        transitionManager.doTransition(prevBuffered, nextBuffered, imageLabel, nextTransition, transTime, new Runnable() {
-            @Override
-            public void run() {
-                index[0] = nextIndex;
-                int totalTime = fixedDuration + transTime;
-                System.out.println("Transition complete. Now showing slide index: " + index[0]
-                        + " | Total time: " + totalTime + " ms");
-                startAutoSlideCycle();
+        transitionManager.doTransition(prevBuffered, nextBuffered, imageLabel,
+        nextTransition, transTime, () -> {
+            index[0] = nextIndex;
+            int totalTime = fixedDuration + transTime;
+            System.out.println("Transition complete. Now showing slide index: "
+            + index[0] + " | Total time: " + totalTime + " ms");
+
+            if (!paused) {        // Don’t restart cycle while paused
+            startAutoSlideCycle();
             }
         });
     }
@@ -380,21 +378,29 @@ public class SlideshowPresenter extends javax.swing.JFrame {
      * when resumed, the timer restarts and the overlay is hidden.
      */
     private void togglePause() {
-        if (autoMode) {
-            if (paused) {
-                pausedLabel.setVisible(false);
-                paused = false;
-                resumeAudio();
+        if (!autoMode) return;   // nothing to pause in manual mode
+    
+        if (paused) {            // ------- RESUME -------
+            paused = false;
+            pausedLabel.setVisible(false);
+    
+            transitionManager.resume();           // Continue any running animation
+            resumeAudio();
+    
+            // Only restart slide cycle if we are *not* in the middle of a transition
+            if (!transitionInProgress) {
                 startAutoSlideCycle();
-            } else {
-                if (slideShowTimer != null) {
-                    slideShowTimer.stop();
-                }
-                pausedLabel.setVisible(true);
-                paused = true;
-                
-                pauseAudio();
             }
+    
+        } else {                 // ------- PAUSE -------
+            if (slideShowTimer != null) {
+                slideShowTimer.stop();            // stop countdown
+            }
+            transitionManager.pause();            // freeze animation
+            pauseAudio();
+    
+            paused = true;
+            pausedLabel.setVisible(true);
         }
     }
     
