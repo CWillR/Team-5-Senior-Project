@@ -931,8 +931,6 @@ public class SlideshowCreator extends javax.swing.JFrame {
             int durationMilliseconds = durationSeconds * 1000;
             // Set the slide's transition duration.
             selectedSlide.setTransitionDuration(durationMilliseconds);
-            // Optionally show a confirmation
-            JOptionPane.showMessageDialog(null, "Transition duration set to " + durationSeconds + " seconds.");
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(null, "Please enter a valid number for the duration.");
         }
