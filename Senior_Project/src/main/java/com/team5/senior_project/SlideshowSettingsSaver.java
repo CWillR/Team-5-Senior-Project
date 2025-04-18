@@ -10,7 +10,8 @@ import org.json.JSONObject;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
-
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class SlideshowSettingsSaver {
     
@@ -28,6 +29,10 @@ public class SlideshowSettingsSaver {
      */
     public static void saveSettingsToJson(String filePath, String slideshowName, List<Slide> slides, List<File> audioFiles, 
                                           boolean loop, String mode, int interval, List<String> transitions) {
+        
+        // Treat the JSON’s directory as the root for relative paths
+        Path rootDir = Paths.get(filePath).toAbsolutePath().getParent();
+        
         JSONObject slideshowJson = new JSONObject();
         slideshowJson.put("name", slideshowName);
         slideshowJson.put("loop", loop);
@@ -38,7 +43,9 @@ public class SlideshowSettingsSaver {
         if (audioFiles != null && !audioFiles.isEmpty()) {
             JSONArray audioArray = new JSONArray();
             for (File audioFile : audioFiles) {
-                audioArray.put(audioFile.getAbsolutePath());
+                // Store path relative to rootDir
+                Path relAudio = rootDir.relativize(audioFile.toPath().toAbsolutePath());
+                audioArray.put(relAudio.toString().replace("\\", "/"));
             }
             slideshowJson.put("audio", audioArray);
         }
@@ -47,7 +54,10 @@ public class SlideshowSettingsSaver {
         JSONArray slidesArray = new JSONArray();
         for (int i = 0; i < slides.size(); i++) {
             JSONObject slideJson = new JSONObject();
-            slideJson.put("image", slides.get(i).getImagePath());
+            // Ssave image path relative to rootDir
+            Path relImg = rootDir.relativize(Paths.get(slides.get(i).getImagePath()).toAbsolutePath());
+            slideJson.put("image", relImg.toString().replace("\\", "/"));
+            
             // Attach the transition for this slide if available.
             if (transitions != null && transitions.size() > i) {
                 slideJson.put("transition", transitions.get(i));

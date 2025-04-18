@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,7 +25,6 @@ import java.util.logging.Logger;
 import javax.swing.filechooser.FileView;
 import net.coobird.thumbnailator.Thumbnails;
 import java.awt.image.BufferedImage;
-import java.util.Collections;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -762,52 +762,61 @@ public class SlideshowCreator extends javax.swing.JFrame {
             // Read file contents
             String content = new String(Files.readAllBytes(file.toPath()));
             JSONObject json = new JSONObject(content);
-    
+
             // Load basic slideshow settings
             currentSlideshowName = json.getString("name");
             boolean loop = json.getBoolean("loop");
             String mode = json.getString("mode");
             int interval = json.getInt("interval");
-    
+
             // Update the settings panel (ensure these methods exist in SettingsPanel)
-            settingsPanel.setPlaybackMode(loop ? "Loop Slideshow" : "Single Play");
+            settingsPanel.setPlaybackMode(loop ? "Loop Slideshow" : "Play Once and End");
             settingsPanel.setSelectedMode(mode);
             settingsPanel.setIntervalText(String.valueOf(interval));
-    
+
+            Path rootDir = file.getParentFile().toPath().toAbsolutePath();   // ← base for relative paths
+
             // Load audio files if available
             audioFiles.clear();
             if (json.has("audio")) {
                 JSONArray audioArray = json.getJSONArray("audio");
                 for (int i = 0; i < audioArray.length(); i++) {
                     String audioPath = audioArray.getString(i);
-                    audioFiles.add(new File(audioPath));
+                    Path p = Paths.get(audioPath);
+                    if (!p.isAbsolute()) p = rootDir.resolve(p);
+                    audioFiles.add(p.toFile());
                 }
                 updateAudioTimeline();
             }
-    
+
             // Load slides (each with its transition)
             JSONArray slidesArray = json.getJSONArray("slides");
             List<Slide> SlidesList = new ArrayList<>();
             for (int i = 0; i < slidesArray.length(); i++) {
                 JSONObject slideObj = slidesArray.getJSONObject(i);
                 String imagePath = slideObj.getString("image");
+                Path ip = Paths.get(imagePath);
+                if (!ip.isAbsolute()) ip = rootDir.resolve(ip);
+
                 String transitionStr = slideObj.optString("transition", "INSTANT");
-                // Load the transition duration; default to 2500 ms if the key is missing
                 int transitionDuration = slideObj.optInt("transitionDuration", 2500);
                 TransitionType transition = TransitionType.valueOf(transitionStr);
-                Slide item = new Slide(imagePath, new File(imagePath), transition);
-                // Set the slide’s transition duration
+
+                Slide item = new Slide(ip.toString(), ip.toFile(), transition);
                 item.setTransitionDuration(transitionDuration);
                 SlidesList.add(item);
             }
             // Update the timeline panel with the loaded timeline items.
             timelinePanelObject.setTimelineSlides(SlidesList);
-    
+
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error loading slideshow settings: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Error loading slideshow settings: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
     // Selects image to add to our image folder and adds it sequentially to the image index for display
     private void createNewSlideMenuItemActionPerformed(java.awt.event.ActionEvent evt) {
         JFileChooser fileChooser = createFileChooser(JFileChooser.FILES_ONLY, true);

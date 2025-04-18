@@ -34,7 +34,6 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     private boolean canLoop;
     private TransitionType[] slideTransitions;
     private boolean paused = false;
-    private JLabel pausedLabel;
     private final Transition transitionManager = new Transition();
     private Thread audioThread;
     private boolean audioPaused = false;
@@ -65,21 +64,6 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         imageLabel.setVerticalAlignment(SwingConstants.CENTER);
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(imageLabel, BorderLayout.CENTER);
-        // Setup paused overlay.
-        pausedLabel = new JLabel("Paused", SwingConstants.CENTER);
-        pausedLabel.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 48));
-        pausedLabel.setForeground(Color.WHITE);
-        pausedLabel.setOpaque(false);
-        pausedLabel.setVisible(false);
-        this.getLayeredPane().add(pausedLabel, new Integer(200));
-        pausedLabel.setBounds(0, 0, getWidth(), getHeight());
-        // Update pausedLabel bounds when the frame is resized.
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                pausedLabel.setBounds(0, 0, getWidth(), getHeight());
-            }
-        });
     }
 
     /**
@@ -135,19 +119,16 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     // --------------------
     
     private void startAutoSlideCycle() {
-        if (slideshowStopped) {
-            return;
-        }
-        
+        if (slideshowStopped || paused) return;
+
         showSlide();
-        Timer displayTimer = new Timer(fixedDuration, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                transitionToNextSlide();
-            }
-        });
-        displayTimer.setRepeats(false);
-        displayTimer.start();
+
+        if (slideShowTimer != null) {
+            slideShowTimer.stop();
+        }
+        slideShowTimer = new Timer(fixedDuration, e -> transitionToNextSlide());
+        slideShowTimer.setRepeats(false);
+        slideShowTimer.start();
     }
         
     private void showSlide() {
@@ -167,6 +148,16 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     }
     
     private void transitionToNextSlide() {
+
+        if (!canLoop && index[0] >= imageFiles.length - 1) {
+            // We’re on the final slide and looping is disabled – halt the show.
+            if (slideShowTimer != null) {
+                slideShowTimer.stop();
+            }
+            System.out.println("Reached final slide – auto‑mode halted.");
+            return;
+        }
+
         if (slideshowStopped) {
             return;
         }
@@ -184,13 +175,14 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         // Prepare images (we use original unscaled images for Transition to do its own scaling).
         BufferedImage prevBuffered = Transition.toBufferedImage(new ImageIcon(imageFiles[index[0]].getAbsolutePath()).getImage());
         BufferedImage nextBuffered = Transition.toBufferedImage(new ImageIcon(imageFiles[nextIndex].getAbsolutePath()).getImage());
-        transitionManager.doTransition(prevBuffered, nextBuffered, imageLabel, nextTransition, transTime, new Runnable() {
-            @Override
-            public void run() {
-                index[0] = nextIndex;
-                int totalTime = fixedDuration + transTime;
-                System.out.println("Transition complete. Now showing slide index: " + index[0]
-                        + " | Total time: " + totalTime + " ms");
+        transitionManager.doTransition(prevBuffered, nextBuffered, imageLabel,
+                nextTransition, transTime, () -> {
+            index[0] = nextIndex;
+            int totalTime = fixedDuration + transTime;
+            System.out.println("Transition complete. Now showing slide index: "
+                    + index[0] + " | Total time: " + totalTime + " ms");
+
+            if (!paused && (canLoop || index[0] < imageFiles.length - 1)) {
                 startAutoSlideCycle();
             }
         });
@@ -376,28 +368,42 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     }
     
     /**
-     * Toggles pause/resume state. When paused, the timer stops and the "Paused" overlay is shown;
-     * when resumed, the timer restarts and the overlay is hidden.
+     * Toggles pause/resume.
+     * – In manual mode: pauses/resumes audio (and any running transition) only.
+     * – In auto mode: also stops/starts the slide‑advance timer.
      */
     private void togglePause() {
-        if (autoMode) {
-            if (paused) {
-                pausedLabel.setVisible(false);
-                paused = false;
+        // ---------- Manual mode ----------
+        if (!autoMode) {
+            if (paused) {                 // RESUME
+                transitionManager.resume();
                 resumeAudio();
-                startAutoSlideCycle();
-            } else {
-                if (slideShowTimer != null) {
-                    slideShowTimer.stop();
-                }
-                pausedLabel.setVisible(true);
-                paused = true;
-                
+            } else {                      // PAUSE
+                transitionManager.pause();
                 pauseAudio();
             }
+            paused = !paused;             // flip state
+            return;                       // done – no timer to manage
+        }
+
+        // ---------- Auto mode ----------
+        if (paused) {                     // RESUME
+            paused = false;
+            transitionManager.resume();
+            resumeAudio();
+            if (!transitionInProgress) {
+                startAutoSlideCycle();    // restart slide timer
+            }
+        } else {                          // PAUSE
+            if (slideShowTimer != null) {
+                slideShowTimer.stop();    // stop countdown
+            }
+            transitionManager.pause();
+            pauseAudio();
+            paused = true;
         }
     }
-    
+
     private void pauseAudio() {
         synchronized (audioLock) {
             audioPaused = true;
