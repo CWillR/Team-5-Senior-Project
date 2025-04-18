@@ -25,6 +25,8 @@ import java.util.logging.Logger;
 import javax.swing.filechooser.FileView;
 import net.coobird.thumbnailator.Thumbnails;
 import java.awt.image.BufferedImage;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -940,15 +942,56 @@ public class SlideshowCreator extends javax.swing.JFrame {
     public void addAudioFile(File audioFile) {
         if (audioFile != null) {
             String fileName = audioFile.getName().toLowerCase();
+            File targetFolder = SlideShowFileManager.getAudioFolder(currentSlideshowName);
+
             if (fileName.endsWith(".wav") || fileName.endsWith(".aiff")) {
-                audioFiles.add(audioFile);
+                File existingFile = new File(targetFolder, audioFile.getName());
+
+                try {
+                    if (existingFile.exists() && audioFilesAreIdentical(audioFile, existingFile)) {
+                        // File already exists in audio folder — reuse it
+                        audioFiles.add(existingFile);
+                        if (audioFiles.size() == 1) {
+                            audioIndex = 0;
+                        }
+                        System.out.println("Audio file already exists. Reusing existing file.");
+                        return;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                // Otherwise, copy file and add reference to the copied file
+                File targetFile = new File(targetFolder, audioFile.getName());
+                targetFile = avoidDuplicateFileNames(targetFile, audioFile, targetFolder);
+                copyAudioFile(audioFile, audioFiles, targetFile);
+
                 if (audioFiles.size() == 1) {
-                    audioIndex = 0; // Set to first file if it's the first one added
+                    audioIndex = 0;
                 }
             } else {
                 System.out.println("Invalid file format. Only .wav and .aiff files are supported.");
             }
         }
+    }
+    
+    private boolean audioFilesAreIdentical(File file1, File file2) throws IOException {
+        if (file1.length() != file2.length()) {
+            return false;
+        }
+
+        try (InputStream is1 = new FileInputStream(file1);
+             InputStream is2 = new FileInputStream(file2)) {
+
+            int b1, b2;
+            while ((b1 = is1.read()) != -1) {
+                b2 = is2.read();
+                if (b1 != b2) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     // Helper method to convert imageTransitions to a List of Strings.
@@ -1155,6 +1198,18 @@ public class SlideshowCreator extends javax.swing.JFrame {
         } catch (IOException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error copying image: " + file.getName(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    private void copyAudioFile(File file, List<File> audioList, File targetFile) {
+        Path source = file.toPath();
+        Path target = targetFile.toPath();
+        try {
+            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+            audioFiles.add(target.toFile());
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error copying audio: " + file.getName(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 

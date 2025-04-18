@@ -54,7 +54,7 @@ public class SlideshowSettingsSaver {
         JSONArray slidesArray = new JSONArray();
         for (int i = 0; i < slides.size(); i++) {
             JSONObject slideJson = new JSONObject();
-            // Ssave image path relative to rootDir
+            // Save image path relative to rootDir
             Path relImg = rootDir.relativize(Paths.get(slides.get(i).getImagePath()).toAbsolutePath());
             slideJson.put("image", relImg.toString().replace("\\", "/"));
             
