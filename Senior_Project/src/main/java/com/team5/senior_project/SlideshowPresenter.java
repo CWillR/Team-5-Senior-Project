@@ -368,34 +368,42 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     }
     
     /**
-     * Toggles pause/resume state. When paused, the timer stops and the "Paused" overlay is shown;
-     * when resumed, the timer restarts and the overlay is hidden.
+     * Toggles pause/resume.
+     * – In manual mode: pauses/resumes audio (and any running transition) only.
+     * – In auto mode: also stops/starts the slide‑advance timer.
      */
     private void togglePause() {
-        if (!autoMode) return;   // nothing to pause in manual mode
-    
-        if (paused) {            // ------- RESUME -------
+        // ---------- Manual mode ----------
+        if (!autoMode) {
+            if (paused) {                 // RESUME
+                transitionManager.resume();
+                resumeAudio();
+            } else {                      // PAUSE
+                transitionManager.pause();
+                pauseAudio();
+            }
+            paused = !paused;             // flip state
+            return;                       // done – no timer to manage
+        }
+
+        // ---------- Auto mode ----------
+        if (paused) {                     // RESUME
             paused = false;
-    
-            transitionManager.resume();           // Continue any running animation
+            transitionManager.resume();
             resumeAudio();
-    
-            // Only restart slide cycle if we are *not* in the middle of a transition
             if (!transitionInProgress) {
-                startAutoSlideCycle();
+                startAutoSlideCycle();    // restart slide timer
             }
-    
-        } else {                 // ------- PAUSE -------
+        } else {                          // PAUSE
             if (slideShowTimer != null) {
-                slideShowTimer.stop();            // stop countdown
+                slideShowTimer.stop();    // stop countdown
             }
-            transitionManager.pause();            // freeze animation
+            transitionManager.pause();
             pauseAudio();
-    
             paused = true;
         }
     }
-    
+
     private void pauseAudio() {
         synchronized (audioLock) {
             audioPaused = true;
