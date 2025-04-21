@@ -87,7 +87,7 @@ public class SlideshowPresenter extends javax.swing.JFrame {
         this.fixedDuration = duration;
         
         if (imageFiles != null && imageFiles.length > 0) {
-            playAudioFilesSequentially();
+            playAudioFilesSequentially(loop);
             if (autoMode) {
                 startAutoSlideCycle();
             } else {
@@ -212,59 +212,62 @@ public class SlideshowPresenter extends javax.swing.JFrame {
     // Audio Methods (unchanged)
     // --------------------
     
-    private void playAudioFilesSequentially() {
+    private void playAudioFilesSequentially(boolean loop) {
         audioThread = new Thread(() -> {
-            while (currentAudioIndex < audioFiles.size() && !slideshowStopped) {
-                File audioFile = audioFiles.get(currentAudioIndex);
-                try (AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile)) {
-                    synchronized (audioLock) {
-                        if (currentClip != null && currentClip.isOpen()) {
-                            currentClip.close();
-                        }
-                        currentClip = AudioSystem.getClip();
-                        currentClip.open(audioStream);
-                    }
-
-                    final Object clipLock = new Object();
-                    final boolean[] playing = {true};
-
-                    currentClip.addLineListener(event -> {
-                        if (event.getType() == LineEvent.Type.STOP && !audioPaused) {
-                            synchronized (clipLock) {
-                                playing[0] = false;
-                                clipLock.notifyAll();
-                            }
-                        }
-                    });
-
-                    synchronized (audioLock) {
-                        currentClip.start();
-                    }
-
-                    while (true) {
+            do {
+                currentAudioIndex = 0; // reset index if looping
+                while (currentAudioIndex < audioFiles.size() && !slideshowStopped) {
+                    File audioFile = audioFiles.get(currentAudioIndex);
+                    try (AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile)) {
                         synchronized (audioLock) {
-                            if (audioPaused) {
-                                currentClip.stop();
-                                audioLock.wait(); // wait for resume
-                                currentClip.start();
+                            if (currentClip != null && currentClip.isOpen()) {
+                                currentClip.close();
                             }
+                            currentClip = AudioSystem.getClip();
+                            currentClip.open(audioStream);
                         }
 
-                        synchronized (clipLock) {
-                            if (!playing[0]) break;
+                        final Object clipLock = new Object();
+                        final boolean[] playing = {true};
+
+                        currentClip.addLineListener(event -> {
+                            if (event.getType() == LineEvent.Type.STOP && !audioPaused) {
+                                synchronized (clipLock) {
+                                    playing[0] = false;
+                                    clipLock.notifyAll();
+                                }
+                            }
+                        });
+
+                        synchronized (audioLock) {
+                            currentClip.start();
                         }
 
-                        Thread.sleep(100);
+                        while (true) {
+                            synchronized (audioLock) {
+                                if (audioPaused) {
+                                    currentClip.stop();
+                                    audioLock.wait(); // wait for resume
+                                    currentClip.start();
+                                }
+                            }
+
+                            synchronized (clipLock) {
+                                if (!playing[0]) break;
+                            }
+
+                            Thread.sleep(100);
+                        }
+
+                        currentClip.close();
+                        currentAudioIndex++;
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        currentAudioIndex++; // skip bad file
                     }
-
-                    currentClip.close();
-                    currentAudioIndex++;
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    currentAudioIndex++; // skip bad file
                 }
-            }
+            } while (loop && !slideshowStopped);
         });
         audioThread.start();
     }
