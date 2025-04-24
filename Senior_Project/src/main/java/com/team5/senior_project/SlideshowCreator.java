@@ -33,6 +33,7 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import org.json.JSONObject;
@@ -150,15 +151,29 @@ public class SlideshowCreator extends javax.swing.JFrame {
         // Ensure a reasonable minimum duration (e.g., 15 seconds)
         return estimatedDuration / 1000;
     }
+    
+    private int calculateSlideDuration(Slide slide) {
+        int slideDuration = 0;
+        SlideshowSettings settings = settingsPanel.getSlideshowSettings();
+        
+        slideDuration = settings.duration + slide.getTransitionDuration();
+        
+        return slideDuration;
+    }
 
     // Update when images or audio change
     private void updateAudioTimeline() {
         if (audioTimelinePanel != null) {
-            TimelinePanel.remove(audioTimelinePanel); // Remove old panel
+            TimelinePanel.remove(audioTimelinePanel);
         }
-        
+
         SlideshowSettings settings = settingsPanel.getSlideshowSettings();
-        audioTimelinePanel = new AudioTimelinePanel(audioFiles, calculateTotalSlideshowDuration(), settings.autoMode);
+        List<Slide> slides = timelinePanelObject.getSlideItems();
+        List<Integer> slideDurations = slides.stream()
+            .map(slide -> calculateSlideDuration(slide) / 1000)
+            .collect(Collectors.toList());
+
+        audioTimelinePanel = new AudioTimelinePanel(audioFiles, slideDurations, settings.autoMode, 10);
         TimelinePanel.add(audioTimelinePanel, BorderLayout.SOUTH);
 
         revalidate();

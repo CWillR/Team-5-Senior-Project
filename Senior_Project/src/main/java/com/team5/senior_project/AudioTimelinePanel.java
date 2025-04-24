@@ -30,13 +30,17 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
     private List<SegmentBounds> segmentBoundsList = new ArrayList<>();
     private JPopupMenu popupMenu;
     private int clickedSegmentIndex = -1;
+    private List<Integer> slideDurationsWithTransitions;
+    private int pixelsPerSecond;
 
 
-    public AudioTimelinePanel(List<File> audioFiles, int totalSlideshowDuration, boolean autoMode) {
+    public AudioTimelinePanel(List<File> audioFiles, List<Integer> slideDurationsWithTransitions, boolean autoMode, int pixelsPerSecond) {
         this.audioFiles = audioFiles;
-        this.totalSlideshowDuration = totalSlideshowDuration;
+        this.slideDurationsWithTransitions = slideDurationsWithTransitions;
         this.autoMode = autoMode;
-        setPreferredSize(new Dimension(800, 50)); // Force height
+        this.pixelsPerSecond = pixelsPerSecond;
+        this.totalSlideshowDuration = slideDurationsWithTransitions.stream().mapToInt(Integer::intValue).sum();
+        setPreferredSize(new Dimension(totalSlideshowDuration * pixelsPerSecond, 50)); // Force height
         setBackground(Color.LIGHT_GRAY); // Debugging: Make it visible
         
         // Setup context menu
@@ -83,76 +87,59 @@ public class AudioTimelinePanel extends javax.swing.JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        
         segmentBoundsList.clear();
 
-        System.out.println("Painting AudioTimelinePanel...");
+        if (audioFiles == null || audioFiles.isEmpty() || slideDurationsWithTransitions == null) return;
 
-        if (audioFiles == null || audioFiles.isEmpty()) {
-            System.out.println("No audio files to display.");
-            return;
+        int panelHeight = getHeight();
+
+        // Draw slide segments (as gray blocks)
+        int x = 0;
+        for (int i = 0; i < slideDurationsWithTransitions.size(); i++) {
+            int slideDuration = slideDurationsWithTransitions.get(i);
+            int width = slideDuration * pixelsPerSecond;
+
+            g.setColor(i % 2 == 0 ? Color.GRAY : Color.LIGHT_GRAY); // alternating colors
+            g.fillRect(x, 0, width, panelHeight);
+            g.setColor(Color.DARK_GRAY);
+            g.drawRect(x, 0, width, panelHeight);
+
+            x += width;
         }
 
-        int panelWidth = getWidth();
-        int panelHeight = getHeight();
-        int x = 0;
-
-        // Debugging total duration
-        System.out.println("Total Slideshow Duration: " + totalSlideshowDuration);
-
+        // Draw audio segments on top
+        int audioStartSec = 0;
         for (int i = 0; i < audioFiles.size(); i++) {
             File audioFile = audioFiles.get(i);
-            int audioDuration = getAudioDuration(audioFile);
-            if (audioDuration <= 0) continue;
+            int duration = getAudioDuration(audioFile);
+            if (duration <= 0) continue;
 
-            System.out.println("Audio File: " + audioFile.getName() + " | Duration: " + audioDuration + " sec");
+            int startX = audioStartSec * pixelsPerSecond;
+            int width = duration * pixelsPerSecond;
 
-            // Ensure proportional width based on total duration
-            int width;
-
-            if (autoMode) {
-                width = (int) ((audioDuration / (double) totalSlideshowDuration) * panelWidth);
-                if (width < 5 && audioDuration > 0) {
-                    // Adjust very small durations to be visible
-                    width = Math.max(5, (int) (panelWidth * 0.02)); // At least 2% of the total width
-                }
-            } else {
-                width = panelWidth / audioFiles.size();
-            }
-            
-            // Draw audio segment
             g.setColor(Color.BLUE);
-            g.fillRect(x, 10, width, panelHeight - 20);
+            g.fillRect(startX, 10, width, panelHeight - 20);
             g.setColor(Color.BLACK);
-            g.drawRect(x, 10, width, panelHeight - 20);
-            
-            // Draw filename inside the segment
+            g.drawRect(startX, 10, width, panelHeight - 20);
+
+            // Filename label
             String filename = audioFile.getName();
             FontMetrics metrics = g.getFontMetrics();
-            int stringWidth = metrics.stringWidth(filename);
-            int stringHeight = metrics.getHeight();
-            int textX = x + Math.max((width - stringWidth) / 2, 2); // Ensure padding
-            int textY = 10 + ((panelHeight - 20 + stringHeight) / 2) - 4;
-            
-            // Clip text if too long
-            if (stringWidth > width - 4) {
-                while (filename.length() > 3 && metrics.stringWidth(filename + "...") > width - 4) {
-                    filename = filename.substring(0, filename.length() - 1);
+            String displayName = filename;
+            if (metrics.stringWidth(displayName) > width - 4) {
+                while (displayName.length() > 3 && metrics.stringWidth(displayName + "...") > width - 4) {
+                    displayName = displayName.substring(0, displayName.length() - 1);
                 }
-                filename += "...";
+                displayName += "...";
             }
-            
+
+            int textX = startX + Math.max((width - metrics.stringWidth(displayName)) / 2, 2);
+            int textY = 10 + ((panelHeight - 20 + metrics.getHeight()) / 2) - 4;
             g.setColor(Color.WHITE);
-            g.drawString(filename, textX, textY);
+            g.drawString(displayName, textX, textY);
 
-            // Draw a white separator if not the last segment
-            if (i < audioFiles.size() - 1) {
-                g.setColor(Color.WHITE);
-                g.fillRect(x + width - 1, 10, 2, panelHeight - 20);
-            }
-
-            segmentBoundsList.add(new SegmentBounds(x, x + width));
-            x += width;
+            segmentBoundsList.add(new SegmentBounds(startX, startX + width));
+            audioStartSec += duration;
         }
     }
 
